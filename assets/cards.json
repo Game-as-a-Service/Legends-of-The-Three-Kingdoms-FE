@@ -1,0 +1,58 @@
+{
+    "BH2028": {
+        "id": "BH2028",
+        "name": "閃",
+        "rank": 2,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "BH3029": {
+        "id": "BH3029",
+        "name": "桃",
+        "rank": 3,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "peach"
+    },
+    "BHO036": {
+        "id": "BHO036",
+        "name": "殺",
+        "rank": 10,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "SHQ051": {
+        "id": "SHQ051",
+        "name": "過河拆橋",
+        "rank": 12,
+        "suit": "heart",
+        "type": "scroll",
+        "audio": "dismantle"
+    },
+    "SS7007": {
+        "id": "SS7007",
+        "name": "南蠻入侵",
+        "rank": 7,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": "barbarianInvasion"
+    },
+    "SH7046": {
+        "id": "SH7046",
+        "name": "無中生有",
+        "rank": 7,
+        "suit": "hart",
+        "type": "scroll",
+        "audio": "somethingForNothing"
+    },
+    "SHA040": {
+        "id": "SHA040",
+        "name": "萬箭齊發",
+        "rank": 1,
+        "suit": "hart",
+        "type": "scroll",
+        "audio": "arrowBarrage"
+    }
+}
