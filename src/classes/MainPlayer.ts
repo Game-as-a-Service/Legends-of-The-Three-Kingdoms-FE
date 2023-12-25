@@ -1,20 +1,28 @@
 import { Card, Player } from './index'
 import threeKingdomsCards from '~/assets/cards.json'
 import { atkLine } from '../utils/drawing'
+import { roleMap } from '~/src/utils/domain'
 export default class MainPlayer extends Player {
     handCards: Card[] = []
     selectedCard: Card | null = null
     seats: Player[] = []
-    // playCardHandler: any = () => {}
+    gamePlayCardHandler: any = () => {}
+    discardMode: boolean = false
+    discardCount: number = 0
+    discardCards: Card[] = []
+    discardCardsAction: ([]) => void = ([]) => {}
     constructor({
         id,
         generral,
-        role,
+        generalId,
+        roleId,
         hp,
         hand,
         equipments,
         delayScrolls,
         handleClickPlayer,
+        gamePlayCardHandler,
+        discardCardsAction,
         x,
         y,
         scene,
@@ -22,7 +30,8 @@ export default class MainPlayer extends Player {
     }: {
         id: string
         generral: string
-        role: string
+        generalId: string
+        roleId: keyof typeof roleMap
         hp: number
         hand: {
             size: number
@@ -31,6 +40,8 @@ export default class MainPlayer extends Player {
         equipments: string[]
         delayScrolls: string[]
         handleClickPlayer: any
+        gamePlayCardHandler: any
+        discardCardsAction: ([]) => void
         x: number
         y: number
         scene: Phaser.Scene
@@ -39,7 +50,8 @@ export default class MainPlayer extends Player {
         super({
             id,
             generral,
-            role,
+            generalId,
+            roleId,
             hp,
             hand,
             equipments,
@@ -50,7 +62,8 @@ export default class MainPlayer extends Player {
             scene,
         })
         this.seats = seats
-        // this.playCardHandler = playCardHandler
+        this.gamePlayCardHandler = gamePlayCardHandler
+        this.discardCardsAction = discardCardsAction
     }
     createInstance({ baseX, baseY, scene }: { baseX: number; baseY: number; scene: Phaser.Scene }) {
         // 創建一個白色的矩形
@@ -60,11 +73,14 @@ export default class MainPlayer extends Player {
             fontSize: '24px',
             color: '#000000',
         })
-        const generralText = scene.add.text(0, -40, this.generral, {
+        const generralText = scene.add.text(0, -40, this.general.name, {
             fontSize: '20px',
             color: '#000',
         })
-        const roleText = scene.add.text(0, 0, this.role, { fontSize: '20px', color: '#000' })
+        const roleText = scene.add.text(0, 0, roleMap[this.roleId] || '?', {
+            fontSize: '20px',
+            color: '#000',
+        })
         const hpText = scene.add.text(0, 40, `血量: ${this.hp}`, {
             fontSize: '20px',
             color: '#000',
@@ -92,6 +108,33 @@ export default class MainPlayer extends Player {
         rectangle.on('pointerdown', () => {
             this.handleClickPlayer(this)
         })
+
+        const checkbtn = scene.add.rectangle(0, 80, 100, 40, 0x00ff00)
+        checkbtn.setInteractive()
+        const checkText = scene.add.text(0, 80, '確認', {
+            fontSize: '20px',
+            color: '#000',
+        })
+        checkText.setOrigin(0.5)
+        const checkContainer = scene.add.container(0, 0, [checkbtn, checkText])
+        checkContainer.setPosition(baseX, baseY - 220)
+        checkContainer.setAlpha(0)
+        this.checkBtnInstance = checkContainer
+        checkbtn.on('pointerdown', () => {
+            if (this.discardMode) {
+                this.discardMode = false
+                this.discardCardsAction(this.discardCards.map((card) => card.id))
+                this.handCards.forEach((card) => {
+                    if (card.selected) {
+                        card.discardCard()
+                    }
+                })
+                this.arrangeCards()
+                this.discardCards = []
+                this.discardCount = 0
+                if (this.checkBtnInstance) this.checkBtnInstance.setAlpha(0)
+            }
+        })
     }
     addHandCard = (cardId: keyof typeof threeKingdomsCards) => {
         const card = new Card({
@@ -106,7 +149,7 @@ export default class MainPlayer extends Player {
         card.arrangeCards = this.arrangeCards
     }
     arrangeCards = () => {
-        if (this.selectedCard) return
+        if (this.selectedCard || this.discardMode) return
         this.handCards = this.handCards.filter((card) => card.played === false)
         if (this.handCards.length < 6) {
             this.handCards.forEach((card, index) => {
@@ -125,7 +168,33 @@ export default class MainPlayer extends Player {
         }
     }
     playCardHandler = (card: Card) => {
-        if (card.id === 'BHO036' || card.id === 'SHQ051') {
+        if (this.discardMode) {
+            if (card.selected) {
+                card.selected = false
+                // card.instance.y = 515
+                this.scene.tweens.add({
+                    targets: card.instance,
+                    x: card.instance.x,
+                    y: card.instance.y + 20,
+                    duration: 500, // 持續時間（毫秒）
+                    ease: 'Power2',
+                })
+                this.discardCards = this.discardCards.filter((discardCard) => discardCard !== card)
+            } else {
+                if (this.discardCards.length >= this.discardCount) return
+                card.selected = true
+                this.scene.tweens.add({
+                    targets: card.instance,
+                    x: card.instance.x,
+                    y: card.instance.y - 20,
+                    duration: 500, // 持續時間（毫秒）
+                    ease: 'Power2',
+                })
+                this.discardCards.push(card)
+            }
+            return
+        }
+        if (card.id === 'BS8008' || card.id === 'SHQ051') {
             if (this.selectedCard == card) {
                 this.scene.tweens.add({
                     targets: card.instance,
@@ -174,10 +243,21 @@ export default class MainPlayer extends Player {
             // this.selectedCard = null
         }
         card.playCard()
+        this.gamePlayCardHandler(card)
         this.selectedCard = null
         // if (card.list[1].text === '殺') {
         //     this.seats[0].hpChange(-1)
         //     card.destroy()
         // }
+    }
+    askDiscardCards = (discardCount: number) => {
+        this.discardMode = true
+        this.discardCount = discardCount
+        if (this.checkBtnInstance) {
+            this.checkBtnInstance.setAlpha(1)
+        }
+        // this.handCards = this.handCards.filter((handCard) => handCard !== card)
+        // card.destroy()
+        // this.arrangeCards()
     }
 }

@@ -18,6 +18,8 @@
   "dependencies": {
     "@nuxtjs/eslint-config-typescript": "^12.1.0",
     "@nuxtjs/tailwindcss": "^6.10.1",
+    "@stomp/stompjs": "^7.0.0",
+    "axios": "^1.6.2",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.0.1",

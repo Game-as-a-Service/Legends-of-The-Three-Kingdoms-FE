@@ -1,11 +1,24 @@
 import { Player, MainPlayer, Card } from './index'
 import { atkLine } from '../utils/drawing'
 import threeKingdomsCards from '~/assets/cards.json'
+import api from '~/src/utils/api'
 const locations = [
-    { x: 160, y: 160 },
-    { x: 400, y: 120 },
     { x: 640, y: 160 },
+    { x: 400, y: 120 },
+    { x: 160, y: 160 },
 ]
+const playCard = async (gameId: string, params: any) => {
+    const res = await api.post(`/api/games/${gameId}/player:playCard`, params)
+    console.log(res)
+}
+const finishAction = async (gameId: string, params: any) => {
+    const res = await api.post(`/api/games/${gameId}/player:finishAction`, params)
+    console.log(res)
+}
+const discardCards = async (gameId: string, params: any) => {
+    const res = await api.post(`/api/games/${gameId}/player:discardCards`, params)
+    console.log(res)
+}
 export default class Game {
     seats: Player[] = []
     hand: { tableCenter: any; handCards: Card[] } = {
@@ -17,6 +30,7 @@ export default class Game {
     }
     me!: MainPlayer
     scene!: Phaser.Scene
+    gameId: string = 'my-id'
     constructor(gameData: any, scene: Phaser.Scene) {
         this.scene = scene
         this.seats = gameData.seats.map(
@@ -31,13 +45,29 @@ export default class Game {
         )
         this.createMe({
             me: gameData.me,
-            myCards: Object.keys(threeKingdomsCards) as (keyof typeof threeKingdomsCards)[],
+            // myCards: Object.keys(threeKingdomsCards) as (keyof typeof threeKingdomsCards)[],
+            myCards: gameData.me.hand.cardIds,
         })
     }
+    gamePlayCardHandler = (card: Card) => {
+        const params = {
+            playerId: this.me.id,
+            targetPlayerId: '',
+            cardId: card.id,
+            playType: 'inactive', //skip
+        }
+        playCard(this.gameId, params)
+    }
     handleClickPlayer = (player: Player) => {
-        console.log('click')
         if (!this.me.selectedCard) return
         if (this.me.selectedCard.name === '殺' || this.me.selectedCard.name === '過河拆橋') {
+            const params = {
+                playerId: this.me.id,
+                targetPlayerId: player.id,
+                cardId: this.me.selectedCard.id,
+                playType: 'active', //skip
+            }
+            playCard(this.gameId, params)
             atkLine({
                 endPoint: new Phaser.Math.Vector2(player.instance.x, player.instance.y),
                 scene: this.scene,
@@ -45,10 +75,105 @@ export default class Game {
             const card = this.me.selectedCard
             this.me.selectedCard = null
             card.playCard()
+            console.log(player, this.me)
         }
     }
-    addHandCardsToPlayer = (playerName: string, number = 2) => {
-        const player = this.seats.find((player) => player.generral == playerName)
+    skipPlayCard = () => {
+        const params = {
+            playerId: this.me.id,
+            targetPlayerId: '',
+            cardId: '',
+            playType: 'skip', //skip
+        }
+        playCard(this.gameId, params)
+    }
+    finishAction = () => {
+        const params = {
+            playerId: this.me.id,
+        }
+        finishAction(this.gameId, params)
+    }
+    discardCards = (cardIds: string[]) => {
+        // const params = {
+        //     playerId: this.me.id,
+        //     cardIds,
+        // }
+        discardCards(this.gameId, cardIds)
+    }
+    async eventHandler(event: any) {
+        console.log(event)
+        const data = event.data
+        switch (event.event) {
+            case 'PlayCardEvent':
+                if (data.playType === 'skip') {
+                    return
+                }
+                if (data.playerId === this.me.id) {
+                    return
+                }
+                const player = this.seats.find((player) => player.id === data.playerId)
+                const playCard = new Card({
+                    cardId: data.cardId,
+                    x: player.instance.x,
+                    y: player.instance.y,
+                    scene: this.scene,
+                })
+                playCard.playCard()
+                if (data.targetPlayerId === '') {
+                    return
+                }
+                const startPoint = new Phaser.Math.Vector2(player.instance.x, player.instance.y)
+                if (data.targetPlayerId == this.me.id) {
+                    atkLine({
+                        startPoint,
+                        endPoint: new Phaser.Math.Vector2(400, 515),
+                        scene: this.scene,
+                    })
+                    return
+                }
+                const targetPlayer = this.seats.find((player) => player.id === data.targetPlayerId)
+                atkLine({
+                    startPoint,
+                    endPoint: new Phaser.Math.Vector2(
+                        targetPlayer.instance.x,
+                        targetPlayer.instance.y,
+                    ),
+                    scene: this.scene,
+                })
+                break
+            case 'DrawCardEvent':
+                if (data.drawCardPlayerId === this.me.id) {
+                    data.cards.forEach((cardId: string) => {
+                        this.me.addHandCard(cardId)
+                    })
+                    this.me.arrangeCards()
+                    return
+                }
+                this.addHandCardsToPlayer(data.drawCardPlayerId, data.size)
+                break
+            case 'NotifyDiscardEvent':
+                if (data.discardPlayerId === this.me.id && data.discardCount > 0) {
+                    this.me.askDiscardCards(data.discardCount)
+                }
+                break
+            case 'PlayerDamagedEvent':
+                const damage = data.from - data.to
+                if (damage <= 0) return
+                const damagedPlayer =
+                    this.seats.find((player) => player.id === data.playerId) || this.me
+                damagedPlayer.hpChange(-damage)
+                // {
+                //     "playerId": "Happypola",
+                //     "from": 3,
+                //     "to": 2
+                // }
+                break
+            default:
+                break
+        }
+    }
+    addHandCardsToPlayer = (playerId: string, number = 2) => {
+        const player = this.seats.find((player) => player.id == playerId)
         if (player === null || player === undefined) return
         const rectangles = []
         for (let i = number - 1; i > 0; i--) {
@@ -84,23 +209,32 @@ export default class Game {
             },
         })
     }
-    makeTurn = (generralName: string) => {
-        if (this.me?.generral == generralName) {
-            this.me.startTurn()
-        }
-        const player = this.seats.find((player) => player.generral == generralName)
-        if (player === null || player === undefined) return
-        player.startTurn()
-        this.seats.forEach((player) => {
-            if (player.generral !== generralName) {
-                player.endTurn()
-            }
-        })
+    makeTurn = (playerId: string) => {
+        // this.me.endTurn()
+        // this.me.startTurn()
+        // const player = this.seats.find((player) => player.id == playerId) || this.me
+        // player.startTurn()
+        // this.seats.forEach((player) => {
+        //     if (player.id !== playerId) player.endTurn()
+        // })
+        // if (this.me?.id == playerId) {
+        //     this.me.startTurn()
+        // }
+        // const player = this.seats.find((player) => player.id == playerId)
+        // if (player === null || player === undefined) return
+        // player.startTurn()
+        // this.seats.forEach((player) => {
+        //     if (player.id !== playerId) {
+        //         player.endTurn()
+        //     }
+        // })
     }
     createMe = ({ me, myCards }: { me: any; myCards: (keyof typeof threeKingdomsCards)[] }) => {
         this.me = new MainPlayer({
             ...me,
             handleClickPlayer: this.handleClickPlayer,
+            gamePlayCardHandler: this.gamePlayCardHandler,
+            discardCardsAction: this.discardCards,
             x: 690,
             y: 490,
             scene: this.scene,
@@ -108,5 +242,12 @@ export default class Game {
         })
         myCards.forEach((cardId) => this.me.addHandCard(cardId))
         this.me.arrangeCards()
+    }
+    updatePlayerData = (players: any[]) => {
+        players.forEach((player) => {
+            const targetPlayer = this.seats.find((p) => p.id === player.id)
+            if (targetPlayer === undefined) return
+            targetPlayer.updatePlayerData(player)
+        })
     }
 }

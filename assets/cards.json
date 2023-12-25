@@ -1,22 +1,22 @@
 {
-    "BH2028": {
-        "id": "BH2028",
+    "BHK039": {
+        "id": "BHK039",
         "name": "閃",
         "rank": 2,
         "suit": "heart",
         "type": "basic",
         "audio": "dodge"
     },
-    "BH3029": {
-        "id": "BH3029",
+    "BH4030": {
+        "id": "BH4030",
         "name": "桃",
         "rank": 3,
         "suit": "heart",
         "type": "basic",
         "audio": "peach"
     },
-    "BHO036": {
-        "id": "BHO036",
+    "BS8008": {
+        "id": "BS8008",
         "name": "殺",
         "rank": 10,
         "suit": "heart",

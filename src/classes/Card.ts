@@ -8,6 +8,7 @@ export default class Card {
     x: number = 0
     y: number = 0
     played: boolean = false
+    selected: boolean = false
     arrangeCards = () => {}
     // properties and methods go here
     constructor({
@@ -15,13 +16,13 @@ export default class Card {
         x,
         y,
         scene,
-        playCardHandler,
+        playCardHandler = () => {},
     }: {
         cardId: keyof typeof threeKingdomsCards
         x: number
         y: number
         scene: Phaser.Scene
-        playCardHandler: any
+        playCardHandler?: any
     }) {
         this.id = cardId
         this.x = x
@@ -91,6 +92,32 @@ export default class Card {
     playCard({ x = 400, y = 300 }: { x?: number; y?: number } = { x: 400, y: 300 }) {
         const instance = this.instance
         if (this.audio) this.audio.play()
+        if (instance === null || this.scene === null) return
+        this.scene.tweens.add({
+            targets: instance,
+            x: x,
+            y: y,
+            // yoyo: true,
+            duration: 1000, // 持續時間（毫秒）
+            ease: 'Power2',
+            onComplete: () => {
+                if (this.scene === null) return
+                this.scene.tweens.add({
+                    targets: instance,
+                    alpha: 0,
+                    duration: 1000, // 持續時間（毫秒）
+                    ease: 'Power2',
+                    onComplete: () => {
+                        instance.destroy()
+                    },
+                })
+            },
+        })
+        this.played = true
+        this.arrangeCards()
+    }
+    discardCard({ x = 400, y = 300 }: { x?: number; y?: number } = { x: 400, y: 300 }) {
+        const instance = this.instance
         if (instance === null || this.scene === null) return
         this.scene.tweens.add({
             targets: instance,

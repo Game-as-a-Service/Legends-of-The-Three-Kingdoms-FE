@@ -1,7 +1,11 @@
+import generalCards from '~/assets/generalCards.json'
+import { roleMap } from '~/src/utils/domain'
 export default class Player {
     id: string
     generral: string
-    role: string
+    generalId: string
+    general: any
+    roleId: keyof typeof roleMap
     hp: number
     hand: {
         size: number
@@ -14,11 +18,13 @@ export default class Player {
     handleClickPlayer!: (player: Player) => void
     x: number = 0
     y: number = 0
+    checkBtnInstance?: Phaser.GameObjects.Container
     // properties and methods go here
     constructor({
         id,
         generral,
-        role,
+        generalId,
+        roleId,
         hp,
         hand,
         equipments,
@@ -30,7 +36,8 @@ export default class Player {
     }: {
         id: string
         generral: string
-        role: string
+        generalId: string
+        roleId: keyof typeof roleMap
         hp: number
         hand: {
             size: number
@@ -45,7 +52,9 @@ export default class Player {
     }) {
         this.id = id
         this.generral = generral
-        this.role = role
+        this.generalId = generalId
+        this.general = generalCards.find((card) => card.id === generalId)
+        this.roleId = roleId
         this.hp = hp
         this.hand = hand
         this.equipments = equipments
@@ -64,11 +73,14 @@ export default class Player {
             fontSize: '24px',
             color: '#000000',
         })
-        const generralText = scene.add.text(0, -40, this.generral, {
+        const generralText = scene.add.text(0, -40, this.general.name, {
             fontSize: '20px',
             color: '#000',
         })
-        const roleText = scene.add.text(0, 0, this.role, { fontSize: '20px', color: '#000' })
+        const roleText = scene.add.text(0, 0, roleMap[this.roleId] || '?', {
+            fontSize: '20px',
+            color: '#000',
+        })
         const hpText = scene.add.text(0, 40, `血量: ${this.hp}`, {
             fontSize: '20px',
             color: '#000',
@@ -147,6 +159,23 @@ export default class Player {
         if (this.instance === null) return
         if (this.scene === null) return
         const rectangle: Phaser.GameObjects.Rectangle = this.instance.getAt(0)
+        debugger
         rectangle.postFX.clear()
+    }
+    updatePlayerData(data) {
+        // 手牌數確認
+        if (data.hand.size !== this.hand.size) {
+            this.hand.size = data.hand.size
+            const handText: Phaser.GameObjects.Text = this.instance.getAt(5)
+            handText.setText(`手牌: ${this.hand.size}`)
+            this.scene.tweens.add({
+                targets: handText,
+                scale: 1.5,
+                duration: 150, // 持續時間（毫秒）
+                ease: 'Power2',
+                yoyo: true,
+                repeat: 1,
+            })
+        }
     }
 }
