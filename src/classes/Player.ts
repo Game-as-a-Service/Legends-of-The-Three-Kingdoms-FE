@@ -19,6 +19,7 @@ export default class Player {
     x: number = 0
     y: number = 0
     checkBtnInstance?: Phaser.GameObjects.Container
+    skipInstance?: Phaser.GameObjects.Container
     // properties and methods go here
     constructor({
         id,
@@ -159,7 +160,6 @@ export default class Player {
         if (this.instance === null) return
         if (this.scene === null) return
         const rectangle: Phaser.GameObjects.Rectangle = this.instance.getAt(0)
-        debugger
         rectangle.postFX.clear()
     }
     updatePlayerData(data) {

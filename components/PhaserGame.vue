@@ -32,9 +32,15 @@ class BattleTable extends Phaser.Scene {
         // myGame.value = new Game(gameData.value, this)
     }
 }
+const roleText = {
+    MONARCH: '主公',
+    REBEL: '反賊',
+    MINISTER: '忠臣',
+    TRAITOR: '內奸',
+}
 const game = ref(null)
 const myCards = ref(['BHK039', 'BH4030', 'BS8008', 'SHQ051', 'SS7007', 'SH7046', 'SHA040'])
-const gameData = ref({})
+const myGameData = ref({})
 const myGame = ref(null)
 const myScene = ref(null)
 const eventSelectedPlayer = ref('曹操')
@@ -132,6 +138,9 @@ onMounted(() => {
         const config = {
             type: Phaser.AUTO,
             parent: 'phaser-game',
+            audio: {
+                disableWebAudio: true,
+            },
             width: 800,
             height: 600,
             scene: BattleTable,
@@ -162,8 +171,35 @@ onMounted(() => {
                     }
 
                     if (res.events) {
-                        if (res.data && res.data.seats) {
-                            myGame.value.updatePlayerData(res.data.seats)
+                        if (res.data) {
+                            myGame.value.updateGameData(res.data)
+                            ////**********/
+                            const gameData = res.data
+                            if (gameData.round) {
+                                if (
+                                    myGameData.value.round?.currentRoundPlayer !==
+                                    gameData.round?.currentRoundPlayer
+                                ) {
+                                    // 顯示誰的回合
+                                    const player = [...myGame.value.seats, myGame.value.me].find(
+                                        (player) => player.id == gameData.round.currentRoundPlayer,
+                                    )
+                                    if (player) player.startTurn()
+                                    // 關閉其他玩家的回合
+                                    // debugger
+                                    const endTurnPlayer = [
+                                        ...myGame.value.seats,
+                                        myGame.value.me,
+                                    ].find(
+                                        (player) =>
+                                            player.id == myGameData.value.round?.currentRoundPlayer,
+                                    )
+                                    if (endTurnPlayer) endTurnPlayer.endTurn()
+                                }
+                            }
+                            myGameData.value = gameData
+
+                            // myGame.value.updatePlayerData(res.data.seats)
                         }
                         for (let i = 0; i < res.events.length; i++) {
                             const event = res.events[i]
@@ -196,18 +232,18 @@ onMounted(() => {
                             },
                             myScene.value,
                         )
-                        const generalIds = seats.value.map((seat) => seat.generalId)
-                        const generalNames = generalIds.map((id) => {
-                            const card = Object.values(generalCards).find(
-                                (value) => value.id === id,
-                            )
-                            return card.name
-                        })
+                        // const generalIds = seats.value.map((seat) => seat.generalId)
+                        // const generalNames = generalIds.map((id) => {
+                        //     const card = Object.values(generalCards).find(
+                        //         (value) => value.id === id,
+                        //     )
+                        //     return card.name
+                        // })
                         // players.value = generalNames
                         players.value = res.data.seats
-                        console.log(seats.value, 'seats')
+                        // console.log(seats.value, 'seats')
                         const me = seats.value.find((seat) => seat.id === playerId.value)
-                        console.log(me, 'me')
+                        // console.log(me, 'me')
                         // me.hand.cardIds.forEach((cardId) => {
                         //     console.log(cardId)
                         //     myGame.value.me.addHandCard(cardId)
@@ -244,7 +280,7 @@ function getRandomElements(array, count) {
     return shuffledArray.slice(0, count)
 }
 const eventTrigger = () => {
-    console.log('eventTrigger', eventSelectedPlayer.value, eventSelectedCard.value)
+    // console.log('eventTrigger', eventSelectedPlayer.value, eventSelectedCard.value)
     const player =
         myGame.value.seats.find((player) => player.id === eventSelectedPlayer.value) ||
         myGame.value.me
@@ -353,7 +389,19 @@ const eventTrigger = () => {
     // player.hpChange(-1)
 }
 const startTurn = () => {
-    myGame.value.makeTurn(eventSelectedPlayer.value)
+    // myGame.value.makeTurn(eventSelectedPlayer.value)
+    const player =
+        myGame.value.seats.find((player) => player.id === eventSelectedPlayer.value) ||
+        myGame.value.me
+    player.startTurn()
+    return
+}
+const endTurn = () => {
+    // myGame.value.makeTurn(eventSelectedPlayer.value)
+    const player =
+        myGame.value.seats.find((player) => player.id === eventSelectedPlayer.value) ||
+        myGame.value.me
+    player.endTurn()
     return
 }
 const socketConnect = () => {
@@ -372,19 +420,19 @@ const api = axios.create({
 const createGame = async () => {
     const params = { gameId: gameId.value, players: playerIds }
     const res = await api.post('/api/games', params)
-    console.log(res)
+    // console.log(res)
     startGameFlag.value = true
 }
 const generals = ['WU001', 'WEI001', 'SHU001', 'SHU003', 'WU003']
 const monarchChooseGeneral = async (generalId) => {
     const params = { playerId: playerId.value, generalId }
     const res = await api.post(`/api/games/${gameId.value}/player:monarchChooseGeneral`, params)
-    console.log(res)
+    // console.log(res)
 }
 const otherChooseGeneral = async () => {
     const params = { playerId: playerId.value, generalId: chooseGeneralCard.value }
     const res = await api.post(`/api/games/${gameId.value}/player:otherChooseGeneral`, params)
-    console.log(res)
+    // console.log(res)
 }
 const selectGeneral = async (generalId) => {
     gameProcess.value = 'selectGeneralEnd'
@@ -394,7 +442,7 @@ const selectGeneral = async (generalId) => {
     }
     const params = { playerId: playerId.value, generalId }
     const res = await api.post(`/api/games/${gameId.value}/player:otherChooseGeneral`, params)
-    console.log(res)
+    // console.log(res)
 }
 const chooseGeneralCardsMap = computed(() => {
     return chooseGeneralCards.value.map((cardId) => {
@@ -421,7 +469,7 @@ const discardCard = () => {
 </script>
 <template>
     <div class="bg-black text-2xl">
-        <div>
+        <div v-if="!demo">
             <div v-if="playerId" class="p-2 text-white">您好：{{ playerId }}</div>
             <div v-else>
                 <label
@@ -443,14 +491,14 @@ const discardCard = () => {
                         type="button"
                         class="rounded-lg bg-green-700 px-5 py-2.5 text-2xl font-medium text-white hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
                     >
-                        demo
+                        ChenQQ(demo)
                     </button>
                 </div>
             </div>
         </div>
         <div class="text-white">
             <div v-if="gameProcess === 'initial'">
-                你的身份是：{{ me.roleId }}，請選擇武將：
+                你的身份是：{{ roleText[me.roleId] }}，請選擇武將：
                 <button
                     v-for="general in chooseGeneralCardsMap"
                     @click="selectGeneral(general.id)"
@@ -476,14 +524,14 @@ const discardCard = () => {
                         >
                             開始遊戲
                         </button>
-                        <button
+                        <!-- <button
                             v-if="isConnected && startGameFlag"
                             @click="skipPlayCard"
                             type="button"
                             class="mb-2 me-2 rounded-lg bg-orange-700 px-5 py-2.5 text-2xl font-medium text-white hover:bg-orange-800 focus:outline-none focus:ring-4 focus:ring-orange-300 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-900"
                         >
                             不出牌
-                        </button>
+                        </button> -->
                         <button
                             v-if="
                                 isConnected &&
@@ -564,13 +612,6 @@ const discardCard = () => {
             </div>
             <div class="flex">
                 <button
-                    @click="startTurn"
-                    type="button"
-                    class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
-                >
-                    回合開始
-                </button>
-                <button
                     @click="eventTrigger"
                     type="button"
                     class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
@@ -597,6 +638,20 @@ const discardCard = () => {
                     class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
                 >
                     棄牌
+                </button>
+                <button
+                    @click="startTurn"
+                    type="button"
+                    class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
+                >
+                    回合開始
+                </button>
+                <button
+                    @click="endTurn"
+                    type="button"
+                    class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
+                >
+                    回合結束
                 </button>
             </div>
         </div>

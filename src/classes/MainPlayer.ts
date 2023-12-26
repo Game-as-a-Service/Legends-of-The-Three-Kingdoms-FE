@@ -8,6 +8,7 @@ export default class MainPlayer extends Player {
     seats: Player[] = []
     gamePlayCardHandler: any = () => {}
     discardMode: boolean = false
+    reactionMode: boolean = false
     discardCount: number = 0
     discardCards: Card[] = []
     discardCardsAction: ([]) => void = ([]) => {}
@@ -108,10 +109,10 @@ export default class MainPlayer extends Player {
         rectangle.on('pointerdown', () => {
             this.handleClickPlayer(this)
         })
-
+        // 棄牌按鈕
         const checkbtn = scene.add.rectangle(0, 80, 100, 40, 0x00ff00)
         checkbtn.setInteractive()
-        const checkText = scene.add.text(0, 80, '確認', {
+        const checkText = scene.add.text(0, 80, '棄牌', {
             fontSize: '20px',
             color: '#000',
         })
@@ -134,6 +135,29 @@ export default class MainPlayer extends Player {
                 this.discardCount = 0
                 if (this.checkBtnInstance) this.checkBtnInstance.setAlpha(0)
             }
+        })
+        // 不出牌按鈕
+        // 橘色按鈕
+        const skipbtn = scene.add.rectangle(0, 80, 100, 40, 0xffbf00)
+        skipbtn.setInteractive()
+        const skipText = scene.add.text(0, 80, '取消', {
+            fontSize: '20px',
+            color: '#000',
+        })
+        skipText.setOrigin(0.5)
+        const skipContainer = scene.add.container(0, 0, [skipbtn, skipText])
+        skipContainer.setPosition(baseX, baseY - 220)
+        skipContainer.setAlpha(0)
+        this.skipInstance = skipContainer
+        skipbtn.on('pointerdown', () => {
+            const params = {
+                cardId: '',
+                playerId: this.id,
+                targetPlayerId: '',
+                playType: 'skip',
+            }
+            this.gamePlayCardHandler({}, params)
+            if (this.skipInstance) this.skipInstance.setAlpha(0)
         })
     }
     addHandCard = (cardId: keyof typeof threeKingdomsCards) => {
@@ -245,6 +269,10 @@ export default class MainPlayer extends Player {
         card.playCard()
         this.gamePlayCardHandler(card)
         this.selectedCard = null
+        if (this.reactionMode) {
+            this.reactionMode = false
+            this.skipInstance?.setAlpha(0)
+        }
         // if (card.list[1].text === '殺') {
         //     this.seats[0].hpChange(-1)
         //     card.destroy()
@@ -259,5 +287,9 @@ export default class MainPlayer extends Player {
         // this.handCards = this.handCards.filter((handCard) => handCard !== card)
         // card.destroy()
         // this.arrangeCards()
+    }
+    askReaction = (card: Card) => {
+        this.reactionMode = true
+        this.skipInstance?.setAlpha(1)
     }
 }

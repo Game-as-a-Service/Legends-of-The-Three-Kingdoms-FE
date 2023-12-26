@@ -31,6 +31,7 @@ export default class Game {
     me!: MainPlayer
     scene!: Phaser.Scene
     gameId: string = 'my-id'
+    gameData: any = {}
     constructor(gameData: any, scene: Phaser.Scene) {
         this.scene = scene
         this.seats = gameData.seats.map(
@@ -49,14 +50,18 @@ export default class Game {
             myCards: gameData.me.hand.cardIds,
         })
     }
-    gamePlayCardHandler = (card: Card) => {
-        const params = {
-            playerId: this.me.id,
-            targetPlayerId: '',
-            cardId: card.id,
-            playType: 'inactive', //skip
+    gamePlayCardHandler = (card: Card, options: any) => {
+        if (options) {
+            playCard(this.gameId, options)
+        } else {
+            const params = {
+                playerId: this.me.id,
+                targetPlayerId: '',
+                cardId: card.id,
+                playType: 'inactive', //skip
+            }
+            playCard(this.gameId, params)
         }
-        playCard(this.gameId, params)
     }
     handleClickPlayer = (player: Player) => {
         if (!this.me.selectedCard) return
@@ -101,7 +106,7 @@ export default class Game {
         discardCards(this.gameId, cardIds)
     }
     async eventHandler(event: any) {
-        console.log(event)
+        // console.log(event)
         const data = event.data
         switch (event.event) {
             case 'PlayCardEvent':
@@ -129,6 +134,9 @@ export default class Game {
                         endPoint: new Phaser.Math.Vector2(400, 515),
                         scene: this.scene,
                     })
+                    if (data.cardId === 'BS8008') {
+                        this.me.askReaction(data)
+                    }
                     return
                 }
                 const targetPlayer = this.seats.find((player) => player.id === data.targetPlayerId)
@@ -162,11 +170,6 @@ export default class Game {
                 const damagedPlayer =
                     this.seats.find((player) => player.id === data.playerId) || this.me
                 damagedPlayer.hpChange(-damage)
-                // {
-                //     "playerId": "Happypola",
-                //     "from": 3,
-                //     "to": 2
-                // }
                 break
             default:
                 break
@@ -249,5 +252,26 @@ export default class Game {
             if (targetPlayer === undefined) return
             targetPlayer.updatePlayerData(player)
         })
+    }
+    updateGameData = (gameData: any) => {
+        if (gameData.seats) {
+            this.updatePlayerData(gameData.seats)
+        }
+        // if (gameData.round) {
+        //     if (this.gameData.round?.currentRoundPlayer !== gameData.round?.currentRoundPlayer) {
+        //         // 顯示誰的回合
+        //         const player = [...this.seats, this.me].find(
+        //             (player) => player.id == gameData.round.currentRoundPlayer,
+        //         )
+        //         if (player) player.startTurn()
+        //         // 關閉其他玩家的回合
+        //         // debugger
+        //         const endTurnPlayer = [...this.seats, this.me].find(
+        //             (player) => player.id == this.gameData.round?.currentRoundPlayer,
+        //         )
+        //         if (endTurnPlayer) endTurnPlayer.endTurn()
+        //     }
+        // }
+        // this.gameData = gameData
     }
 }
