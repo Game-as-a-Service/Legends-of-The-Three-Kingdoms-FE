@@ -20,6 +20,7 @@ export default class Player {
     y: number = 0
     checkBtnInstance?: Phaser.GameObjects.Container
     skipInstance?: Phaser.GameObjects.Container
+    hintInstance!: Phaser.GameObjects.Container
     // properties and methods go here
     constructor({
         id,
@@ -162,7 +163,7 @@ export default class Player {
         const rectangle: Phaser.GameObjects.Rectangle = this.instance.getAt(0)
         rectangle.postFX.clear()
     }
-    updatePlayerData(data) {
+    updatePlayerData(data: any) {
         // 手牌數確認
         if (data.hand.size !== this.hand.size) {
             this.hand.size = data.hand.size

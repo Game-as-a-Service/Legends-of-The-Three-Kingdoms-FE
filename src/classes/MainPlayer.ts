@@ -9,6 +9,7 @@ export default class MainPlayer extends Player {
     gamePlayCardHandler: any = () => {}
     discardMode: boolean = false
     reactionMode: boolean = false
+    reactionType: string = ''
     discardCount: number = 0
     discardCards: Card[] = []
     discardCardsAction: ([]) => void = ([]) => {}
@@ -134,10 +135,10 @@ export default class MainPlayer extends Player {
                 this.discardCards = []
                 this.discardCount = 0
                 if (this.checkBtnInstance) this.checkBtnInstance.setAlpha(0)
+                if (this.hintInstance) this.hintInstance.setAlpha(0)
             }
         })
         // 不出牌按鈕
-        // 橘色按鈕
         const skipbtn = scene.add.rectangle(0, 80, 100, 40, 0xffbf00)
         skipbtn.setInteractive()
         const skipText = scene.add.text(0, 80, '取消', {
@@ -150,15 +151,20 @@ export default class MainPlayer extends Player {
         skipContainer.setAlpha(0)
         this.skipInstance = skipContainer
         skipbtn.on('pointerdown', () => {
-            const params = {
-                cardId: '',
-                playerId: this.id,
-                targetPlayerId: '',
-                playType: 'skip',
-            }
-            this.gamePlayCardHandler({}, params)
+            this.gamePlayCardHandler({}, this.reactionType)
             if (this.skipInstance) this.skipInstance.setAlpha(0)
+            if (this.hintInstance) this.hintInstance.setAlpha(0)
         })
+        // 提示文字
+        const hintText = scene.add.text(0, 0, '請選擇要棄的牌', {
+            fontSize: '20px',
+            color: '#FFF',
+        })
+        hintText.setOrigin(0.5)
+        const hintContainer = scene.add.container(0, 0, [hintText])
+        hintContainer.setPosition(baseX - 300, baseY - 220)
+        hintContainer.setAlpha(0)
+        this.hintInstance = hintContainer
     }
     addHandCard = (cardId: keyof typeof threeKingdomsCards) => {
         const card = new Card({
@@ -272,6 +278,7 @@ export default class MainPlayer extends Player {
         if (this.reactionMode) {
             this.reactionMode = false
             this.skipInstance?.setAlpha(0)
+            this.hintInstance?.setAlpha(0)
         }
         // if (card.list[1].text === '殺') {
         //     this.seats[0].hpChange(-1)
@@ -284,12 +291,28 @@ export default class MainPlayer extends Player {
         if (this.checkBtnInstance) {
             this.checkBtnInstance.setAlpha(1)
         }
+        if (this.hintInstance) {
+            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+            hintText?.setText(`請選擇要棄的牌(${discardCount}張)`)
+            this.hintInstance.setAlpha(1)
+        }
         // this.handCards = this.handCards.filter((handCard) => handCard !== card)
         // card.destroy()
         // this.arrangeCards()
     }
-    askReaction = (card: Card) => {
+    askReaction = (reactionType: string) => {
+        console.log('askReaction', reactionType)
+        this.reactionType = reactionType
         this.reactionMode = true
         this.skipInstance?.setAlpha(1)
+        if (reactionType === 'askDodge') {
+            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+            hintText?.setText('請出一張閃')
+            this.hintInstance?.setAlpha(1)
+        } else if (reactionType === 'askPeach') {
+            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+            hintText?.setText('請出一張桃')
+            this.hintInstance?.setAlpha(1)
+        }
     }
 }

@@ -32,6 +32,7 @@ export default class Game {
     scene!: Phaser.Scene
     gameId: string = 'my-id'
     gameData: any = {}
+    hintInstance!: Phaser.GameObjects.Container
     constructor(gameData: any, scene: Phaser.Scene) {
         this.scene = scene
         this.seats = gameData.seats.map(
@@ -49,19 +50,45 @@ export default class Game {
             // myCards: Object.keys(threeKingdomsCards) as (keyof typeof threeKingdomsCards)[],
             myCards: gameData.me.hand.cardIds,
         })
+        // 提示文字
+        const hintText = scene.add.text(0, 0, '誰贏了', {
+            fontSize: '30px',
+            color: '#FFF',
+        })
+        hintText.setOrigin(0.5)
+        const hintContainer = scene.add.container(0, 0, [hintText])
+        hintContainer.setPosition(400, 300)
+        hintContainer.setAlpha(0)
+        this.hintInstance = hintContainer
     }
-    gamePlayCardHandler = (card: Card, options: any) => {
-        if (options) {
-            playCard(this.gameId, options)
-        } else {
+    gamePlayCardHandler = (card: Card, reactionType: string) => {
+        if (reactionType === 'askDodge') {
             const params = {
+                cardId: '',
                 playerId: this.me.id,
                 targetPlayerId: '',
-                cardId: card.id,
-                playType: 'inactive', //skip
+                playType: 'skip',
             }
             playCard(this.gameId, params)
+            return
         }
+        if (reactionType === 'askPeach') {
+            const params = {
+                cardId: '',
+                playerId: this.me.id,
+                targetPlayerId: this.gameData.round?.dyingPlayer,
+                playType: 'skip',
+            }
+            playCard(this.gameId, params)
+            return
+        }
+        const params = {
+            playerId: this.me.id,
+            targetPlayerId: '',
+            cardId: card.id,
+            playType: 'inactive', //skip
+        }
+        playCard(this.gameId, params)
     }
     handleClickPlayer = (player: Player) => {
         if (!this.me.selectedCard) return
@@ -135,7 +162,7 @@ export default class Game {
                         scene: this.scene,
                     })
                     if (data.cardId === 'BS8008') {
-                        this.me.askReaction(data)
+                        this.me.askReaction('askDodge')
                     }
                     return
                 }
@@ -170,6 +197,18 @@ export default class Game {
                 const damagedPlayer =
                     this.seats.find((player) => player.id === data.playerId) || this.me
                 damagedPlayer.hpChange(-damage)
+                break
+            case 'AskPeachEvent':
+                if (data.playerId === this.me.id) {
+                    this.me.askReaction('askPeach')
+                }
+                break
+            case 'GameOverEvent':
+                if (this.hintInstance) {
+                    const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+                    hintText?.setText(`遊戲結束！${data.winners.join(',')}獲得勝利！`)
+                    this.hintInstance.setAlpha(1)
+                }
                 break
             default:
                 break
@@ -272,6 +311,6 @@ export default class Game {
         //         if (endTurnPlayer) endTurnPlayer.endTurn()
         //     }
         // }
-        // this.gameData = gameData
+        this.gameData = gameData
     }
 }
