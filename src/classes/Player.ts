@@ -1,5 +1,7 @@
 import generalCards from '~/assets/generalCards.json'
+import threeKingdomsCards from '~/assets/cards.json'
 import { roleMap } from '~/src/utils/domain'
+import type { ThreeKingdomsCardIds } from '~/src/types'
 export default class Player {
     id: string
     generral: string
@@ -11,7 +13,7 @@ export default class Player {
         size: number
         cards: string[]
     }
-    equipments: string[]
+    equipments: ThreeKingdomsCardIds[]
     delayScrolls: string[]
     instance!: Phaser.GameObjects.Container
     scene!: Phaser.Scene
@@ -45,7 +47,7 @@ export default class Player {
             size: number
             cards: string[]
         }
-        equipments: string[]
+        equipments: ThreeKingdomsCardIds[]
         delayScrolls: string[]
         handleClickPlayer: any
         x: number
@@ -75,24 +77,34 @@ export default class Player {
             fontSize: '24px',
             color: '#000000',
         })
-        const generralText = scene.add.text(0, -40, this.general.name, {
+        const generralText = scene.add.text(0, -50, this.general.name, {
             fontSize: '20px',
             color: '#000',
         })
-        const roleText = scene.add.text(0, 0, roleMap[this.roleId] || '?', {
+        const roleText = scene.add.text(0, -20, roleMap[this.roleId] || '?', {
             fontSize: '20px',
             color: '#000',
         })
-        const hpText = scene.add.text(0, 40, `血量: ${this.hp}`, {
+        const hpText = scene.add.text(0, 10, `血量: ${this.hp}`, {
             fontSize: '20px',
             color: '#000',
         })
-        const handText = scene.add.text(0, 80, `手牌: ${this.hand.size}`, {
+        const handText = scene.add.text(0, 40, `手牌: ${this.hand.size}`, {
+            fontSize: '20px',
+            color: '#000',
+        })
+        const equipmentNames = this.equipments
+            .map((equipmentId) => {
+                const equipment = threeKingdomsCards[equipmentId]
+                return equipment.name
+            })
+            .join(', ')
+        const equipmentText = scene.add.text(0, 70, `裝備: ${equipmentNames}`, {
             fontSize: '20px',
             color: '#000',
         })
         // 設置文字位置在矩形中心
-        const texts = [idText, generralText, roleText, hpText, handText]
+        const texts = [idText, generralText, roleText, hpText, handText, equipmentText]
         texts.forEach((text) => {
             text.setOrigin(0.5)
         })
@@ -104,6 +116,7 @@ export default class Player {
             generralText,
             hpText,
             handText,
+            equipmentText,
         ])
 
         // 設置容器位置在遊戲場景中心
@@ -171,6 +184,26 @@ export default class Player {
             handText.setText(`手牌: ${this.hand.size}`)
             this.scene.tweens.add({
                 targets: handText,
+                scale: 1.5,
+                duration: 150, // 持續時間（毫秒）
+                ease: 'Power2',
+                yoyo: true,
+                repeat: 1,
+            })
+        }
+        // 裝備數確認
+        if (data.equipments.join() !== this.equipments.join()) {
+            this.equipments = data.equipments
+            const equipmentNames = this.equipments
+                .map((equipmentId) => {
+                    const equipment = threeKingdomsCards[equipmentId]
+                    return equipment.name
+                })
+                .join(', ')
+            const equipmentText: Phaser.GameObjects.Text = this.instance.getAt(6)
+            equipmentText.setText(`裝備: ${equipmentNames}`)
+            this.scene.tweens.add({
+                targets: equipmentText,
                 scale: 1.5,
                 duration: 150, // 持續時間（毫秒）
                 ease: 'Power2',

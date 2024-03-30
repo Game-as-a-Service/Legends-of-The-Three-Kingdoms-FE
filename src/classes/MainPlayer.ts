@@ -2,6 +2,7 @@ import { Card, Player } from './index'
 import threeKingdomsCards from '~/assets/cards.json'
 import { atkLine } from '../utils/drawing'
 import { roleMap } from '~/src/utils/domain'
+import type { ThreeKingdomsCardIds } from '~/src/types'
 export default class MainPlayer extends Player {
     handCards: Card[] = []
     selectedCard: Card | null = null
@@ -39,7 +40,7 @@ export default class MainPlayer extends Player {
             size: number
             cards: string[]
         }
-        equipments: string[]
+        equipments: ThreeKingdomsCardIds[]
         delayScrolls: string[]
         handleClickPlayer: any
         gamePlayCardHandler: any
@@ -87,8 +88,18 @@ export default class MainPlayer extends Player {
             fontSize: '20px',
             color: '#000',
         })
+        const equipmentNames = this.equipments
+            .map((equipmentId) => {
+                const equipment = threeKingdomsCards[equipmentId]
+                return equipment.name
+            })
+            .join(', ')
+        const equipmentText = scene.add.text(0, 70, `裝備: ${equipmentNames}`, {
+            fontSize: '20px',
+            color: '#000',
+        })
         // 設置文字位置在矩形中心
-        const texts = [idText, generralText, roleText, hpText]
+        const texts = [idText, generralText, roleText, hpText, equipmentText]
         texts.forEach((text) => {
             text.setOrigin(0.5)
         })
@@ -152,6 +163,7 @@ export default class MainPlayer extends Player {
         this.skipInstance = skipContainer
         skipbtn.on('pointerdown', () => {
             this.gamePlayCardHandler({}, this.reactionType)
+            this.reactionType = ''
             if (this.skipInstance) this.skipInstance.setAlpha(0)
             if (this.hintInstance) this.hintInstance.setAlpha(0)
         })
@@ -166,7 +178,7 @@ export default class MainPlayer extends Player {
         hintContainer.setAlpha(0)
         this.hintInstance = hintContainer
     }
-    addHandCard = (cardId: keyof typeof threeKingdomsCards) => {
+    addHandCard = (cardId: ThreeKingdomsCardIds) => {
         const card = new Card({
             cardId,
             x: 1000,
@@ -224,6 +236,11 @@ export default class MainPlayer extends Player {
             }
             return
         }
+        if (this.reactionType) {
+            this.gamePlayCardHandler(card, this.reactionType)
+            this.reactionType = ''
+            return
+        }
         if (card.id === 'BS8008' || card.id === 'SHQ051') {
             if (this.selectedCard == card) {
                 this.scene.tweens.add({
@@ -239,6 +256,7 @@ export default class MainPlayer extends Player {
                 return
             }
             if (this.selectedCard !== null && this.selectedCard !== card) {
+                // 換牌
                 this.scene.tweens.add({
                     targets: this.selectedCard.instance,
                     x: this.selectedCard.instance.x,
@@ -247,6 +265,7 @@ export default class MainPlayer extends Player {
                     ease: 'Power2',
                 })
             }
+            // 卡片上移
             this.selectedCard = card
             let x = card.instance.x
             let y = card.instance.y

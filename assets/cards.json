@@ -54,5 +54,21 @@
         "suit": "hart",
         "type": "scroll",
         "audio": "arrowBarrage"
+    },
+    "ES5018": {
+        "id": "ES5018",
+        "name": "絕影",
+        "rank": 5,
+        "suit": "spade",
+        "type": "equipment",
+        "audio": ""
+    },
+    "ES5044": {
+        "id": "ES5044",
+        "name": "赤兔馬",
+        "rank": 5,
+        "suit": "hart",
+        "type": "equipment",
+        "audio": ""
     }
 }

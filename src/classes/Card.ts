@@ -44,7 +44,7 @@ export default class Card {
         // 創建一個白色的矩形
         const card = threeKingdomsCards[this.id]
         this.name = card.name
-        this.audio = scene.sound.add(card.audio)
+        if (card.audio) this.audio = scene.sound.add(card.audio)
         const rectangle = scene.add.rectangle(0, 0, 100, 150, 0xffffff)
         rectangle.setStrokeStyle(2, 0x000000)
         // 創建文字

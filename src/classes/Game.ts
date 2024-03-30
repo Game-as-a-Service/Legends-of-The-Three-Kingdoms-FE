@@ -1,6 +1,6 @@
 import { Player, MainPlayer, Card } from './index'
 import { atkLine } from '../utils/drawing'
-import threeKingdomsCards from '~/assets/cards.json'
+import type { ThreeKingdomsCardIds } from '~/src/types'
 import api from '~/src/utils/api'
 const locations = [
     { x: 640, y: 160 },
@@ -47,7 +47,6 @@ export default class Game {
         )
         this.createMe({
             me: gameData.me,
-            // myCards: Object.keys(threeKingdomsCards) as (keyof typeof threeKingdomsCards)[],
             myCards: gameData.me.hand.cardIds,
         })
         // 提示文字
@@ -73,20 +72,21 @@ export default class Game {
             return
         }
         if (reactionType === 'askPeach') {
+            const playType = card.id ? 'inactive' : 'skip'
             const params = {
-                cardId: '',
+                cardId: card.id,
                 playerId: this.me.id,
                 targetPlayerId: this.gameData.round?.dyingPlayer,
-                playType: 'skip',
+                playType: playType,
             }
             playCard(this.gameId, params)
             return
         }
         const params = {
             playerId: this.me.id,
-            targetPlayerId: '',
+            targetPlayerId: this.me.id,
             cardId: card.id,
-            playType: 'inactive', //skip
+            playType: 'active', //skip
         }
         playCard(this.gameId, params)
     }
@@ -144,6 +144,7 @@ export default class Game {
                     return
                 }
                 const player = this.seats.find((player) => player.id === data.playerId)
+                if (player === undefined) return
                 const playCard = new Card({
                     cardId: data.cardId,
                     x: player.instance.x,
@@ -167,6 +168,7 @@ export default class Game {
                     return
                 }
                 const targetPlayer = this.seats.find((player) => player.id === data.targetPlayerId)
+                if (targetPlayer === undefined) return
                 atkLine({
                     startPoint,
                     endPoint: new Phaser.Math.Vector2(
@@ -178,9 +180,10 @@ export default class Game {
                 break
             case 'DrawCardEvent':
                 if (data.drawCardPlayerId === this.me.id) {
-                    data.cards.forEach((cardId: string) => {
+                    data.cards.forEach((cardId: ThreeKingdomsCardIds) => {
                         this.me.addHandCard(cardId)
                     })
+                    // this.me.addHandCard('EH5044')
                     this.me.arrangeCards()
                     return
                 }
@@ -197,6 +200,12 @@ export default class Game {
                 const damagedPlayer =
                     this.seats.find((player) => player.id === data.playerId) || this.me
                 damagedPlayer.hpChange(-damage)
+                break
+            case 'PeachEvent':
+                const healHp = data.to - data.from
+                const healedPlayer =
+                    this.seats.find((player) => player.id === data.playerId) || this.me
+                healedPlayer.hpChange(healHp)
                 break
             case 'AskPeachEvent':
                 if (data.playerId === this.me.id) {
@@ -271,7 +280,7 @@ export default class Game {
         //     }
         // })
     }
-    createMe = ({ me, myCards }: { me: any; myCards: (keyof typeof threeKingdomsCards)[] }) => {
+    createMe = ({ me, myCards }: { me: any; myCards: ThreeKingdomsCardIds[] }) => {
         this.me = new MainPlayer({
             ...me,
             handleClickPlayer: this.handleClickPlayer,

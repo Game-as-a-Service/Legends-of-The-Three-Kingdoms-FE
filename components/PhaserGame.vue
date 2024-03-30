@@ -148,7 +148,7 @@ onMounted(() => {
         game.value = new Phaser.Game(config)
         socketClient = new Client({
             // brokerURL: 'ws://localhost:8080/legendsOfTheThreeKingdoms',
-            brokerURL: 'ws://54.249.145.17:8080/legendsOfTheThreeKingdoms',
+            brokerURL: 'ws://54.238.232.62:8080/legendsOfTheThreeKingdoms',
             reconnectDelay: 5000,
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,
@@ -412,7 +412,7 @@ const playerConnect = (id) => {
     socketClient.activate()
 }
 const api = axios.create({
-    baseURL: 'http://54.249.145.17:8080/',
+    baseURL: 'http://54.238.232.62:8080/',
     headers: {
         'Content-Type': 'application/json',
     },
