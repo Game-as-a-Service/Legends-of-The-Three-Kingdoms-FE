@@ -1,6 +1,6 @@
 export const roleMap = {
     Monarch: '主公',
-    Traitor: '忠臣',
+    Traitor: '内奸',
     Rebel: '反賊',
-    Minister: '内奸',
+    Minister: '忠臣',
 }

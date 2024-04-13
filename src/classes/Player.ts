@@ -23,6 +23,7 @@ export default class Player {
     checkBtnInstance?: Phaser.GameObjects.Container
     skipInstance?: Phaser.GameObjects.Container
     hintInstance!: Phaser.GameObjects.Container
+    isOutofDistance: boolean = false
     // properties and methods go here
     constructor({
         id,
@@ -94,6 +95,7 @@ export default class Player {
             color: '#000',
         })
         const equipmentNames = this.equipments
+            .filter((equipmentId) => equipmentId)
             .map((equipmentId) => {
                 const equipment = threeKingdomsCards[equipmentId]
                 return equipment.name
@@ -195,6 +197,7 @@ export default class Player {
         if (data.equipments.join() !== this.equipments.join()) {
             this.equipments = data.equipments
             const equipmentNames = this.equipments
+                .filter((equipmentId) => equipmentId)
                 .map((equipmentId) => {
                     const equipment = threeKingdomsCards[equipmentId]
                     return equipment.name
@@ -210,6 +213,14 @@ export default class Player {
                 yoyo: true,
                 repeat: 1,
             })
+        }
+    }
+    setOutofDistance(isOutofDistance: boolean) {
+        this.isOutofDistance = isOutofDistance
+        if (isOutofDistance) {
+            this.instance.setAlpha(0.5)
+        } else {
+            this.instance.setAlpha(1)
         }
     }
 }

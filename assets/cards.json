@@ -1,19 +1,11 @@
 {
-    "BHK039": {
-        "id": "BHK039",
-        "name": "閃",
-        "rank": 2,
-        "suit": "heart",
-        "type": "basic",
-        "audio": "dodge"
-    },
-    "BH4030": {
-        "id": "BH4030",
-        "name": "桃",
-        "rank": 3,
-        "suit": "heart",
-        "type": "basic",
-        "audio": "peach"
+    "SS7007": {
+        "id": "SS7007",
+        "name": "南蠻入侵",
+        "rank": 7,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": "barbarianInvasion"
     },
     "BS8008": {
         "id": "BS8008",
@@ -23,29 +15,29 @@
         "type": "basic",
         "audio": "kill"
     },
-    "SHQ051": {
-        "id": "SHQ051",
-        "name": "過河拆橋",
-        "rank": 12,
-        "suit": "heart",
-        "type": "scroll",
-        "audio": "dismantle"
-    },
-    "SS7007": {
-        "id": "SS7007",
-        "name": "南蠻入侵",
-        "rank": 7,
+    "ES5018": {
+        "id": "ES5018",
+        "name": "絕影",
+        "rank": 5,
         "suit": "spade",
-        "type": "scroll",
-        "audio": "barbarianInvasion"
+        "type": "equipment",
+        "audio": ""
     },
-    "SH7046": {
-        "id": "SH7046",
-        "name": "無中生有",
-        "rank": 7,
-        "suit": "hart",
-        "type": "scroll",
-        "audio": "somethingForNothing"
+    "BH4030": {
+        "id": "BH4030",
+        "name": "桃",
+        "rank": 3,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "peach"
+    },
+    "BHK039": {
+        "id": "BHK039",
+        "name": "閃",
+        "rank": 2,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "dodge"
     },
     "SHA040": {
         "id": "SHA040",
@@ -55,19 +47,43 @@
         "type": "scroll",
         "audio": "arrowBarrage"
     },
-    "ES5018": {
-        "id": "ES5018",
-        "name": "絕影",
-        "rank": 5,
-        "suit": "spade",
-        "type": "equipment",
-        "audio": ""
-    },
-    "ES5044": {
-        "id": "ES5044",
+    "EH5044": {
+        "id": "EH5044",
         "name": "赤兔馬",
         "rank": 5,
         "suit": "hart",
+        "type": "equipment",
+        "audio": ""
+    },
+    "SH7046": {
+        "id": "SH7046",
+        "name": "無中生有",
+        "rank": 7,
+        "suit": "hart",
+        "type": "scroll",
+        "audio": "somethingForNothing"
+    },
+    "SHQ051": {
+        "id": "SHQ051",
+        "name": "過河拆橋",
+        "rank": 12,
+        "suit": "heart",
+        "type": "scroll",
+        "audio": "dismantle"
+    },
+    "ECA066": {
+        "id": "ECA066",
+        "name": "諸葛連弩",
+        "rank": 1,
+        "suit": "Club",
+        "type": "equipment",
+        "audio": ""
+    },
+    "EDA092": {
+        "id": "EDA092",
+        "name": "諸葛連弩",
+        "rank": 1,
+        "suit": "diamond",
         "type": "equipment",
         "audio": ""
     }

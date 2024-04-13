@@ -1,13 +1,21 @@
 import { Player, MainPlayer, Card } from './index'
 import { atkLine } from '../utils/drawing'
-import type { ThreeKingdomsCardIds } from '~/src/types'
+import type { ThreeKingdomsCardIds, GameData, PlayType } from '~/src/types'
 import api from '~/src/utils/api'
 const locations = [
     { x: 640, y: 160 },
     { x: 400, y: 120 },
     { x: 160, y: 160 },
 ]
-const playCard = async (gameId: string, params: any) => {
+const playCard = async (
+    gameId: string,
+    params: {
+        cardId: ThreeKingdomsCardIds
+        playerId: string
+        targetPlayerId: string
+        playType: PlayType
+    },
+) => {
     const res = await api.post(`/api/games/${gameId}/player:playCard`, params)
     console.log(res)
 }
@@ -31,7 +39,17 @@ export default class Game {
     me!: MainPlayer
     scene!: Phaser.Scene
     gameId: string = 'my-id'
-    gameData: any = {}
+    gameData: GameData = {
+        gamePhase: 'Initial',
+        seats: [],
+        round: {
+            roundPhase: 'Judgement',
+            currentRoundPlayer: '',
+            activePlayer: '',
+            dyingPlayer: '',
+            showKill: false,
+        },
+    }
     hintInstance!: Phaser.GameObjects.Container
     constructor(gameData: any, scene: Phaser.Scene) {
         this.scene = scene
@@ -91,7 +109,7 @@ export default class Game {
         playCard(this.gameId, params)
     }
     handleClickPlayer = (player: Player) => {
-        if (!this.me.selectedCard) return
+        if (!this.me.selectedCard || player.isOutofDistance) return
         if (this.me.selectedCard.name === '殺' || this.me.selectedCard.name === '過河拆橋') {
             const params = {
                 playerId: this.me.id,
@@ -108,6 +126,7 @@ export default class Game {
             this.me.selectedCard = null
             card.playCard()
             console.log(player, this.me)
+            this.seats.forEach((player) => player.setOutofDistance(false))
         }
     }
     skipPlayCard = () => {
@@ -290,6 +309,7 @@ export default class Game {
             y: 490,
             scene: this.scene,
             seats: this.seats,
+            game: this,
         })
         myCards.forEach((cardId) => this.me.addHandCard(cardId))
         this.me.arrangeCards()
@@ -297,7 +317,12 @@ export default class Game {
     updatePlayerData = (players: any[]) => {
         players.forEach((player) => {
             const targetPlayer = this.seats.find((p) => p.id === player.id)
-            if (targetPlayer === undefined) return
+            if (targetPlayer === undefined) {
+                if (player.id === this.me.id) {
+                    this.me.updatePlayerData(player)
+                }
+                return
+            }
             targetPlayer.updatePlayerData(player)
         })
     }
@@ -321,5 +346,8 @@ export default class Game {
         //     }
         // }
         this.gameData = gameData
+    }
+    getActivePlayer = () => {
+        return this.gameData.round?.activePlayer || this.gameData.round?.currentRoundPlayer
     }
 }

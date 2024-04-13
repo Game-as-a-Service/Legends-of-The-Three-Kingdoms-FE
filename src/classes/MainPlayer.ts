@@ -3,6 +3,7 @@ import threeKingdomsCards from '~/assets/cards.json'
 import { atkLine } from '../utils/drawing'
 import { roleMap } from '~/src/utils/domain'
 import type { ThreeKingdomsCardIds } from '~/src/types'
+import Game from './Game'
 export default class MainPlayer extends Player {
     handCards: Card[] = []
     selectedCard: Card | null = null
@@ -13,6 +14,7 @@ export default class MainPlayer extends Player {
     reactionType: string = ''
     discardCount: number = 0
     discardCards: Card[] = []
+    game: Game | null = null
     discardCardsAction: ([]) => void = ([]) => {}
     constructor({
         id,
@@ -30,6 +32,7 @@ export default class MainPlayer extends Player {
         y,
         scene,
         seats,
+        game,
     }: {
         id: string
         generral: string
@@ -49,6 +52,7 @@ export default class MainPlayer extends Player {
         y: number
         scene: Phaser.Scene
         seats: any
+        game: any
     }) {
         super({
             id,
@@ -67,6 +71,7 @@ export default class MainPlayer extends Player {
         this.seats = seats
         this.gamePlayCardHandler = gamePlayCardHandler
         this.discardCardsAction = discardCardsAction
+        this.game = game
     }
     createInstance({ baseX, baseY, scene }: { baseX: number; baseY: number; scene: Phaser.Scene }) {
         // 創建一個白色的矩形
@@ -89,6 +94,7 @@ export default class MainPlayer extends Player {
             color: '#000',
         })
         const equipmentNames = this.equipments
+            .filter((equipmentId) => equipmentId)
             .map((equipmentId) => {
                 const equipment = threeKingdomsCards[equipmentId]
                 return equipment.name
@@ -110,6 +116,7 @@ export default class MainPlayer extends Player {
             roleText,
             generralText,
             hpText,
+            equipmentText,
         ])
 
         // 設置容器位置在遊戲場景中心
@@ -210,6 +217,10 @@ export default class MainPlayer extends Player {
         }
     }
     playCardHandler = (card: Card) => {
+        if (this.game === null) return
+        if (this.game.getActivePlayer() !== this.id) {
+            return
+        }
         if (this.discardMode) {
             if (card.selected) {
                 card.selected = false
@@ -241,8 +252,9 @@ export default class MainPlayer extends Player {
             this.reactionType = ''
             return
         }
-        if (card.id === 'BS8008' || card.id === 'SHQ051') {
+        if (card.name === '殺' || card.name === '過河拆橋') {
             if (this.selectedCard == card) {
+                // 卡片下移
                 this.scene.tweens.add({
                     targets: card.instance,
                     x: card.instance.x,
@@ -253,6 +265,7 @@ export default class MainPlayer extends Player {
                         this.selectedCard = null
                     },
                 })
+                this.resetOutofDistance()
                 return
             }
             if (this.selectedCard !== null && this.selectedCard !== card) {
@@ -264,6 +277,7 @@ export default class MainPlayer extends Player {
                     duration: 500, // 持續時間（毫秒）
                     ease: 'Power2',
                 })
+                this.resetOutofDistance()
             }
             // 卡片上移
             this.selectedCard = card
@@ -276,6 +290,19 @@ export default class MainPlayer extends Player {
                 // yoyo: true,
                 duration: 500, // 持續時間（毫秒）
                 ease: 'Power2',
+            })
+            // 計算每個人的距離
+            const distances = this.seats.forEach((player, index) => {
+                // index 就是距離
+                // 考慮裝備
+                let distance = Math.min(index + 1, this.seats.length - index)
+                if (player.equipments[0]) {
+                    distance += 1
+                }
+                if (this.equipments[1]) {
+                    distance -= 1
+                }
+                if (distance > 1) player.setOutofDistance(true)
             })
             return
         }
@@ -333,5 +360,47 @@ export default class MainPlayer extends Player {
             hintText?.setText('請出一張桃')
             this.hintInstance?.setAlpha(1)
         }
+    }
+    updatePlayerData(data: any) {
+        // 手牌數確認
+        // if (data.hand.size !== this.hand.size) {
+        //     this.hand.size = data.hand.size
+        //     const handText: Phaser.GameObjects.Text = this.instance.getAt(5)
+        //     handText.setText(`手牌: ${this.hand.size}`)
+        //     this.scene.tweens.add({
+        //         targets: handText,
+        //         scale: 1.5,
+        //         duration: 150, // 持續時間（毫秒）
+        //         ease: 'Power2',
+        //         yoyo: true,
+        //         repeat: 1,
+        //     })
+        // }
+        // 裝備數確認
+        if (data.equipments.join() !== this.equipments.join()) {
+            this.equipments = data.equipments
+            const equipmentNames = this.equipments
+                .filter((equipmentId) => equipmentId)
+                .map((equipmentId) => {
+                    const equipment = threeKingdomsCards[equipmentId]
+                    return equipment.name
+                })
+                .join(', ')
+            const equipmentText: Phaser.GameObjects.Text = this.instance.getAt(5)
+            equipmentText.setText(`裝備: ${equipmentNames}`)
+            this.scene.tweens.add({
+                targets: equipmentText,
+                scale: 1.5,
+                duration: 150, // 持續時間（毫秒）
+                ease: 'Power2',
+                yoyo: true,
+                repeat: 1,
+            })
+        }
+    }
+    resetOutofDistance = () => {
+        this.seats.forEach((player) => {
+            player.setOutofDistance(false)
+        })
     }
 }
