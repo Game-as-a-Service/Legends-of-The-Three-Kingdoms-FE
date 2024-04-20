@@ -412,7 +412,8 @@ const playerConnect = (id) => {
     socketClient.activate()
 }
 const api = axios.create({
-    baseURL: 'http://54.238.232.62:8080/',
+    // baseURL: 'http://54.238.232.62:8080/',
+    baseURL: 'https://scolley31.com/:8080/',
     headers: {
         'Content-Type': 'application/json',
     },
