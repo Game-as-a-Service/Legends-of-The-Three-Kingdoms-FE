@@ -149,7 +149,7 @@ onMounted(() => {
         socketClient = new Client({
             // brokerURL: 'ws://localhost:8080/legendsOfTheThreeKingdoms',
             // brokerURL: 'ws://54.238.232.62:8080/legendsOfTheThreeKingdoms',
-            brokerURL: 'wss://scolley31.com:8080/legendsOfTheThreeKingdoms',
+            brokerURL: 'ws://scolley31.com/legendsOfTheThreeKingdoms',
             reconnectDelay: 5000,
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,
@@ -414,7 +414,7 @@ const playerConnect = (id) => {
 }
 const api = axios.create({
     // baseURL: 'http://54.238.232.62:8080/',
-    baseURL: 'https://scolley31.com/:8080/',
+    baseURL: 'https://scolley31.com/',
     headers: {
         'Content-Type': 'application/json',
     },
