@@ -1,11 +1,11 @@
 import generalCards from '~/assets/generalCards.json'
 import threeKingdomsCards from '~/assets/cards.json'
 import { roleMap } from '~/src/utils/domain'
-import type { ThreeKingdomsCardIds } from '~/src/types'
+import type { ThreeKingdomsCardIds, ThreeKingdomsGeneralIds } from '~/src/types'
 export default class Player {
     id: string
     generral: string
-    generalId: string
+    generalId: ThreeKingdomsGeneralIds
     general: any
     roleId: keyof typeof roleMap
     hp: number
@@ -41,7 +41,7 @@ export default class Player {
     }: {
         id: string
         generral: string
-        generalId: string
+        generalId: ThreeKingdomsGeneralIds
         roleId: keyof typeof roleMap
         hp: number
         hand: {
@@ -58,7 +58,7 @@ export default class Player {
         this.id = id
         this.generral = generral
         this.generalId = generalId
-        this.general = generalCards.find((card) => card.id === generalId)
+        this.general = generalCards[generalId]
         this.roleId = roleId
         this.hp = hp
         this.hand = hand

@@ -1,32 +1,32 @@
 import { Player, MainPlayer, Card } from './index'
 import { atkLine } from '../utils/drawing'
 import type { ThreeKingdomsCardIds, GameData, PlayType } from '~/src/types'
-import api from '~/src/utils/api'
+// import api from '~/src/utils/api'
 const locations = [
     { x: 640, y: 160 },
     { x: 400, y: 120 },
     { x: 160, y: 160 },
 ]
-const playCard = async (
-    gameId: string,
-    params: {
-        cardId: ThreeKingdomsCardIds
-        playerId: string
-        targetPlayerId: string
-        playType: PlayType
-    },
-) => {
-    const res = await api.post(`/api/games/${gameId}/player:playCard`, params)
-    console.log(res)
-}
-const finishAction = async (gameId: string, params: any) => {
-    const res = await api.post(`/api/games/${gameId}/player:finishAction`, params)
-    console.log(res)
-}
-const discardCards = async (gameId: string, params: any) => {
-    const res = await api.post(`/api/games/${gameId}/player:discardCards`, params)
-    console.log(res)
-}
+// const playCard = async (
+//     gameId: string,
+//     params: {
+//         cardId: ThreeKingdomsCardIds
+//         playerId: string
+//         targetPlayerId: string
+//         playType: PlayType
+//     },
+// ) => {
+//     const res = await api.post(`/api/games/${gameId}/player:playCard`, params)
+//     console.log(res)
+// }
+// const finishAction = async (gameId: string, params: any) => {
+//     const res = await api.post(`/api/games/${gameId}/player:finishAction`, params)
+//     console.log(res)
+// }
+// const discardCards = async (gameId: string, params: any) => {
+//     const res = await api.post(`/api/games/${gameId}/player:discardCards`, params)
+//     console.log(res)
+// }
 export default class Game {
     seats: Player[] = []
     hand: { tableCenter: any; handCards: Card[] } = {
@@ -51,8 +51,10 @@ export default class Game {
         },
     }
     hintInstance!: Phaser.GameObjects.Container
-    constructor(gameData: any, scene: Phaser.Scene) {
+    api: any
+    constructor(gameData: any, scene: Phaser.Scene, api: any) {
         this.scene = scene
+        this.api = api
         this.seats = gameData.seats.map(
             (player: any, index: number) =>
                 new Player({
@@ -86,7 +88,7 @@ export default class Game {
                 targetPlayerId: '',
                 playType: 'skip',
             }
-            playCard(this.gameId, params)
+            this.api.playCard(this.gameId, params)
             return
         }
         if (reactionType === 'askPeach') {
@@ -97,7 +99,7 @@ export default class Game {
                 targetPlayerId: this.gameData.round?.dyingPlayer,
                 playType: playType,
             }
-            playCard(this.gameId, params)
+            this.api.playCard(this.gameId, params)
             return
         }
         const params = {
@@ -106,7 +108,7 @@ export default class Game {
             cardId: card.id,
             playType: 'active', //skip
         }
-        playCard(this.gameId, params)
+        this.api.playCard(this.gameId, params)
     }
     handleClickPlayer = (player: Player) => {
         if (!this.me.selectedCard || player.isOutofDistance) return
@@ -117,7 +119,7 @@ export default class Game {
                 cardId: this.me.selectedCard.id,
                 playType: 'active', //skip
             }
-            playCard(this.gameId, params)
+            this.api.playCard(this.gameId, params)
             atkLine({
                 endPoint: new Phaser.Math.Vector2(player.instance.x, player.instance.y),
                 scene: this.scene,
@@ -136,20 +138,20 @@ export default class Game {
             cardId: '',
             playType: 'skip', //skip
         }
-        playCard(this.gameId, params)
+        this.api.playCard(this.gameId, params)
     }
     finishAction = () => {
         const params = {
             playerId: this.me.id,
         }
-        finishAction(this.gameId, params)
+        this.api.finishAction(this.gameId, params)
     }
     discardCards = (cardIds: string[]) => {
         // const params = {
         //     playerId: this.me.id,
         //     cardIds,
         // }
-        discardCards(this.gameId, cardIds)
+        this.api.discardCards(this.gameId, cardIds)
     }
     async eventHandler(event: any) {
         // console.log(event)

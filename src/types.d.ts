@@ -1,6 +1,8 @@
 import threeKingdomsCards from '~/assets/cards.json'
+import threeKingdomsGenerals from '~/assets/generalCards.json'
 import { roleMap } from './utils/domain'
 export type ThreeKingdomsCardIds = keyof typeof threeKingdomsCards
+export type ThreeKingdomsGeneralIds = keyof typeof threeKingdomsGenerals
 export type GamePhase = 'Initial' | 'Normal' | 'GeneralDying' | 'GameOver'
 export type RoundPhase = 'Judgement' | 'Drawing' | 'Action' | 'Discard'
 export type Role = keyof typeof roleMap

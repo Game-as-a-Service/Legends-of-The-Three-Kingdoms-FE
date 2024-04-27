@@ -11,8 +11,9 @@ import { Player, MainPlayer, Card, Game } from '~/src/classes'
 import threeKingdomsCards from '~/assets/cards.json'
 import { atkLine } from '~/src/utils/drawing'
 import { Client } from '@stomp/stompjs'
-import axios from 'axios'
+// import api from '~/src/utils/api'
 import generalCards from '~/assets/generalCards.json'
+const api = useApi()
 class BattleTable extends Phaser.Scene {
     constructor() {
         super('BattleTable')
@@ -130,7 +131,7 @@ const initDemo = () => {
         },
     }
     demo.value = true
-    myGame.value = new Game(gameData, myScene.value)
+    myGame.value = new Game(gameData, myScene.value, api)
     players.value = [...gameData.seats, gameData.me]
 }
 onMounted(() => {
@@ -148,8 +149,8 @@ onMounted(() => {
         game.value = new Phaser.Game(config)
         socketClient = new Client({
             // brokerURL: 'ws://localhost:8080/legendsOfTheThreeKingdoms',
-            // brokerURL: 'ws://54.238.232.62:8080/legendsOfTheThreeKingdoms',
-            brokerURL: 'wss://scolley31.com/legendsOfTheThreeKingdoms',
+            brokerURL: runtimeConfig.public.brokerUrl,
+            // brokerURL: 'wss://scolley31.com/legendsOfTheThreeKingdoms',
             reconnectDelay: 5000,
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,
@@ -232,6 +233,7 @@ onMounted(() => {
                                 me: mainPlayer,
                             },
                             myScene.value,
+                            api,
                         )
                         // const generalIds = seats.value.map((seat) => seat.generalId)
                         // const generalNames = generalIds.map((id) => {
@@ -412,28 +414,17 @@ const playerConnect = (id) => {
     playerId.value = id
     socketClient.activate()
 }
-const api = axios.create({
-    // baseURL: 'http://54.238.232.62:8080/',
-    baseURL: 'https://scolley31.com/',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-})
 const createGame = async () => {
     const params = { gameId: gameId.value, players: playerIds }
-    const res = await api.post('/api/games', params)
+    // const res = await api.post('/api/games', params)
+    const res = await api.createGame(params)
     // console.log(res)
     startGameFlag.value = true
 }
-const generals = ['WU001', 'WEI001', 'SHU001', 'SHU003', 'WU003']
 const monarchChooseGeneral = async (generalId) => {
     const params = { playerId: playerId.value, generalId }
-    const res = await api.post(`/api/games/${gameId.value}/player:monarchChooseGeneral`, params)
-    // console.log(res)
-}
-const otherChooseGeneral = async () => {
-    const params = { playerId: playerId.value, generalId: chooseGeneralCard.value }
-    const res = await api.post(`/api/games/${gameId.value}/player:otherChooseGeneral`, params)
+    // const res = await api.post(`/api/games/${gameId.value}/player:monarchChooseGeneral`, params)
+    const res = await api.monarchChooseGeneral(gameId.value, params)
     // console.log(res)
 }
 const selectGeneral = async (generalId) => {
@@ -443,12 +434,14 @@ const selectGeneral = async (generalId) => {
         return
     }
     const params = { playerId: playerId.value, generalId }
-    const res = await api.post(`/api/games/${gameId.value}/player:otherChooseGeneral`, params)
+    const res = await api.selectGeneral(gameId.value, params)
+    // const res = await api.post(`/api/games/${gameId.value}/player:otherChooseGeneral`, params)
     // console.log(res)
 }
 const chooseGeneralCardsMap = computed(() => {
     return chooseGeneralCards.value.map((cardId) => {
-        const card = Object.values(generalCards).find((value) => value.id === cardId)
+        // const card = Object.values(generalCards).find((value) => value.id === cardId)
+        const card = generalCards[cardId]
         return card
     })
 })
