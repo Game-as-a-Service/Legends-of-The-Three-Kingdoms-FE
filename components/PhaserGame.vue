@@ -151,7 +151,8 @@ onMounted(() => {
         game.value = new Phaser.Game(config)
         socketClient = new Client({
             // brokerURL: 'ws://localhost:8080/legendsOfTheThreeKingdoms',
-            brokerURL: runtimeConfig.public.brokerUrl,
+            brokerURL:
+                runtimeConfig.public.brokerUrl || 'wss://scolley31.com/legendsOfTheThreeKingdoms',
             // brokerURL: 'wss://scolley31.com/legendsOfTheThreeKingdoms',
             reconnectDelay: 5000,
             heartbeatIncoming: 4000,
