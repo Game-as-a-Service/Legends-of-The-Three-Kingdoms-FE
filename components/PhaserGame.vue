@@ -15,6 +15,7 @@ import { Client } from '@stomp/stompjs'
 import generalCards from '~/assets/generalCards.json'
 const api = useApi()
 const runtimeConfig = useRuntimeConfig()
+console.log(runtimeConfig, 'runtimeConfig')
 class BattleTable extends Phaser.Scene {
     constructor() {
         super('BattleTable')
