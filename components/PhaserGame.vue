@@ -7,7 +7,7 @@ import dismantleAudio from '~/assets/dismantle.mp3'
 import barbarianInvasionAudio from '~/assets/barbarianInvasion.mp3'
 import somethingForNothingAudio from '~/assets/somethingForNothing.mp3'
 import arrowBarrageAudio from '~/assets/arrowBarrage.mp3'
-import { Player, MainPlayer, Card, Game } from '~/src/classes'
+import { Card, Game } from '~/src/classes'
 import threeKingdomsCards from '~/assets/cards.json'
 import { atkLine } from '~/src/utils/drawing'
 import { Client } from '@stomp/stompjs'
@@ -67,7 +67,17 @@ const me = computed(() => {
 const demo = ref(false)
 const startGameFlag = ref(false)
 const round = ref({})
+const cardNames = Object.values(threeKingdomsCards).map((card) => card.name)
+const uniqeCardNames = [...new Set(cardNames)]
 const initDemo = () => {
+    const defaultCards = Object.entries(threeKingdomsCards)
+        .filter(
+            ([key, value], index) =>
+                Object.entries(threeKingdomsCards).findIndex(
+                    ([key2, value2]) => value2.name === value.name,
+                ) === index,
+        )
+        .map(([key, value]) => key)
     const gameData = {
         seats: [
             {
@@ -126,7 +136,7 @@ const initDemo = () => {
             hp: 3,
             hand: {
                 size: 4,
-                cardIds: Object.keys(threeKingdomsCards),
+                cardIds: defaultCards,
             },
             equipments: [],
             delayScrolls: [],
@@ -389,6 +399,31 @@ const eventTrigger = () => {
             endPoint: new Phaser.Math.Vector2(400, 515),
             scene: myScene.value,
         })
+    } else if (
+        eventSelectedCard.value === '赤兔馬' ||
+        eventSelectedCard.value === '絕影' ||
+        eventSelectedCard.value === '八卦陣'
+    ) {
+        const card = Object.values(threeKingdomsCards).find(
+            (value) => value.name === eventSelectedCard.value,
+        )
+        const dodgeCard = new Card({
+            cardId: card.id,
+            x: player.instance.x,
+            y: player.instance.y,
+            scene: myScene.value,
+            playCardHandler: myGame.value.playCardHandler,
+        })
+        dodgeCard.playCard()
+        const equipments = [...player.equipments]
+        if (card.name === '赤兔馬') {
+            equipments[3] = card.id
+        } else if (card.name === '絕影') {
+            equipments[2] = card.id
+        } else if (card.name === '八卦陣') {
+            equipments[1] = card.id
+        }
+        player.updatePlayerData({ hand: player.hand, equipments })
     }
     // const player = myGame.value.seats.find((player) => player.id === selectedPlayer.value)
     // console.log(player)
@@ -571,21 +606,21 @@ const discardCard = () => {
                 </template>
             </div>
             <div class="flex">
-                <template v-for="card in threeKingdomsCards">
+                <template v-for="cardName in uniqeCardNames">
                     <button
-                        v-if="card.name === eventSelectedCard"
+                        v-if="cardName === eventSelectedCard"
                         type="button"
                         class="mb-2 me-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800"
                     >
-                        {{ card.name }}
+                        {{ cardName }}
                     </button>
                     <button
                         v-else
-                        @click="eventSelectedCard = card.name"
+                        @click="eventSelectedCard = cardName"
                         type="button"
                         class="mb-2 me-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-900"
                     >
-                        {{ card.name }}
+                        {{ cardName }}
                     </button>
                 </template>
             </div>

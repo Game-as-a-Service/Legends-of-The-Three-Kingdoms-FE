@@ -15,6 +15,14 @@
         "type": "basic",
         "audio": "kill"
     },
+    "ES2015": {
+        "id": "ES2015",
+        "name": "八卦陣",
+        "rank": 2,
+        "suit": "spade",
+        "type": "equipment",
+        "audio": ""
+    },
     "ES5018": {
         "id": "ES5018",
         "name": "絕影",
@@ -75,6 +83,14 @@
         "id": "ECA066",
         "name": "諸葛連弩",
         "rank": 1,
+        "suit": "Club",
+        "type": "equipment",
+        "audio": ""
+    },
+    "EC2067": {
+        "id": "EC2067",
+        "name": "八卦陣",
+        "rank": 2,
         "suit": "Club",
         "type": "equipment",
         "audio": ""
