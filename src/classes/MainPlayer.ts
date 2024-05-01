@@ -302,7 +302,7 @@ export default class MainPlayer extends Player {
                 if (this.equipments[1]) {
                     distance -= 1
                 }
-                if (distance > 1) player.setOutofDistance(true)
+                if (distance > 1) player.setOutOfDistance(true)
             })
             return
         }
@@ -400,7 +400,7 @@ export default class MainPlayer extends Player {
     }
     resetOutofDistance = () => {
         this.seats.forEach((player) => {
-            player.setOutofDistance(false)
+            player.setOutOfDistance(false)
         })
     }
 }

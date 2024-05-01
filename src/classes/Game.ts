@@ -128,7 +128,7 @@ export default class Game {
             this.me.selectedCard = null
             card.playCard()
             console.log(player, this.me)
-            this.seats.forEach((player) => player.setOutofDistance(false))
+            this.seats.forEach((player) => player.setOutOfDistance(false))
         }
     }
     skipPlayCard = () => {
