@@ -78,6 +78,7 @@ const initDemo = () => {
                 ) === index,
         )
         .map(([key, value]) => key)
+        .splice(0, 4)
     const gameData = {
         seats: [
             {

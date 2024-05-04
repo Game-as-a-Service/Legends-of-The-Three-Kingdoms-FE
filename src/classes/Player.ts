@@ -1,6 +1,6 @@
 import generalCards from '~/assets/generalCards.json'
 import threeKingdomsCards from '~/assets/cards.json'
-import { roleMap } from '~/src/utils/domain'
+import { roleMap, suits } from '~/src/utils/domain'
 import type { ThreeKingdomsCardIds, ThreeKingdomsGeneralIds } from '~/src/types'
 export default class Player {
     id: string
@@ -24,6 +24,7 @@ export default class Player {
     skipInstance?: Phaser.GameObjects.Container
     hintInstance!: Phaser.GameObjects.Container
     isOutofDistance: boolean = false
+    instanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
     // properties and methods go here
     constructor({
         id,
@@ -82,16 +83,16 @@ export default class Player {
             fontSize: '20px',
             color: '#000',
         })
-        const roleText = scene.add.text(0, -20, roleMap[this.roleId] || '?', {
+        const roleText = scene.add.text(0, -30, roleMap[this.roleId] || '?', {
             fontSize: '20px',
             color: '#000',
         })
-        const hpText = scene.add.text(0, 10, `血量: ${this.hp}`, {
-            fontSize: '20px',
+        const hpText = scene.add.text(0, -10, `血量: ${this.hp}`, {
+            fontSize: '10px',
             color: '#000',
         })
-        const handText = scene.add.text(0, 40, `手牌: ${this.hand.size}`, {
-            fontSize: '20px',
+        const handText = scene.add.text(0, 0, `手牌: ${this.hand.size}`, {
+            fontSize: '10px',
             color: '#000',
         })
         // const equipmentNames = this.equipments
@@ -101,15 +102,19 @@ export default class Player {
         //         return equipment.name
         //     })
         //     .join(', ')
-        const weapon = this.equipments[0] ? threeKingdomsCards[this.equipments[0]].name : ''
+        const weapon = this.equipments[0] ? threeKingdomsCards[this.equipments[0]] : null
         const armor = this.equipments[1] ? threeKingdomsCards[this.equipments[1]].name : ''
         const horsePlus = this.equipments[2] ? threeKingdomsCards[this.equipments[2]].name : ''
         const horseMinus = this.equipments[3] ? threeKingdomsCards[this.equipments[3]].name : ''
+        const equipmentContainer1 = scene.add.container(0, 0)
+        const equipmentContainer2 = scene.add.container(0, 0)
+        const equipmentContainer3 = scene.add.container(0, 0)
+        const equipmentContainer4 = scene.add.container(0, 0)
 
-        const weaponText = scene.add.text(0, 60, `${weapon}`, {
-            fontSize: '10px',
-            color: '#000',
-        })
+        if (weapon) {
+            const equipmentContainer1 = this.initEquipmentInstance(weapon)
+            this.instanceMap.weapon = equipmentContainer1
+        }
         const armorText = scene.add.text(0, 70, `${armor}`, {
             fontSize: '10px',
             color: '#000',
@@ -122,6 +127,7 @@ export default class Player {
             fontSize: '10px',
             color: '#000',
         })
+
         // const equipmentText = scene.add.text(0, 70, `裝備: ${equipmentNames}`, {
         //     fontSize: '20px',
         //     color: '#000',
@@ -133,7 +139,6 @@ export default class Player {
             roleText,
             hpText,
             handText,
-            weaponText,
             armorText,
             horsePlusText,
             horseMinusText,
@@ -149,12 +154,12 @@ export default class Player {
             generralText,
             hpText,
             handText,
-            weaponText,
+            equipmentContainer1,
             armorText,
             horsePlusText,
             horseMinusText,
         ])
-
+        equipmentContainer1.setPosition(-100, 100 - 24 * 4)
         // 設置容器位置在遊戲場景中心
         container.setPosition(baseX, baseY)
         this.instance = container
@@ -231,55 +236,49 @@ export default class Player {
         if (data.equipments.join() !== this.equipments.join()) {
             if (data.equipments[0] !== this.equipments[0]) {
                 this.equipments[0] = data.equipments[0]
-                const weaponText: Phaser.GameObjects.Text = this.instance.getAt(6)
-                weaponText.setText(`${threeKingdomsCards[this.equipments[0]].name}`)
-                this.scene.tweens.add({
-                    targets: weaponText,
-                    scale: 1.5,
-                    duration: 150, // 持續時間（毫秒）
-                    ease: 'Power2',
-                    yoyo: true,
-                    repeat: 1,
-                })
+                this.updateEquipments(0)
             }
             if (data.equipments[1] !== this.equipments[1]) {
                 this.equipments[1] = data.equipments[1]
-                const armorText: Phaser.GameObjects.Text = this.instance.getAt(7)
-                armorText.setText(`${threeKingdomsCards[this.equipments[1]].name}`)
-                this.scene.tweens.add({
-                    targets: armorText,
-                    scale: 1.5,
-                    duration: 150, // 持續時間（毫秒）
-                    ease: 'Power2',
-                    yoyo: true,
-                    repeat: 1,
-                })
+                this.updateEquipments(1)
+                // const armorText: Phaser.GameObjects.Text = this.instance.getAt(7)
+                // armorText.setText(`${threeKingdomsCards[this.equipments[1]].name}`)
+                // this.scene.tweens.add({
+                //     targets: armorText,
+                //     scale: 1.5,
+                //     duration: 150, // 持續時間（毫秒）
+                //     ease: 'Power2',
+                //     yoyo: true,
+                //     repeat: 1,
+                // })
             }
             if (data.equipments[2] !== this.equipments[2]) {
                 this.equipments[2] = data.equipments[2]
-                const horsePlusText: Phaser.GameObjects.Text = this.instance.getAt(8)
-                horsePlusText.setText(`${threeKingdomsCards[this.equipments[2]].name}`)
-                this.scene.tweens.add({
-                    targets: horsePlusText,
-                    scale: 1.5,
-                    duration: 150, // 持續時間（毫秒）
-                    ease: 'Power2',
-                    yoyo: true,
-                    repeat: 1,
-                })
+                this.updateEquipments(2)
+                // const horsePlusText: Phaser.GameObjects.Text = this.instance.getAt(8)
+                // horsePlusText.setText(`${threeKingdomsCards[this.equipments[2]].name}`)
+                // this.scene.tweens.add({
+                //     targets: horsePlusText,
+                //     scale: 1.5,
+                //     duration: 150, // 持續時間（毫秒）
+                //     ease: 'Power2',
+                //     yoyo: true,
+                //     repeat: 1,
+                // })
             }
             if (data.equipments[3] !== this.equipments[3]) {
                 this.equipments[3] = data.equipments[3]
-                const horseMinusText: Phaser.GameObjects.Text = this.instance.getAt(9)
-                horseMinusText.setText(`${threeKingdomsCards[this.equipments[3]].name}`)
-                this.scene.tweens.add({
-                    targets: horseMinusText,
-                    scale: 1.5,
-                    duration: 150, // 持續時間（毫秒）
-                    ease: 'Power2',
-                    yoyo: true,
-                    repeat: 1,
-                })
+                this.updateEquipments(3)
+                // const horseMinusText: Phaser.GameObjects.Text = this.instance.getAt(9)
+                // horseMinusText.setText(`${threeKingdomsCards[this.equipments[3]].name}`)
+                // this.scene.tweens.add({
+                //     targets: horseMinusText,
+                //     scale: 1.5,
+                //     duration: 150, // 持續時間（毫秒）
+                //     ease: 'Power2',
+                //     yoyo: true,
+                //     repeat: 1,
+                // })
             }
             this.equipments = data.equipments
             // const equipmentNames = this.equipments
@@ -308,5 +307,46 @@ export default class Player {
         } else {
             this.instance.setAlpha(1)
         }
+    }
+    updateEquipments(index: number) {
+        const equipments = ['weapon', 'armor', 'horsePlus', 'horseMinus']
+        const equipment = this.equipments[index]
+        if (equipment) {
+            if (this.instanceMap[equipments[index]]) {
+                this.instanceMap[equipments[index]].destroy()
+            }
+            const equipmentContainer = this.initEquipmentInstance(threeKingdomsCards[equipment])
+            this.instanceMap[equipments[index]] = equipmentContainer
+            this.instance.add(equipmentContainer)
+            equipmentContainer.setPosition(-100, 100 - 24 * (4 - index))
+            this.scene.tweens.add({
+                targets: equipmentContainer,
+                scale: 1.5,
+                duration: 150, // 持續時間（毫秒）
+                ease: 'Power2',
+                yoyo: true,
+                repeat: 1,
+            })
+        }
+    }
+    initEquipmentInstance(weapon: any) {
+        const equipmentContainer1 = this.scene.add.container(0, 0)
+        const weaponRankText = this.scene.add.text(24, 4, `${weapon.rank}`, {
+            fontSize: '16px',
+            color: suits[weapon.suit].color,
+        })
+        const weaponSuitText = this.scene.add.text(24 + 12, 4, `${suits[weapon.suit].symbol}`, {
+            fontSize: '16px',
+            color: suits[weapon.suit].color,
+        })
+        const weaponText = this.scene.add.text(100 - 32, 6, `${weapon.name}`, {
+            fontSize: '14px',
+            color: '#000',
+        })
+        const border = this.scene.add.graphics()
+        border.lineStyle(1, 0x000000, 1)
+        border.strokeRect(20, 0, 160, 24)
+        equipmentContainer1.add([weaponRankText, weaponSuitText, weaponText, border])
+        return equipmentContainer1
     }
 }

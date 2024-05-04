@@ -51,7 +51,7 @@
         "id": "SHA040",
         "name": "萬箭齊發",
         "rank": 1,
-        "suit": "hart",
+        "suit": "heart",
         "type": "scroll",
         "audio": "arrowBarrage"
     },
@@ -59,7 +59,7 @@
         "id": "EH5044",
         "name": "赤兔馬",
         "rank": 5,
-        "suit": "hart",
+        "suit": "heart",
         "type": "equipment",
         "audio": ""
     },
@@ -67,7 +67,7 @@
         "id": "SH7046",
         "name": "無中生有",
         "rank": 7,
-        "suit": "hart",
+        "suit": "heart",
         "type": "scroll",
         "audio": "somethingForNothing"
     },
@@ -83,7 +83,7 @@
         "id": "ECA066",
         "name": "諸葛連弩",
         "rank": 1,
-        "suit": "Club",
+        "suit": "club",
         "type": "equipment",
         "audio": ""
     },
@@ -91,7 +91,7 @@
         "id": "EC2067",
         "name": "八卦陣",
         "rank": 2,
-        "suit": "Club",
+        "suit": "club",
         "type": "equipment",
         "audio": ""
     },

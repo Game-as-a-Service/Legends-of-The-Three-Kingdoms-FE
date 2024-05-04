@@ -2,7 +2,7 @@ import { Card, Player } from './index'
 import threeKingdomsCards from '~/assets/cards.json'
 import { atkLine } from '../utils/drawing'
 import { roleMap } from '~/src/utils/domain'
-import type { ThreeKingdomsCardIds } from '~/src/types'
+import type { ThreeKingdomsCardIds, ThreeKingdomsGeneralIds } from '~/src/types'
 import Game from './Game'
 export default class MainPlayer extends Player {
     handCards: Card[] = []
@@ -36,7 +36,7 @@ export default class MainPlayer extends Player {
     }: {
         id: string
         generral: string
-        generalId: string
+        generalId: ThreeKingdomsGeneralIds
         roleId: keyof typeof roleMap
         hp: number
         hand: {

@@ -1,4 +1,5 @@
 import threeKingdomsCards from '~/assets/cards.json'
+import { suits } from '~/src/utils/domain'
 export default class Card {
     id: keyof typeof threeKingdomsCards
     name: string = ''
@@ -47,6 +48,16 @@ export default class Card {
         if (card.audio) this.audio = scene.sound.add(card.audio)
         const rectangle = scene.add.rectangle(0, 0, 100, 150, 0xffffff)
         rectangle.setStrokeStyle(2, 0x000000)
+        // 創建卡牌數字
+        const number = scene.add.text(-50, -75, String(card.rank), {
+            fontSize: '24px',
+            color: suits[card.suit].color,
+        })
+        // 創建卡牌花色
+        const rank = scene.add.text(-50, -75 + 24, suits[card.suit].symbol, {
+            fontSize: '24px',
+            color: suits[card.suit].color,
+        })
         // 創建文字
         const text = scene.add.text(0, 0, card.name, {
             fontSize: '24px',
@@ -56,7 +67,7 @@ export default class Card {
         text.setOrigin(0.5)
 
         // 將矩形和文字添加到容器中，以便一起操作
-        const container = scene.add.container(0, 0, [rectangle, text])
+        const container = scene.add.container(0, 0, [rectangle, text, rank, number])
 
         // 設置容器位置在遊戲場景中心
         container.setPosition(baseX, baseY)
