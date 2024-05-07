@@ -87,12 +87,14 @@ export default class Player {
             fontSize: '20px',
             color: '#000',
         })
-        const hpText = scene.add.text(0, -10, `血量: ${this.hp}`, {
-            fontSize: '10px',
-            color: '#000',
-        })
-        const handText = scene.add.text(0, 0, `手牌: ${this.hand.size}`, {
-            fontSize: '10px',
+        const hpContainer = this.initHpInstance(this.hp, this.general.hp)
+        this.instanceMap.hp = hpContainer
+        // const hpText = scene.add.text(0, -10, `血量: ${this.hp}`, {
+        //     fontSize: '10px',
+        //     color: '#000',
+        // })
+        const handText = scene.add.text(0, -10, `手牌: ${this.hand.size}`, {
+            fontSize: '20px',
             color: '#000',
         })
         // const equipmentNames = this.equipments
@@ -137,7 +139,7 @@ export default class Player {
             idText,
             generralText,
             roleText,
-            hpText,
+            // hpText,
             handText,
             armorText,
             horsePlusText,
@@ -152,12 +154,13 @@ export default class Player {
             idText,
             roleText,
             generralText,
-            hpText,
+            // hpText,
             handText,
             equipmentContainer1,
             armorText,
             horsePlusText,
             horseMinusText,
+            hpContainer,
         ])
         equipmentContainer1.setPosition(-100, 100 - 24 * 4)
         // 設置容器位置在遊戲場景中心
@@ -175,26 +178,33 @@ export default class Player {
         if (this.instance === null) return
         if (this.scene === null) return
         // this.instance.getAt(4).setText(`血量: ${this.hp}`)
-        const hpText: Phaser.GameObjects.Text = this.instance.getAt(4)
-        hpText.setText(`血量: ${this.hp}`)
-        if (hp <= 0) {
-            this.scene.tweens.add({
-                targets: this.instance,
-                alpha: 0, // 将透明度从 1（不透明）变为 0（透明）
-                duration: 100, // 动画持续时间 1000 毫秒（1 秒）
-                yoyo: true, // 设置 yoyo 为 true，使动画来回循环
-                repeat: 1, // 设置 repeat 为 1，使动画重复 1 次
-            })
-        } else {
-            this.scene.tweens.add({
-                targets: hpText,
-                scale: 1.5,
-                duration: 150, // 持續時間（毫秒）
-                ease: 'Power2',
-                yoyo: true,
-                repeat: 1,
-            })
+        // const hpText: Phaser.GameObjects.Text = this.instance.getAt(4)
+        // hpText.setText(`血量: ${this.hp}`)
+        // if (hp <= 0) {
+        //     this.scene.tweens.add({
+        //         targets: this.instance,
+        //         alpha: 0, // 将透明度从 1（不透明）变为 0（透明）
+        //         duration: 100, // 动画持续时间 1000 毫秒（1 秒）
+        //         yoyo: true, // 设置 yoyo 为 true，使动画来回循环
+        //         repeat: 1, // 设置 repeat 为 1，使动画重复 1 次
+        //     })
+        // } else {
+        //     this.scene.tweens.add({
+        //         targets: hpText,
+        //         scale: 1.5,
+        //         duration: 150, // 持續時間（毫秒）
+        //         ease: 'Power2',
+        //         yoyo: true,
+        //         repeat: 1,
+        //     })
+        // }
+        if (this.instanceMap.hp) {
+            this.instanceMap.hp.destroy()
         }
+        const hpContainer = this.initHpInstance(this.hp, this.general.hp)
+        this.instanceMap.hp = hpContainer
+        this.instance.add(hpContainer)
+        // hpContainer.setPosition(-100, 100 - 24 * 4)
     }
     startTurn() {
         if (this.instance === null) return
@@ -221,7 +231,7 @@ export default class Player {
         // 手牌數確認
         if (data.hand.size !== this.hand.size) {
             this.hand.size = data.hand.size
-            const handText: Phaser.GameObjects.Text = this.instance.getAt(5)
+            const handText: Phaser.GameObjects.Text = this.instance.getAt(4)
             handText.setText(`手牌: ${this.hand.size}`)
             this.scene.tweens.add({
                 targets: handText,
@@ -350,5 +360,60 @@ export default class Player {
         border.strokeRect(20, 0, 160, 24)
         equipmentContainer1.add([weaponRankText, weaponSuitText, weaponText, border])
         return equipmentContainer1
+    }
+    initHpInstance(nowHp: number = 5, maxHp: number = 5) {
+        var healthContainer = this.scene.add.container(0, 0)
+
+        // 血量文字的間距
+        var spacing = 10
+
+        // 血量的最大值
+        var maxHealth = maxHp + (this.roleId === 'Monarch' ? 1 : 0)
+
+        // 血量的當前值（假設為3）
+        var currentHealth = nowHp
+
+        // 文字的寬度和高度
+        var textWidth = 50
+        var textHeight = 12
+
+        // 文字樣式
+        var textStyle = {
+            fontFamily: 'Arial',
+            fontSize: '24px',
+            fontStyle: 'bold',
+        }
+
+        // 從下往上添加血量文字
+        for (var i = maxHealth - 1; i >= 0; i--) {
+            var xPos = 0 // 文字的 x 位置
+            var yPos = (maxHealth - i - 1) * (textHeight + spacing) // 文字的 y 位置
+
+            // 創建一個血量文字
+            var healthText = this.scene.add.text(xPos, yPos, '♥', textStyle)
+
+            // 將文字添加到容器中
+            healthContainer.add(healthText)
+
+            // 根據血量值設置文字顏色
+            if (i >= currentHealth) {
+                healthText.setColor('#cccccc') // 灰色
+            } else if (i === 0) {
+                healthText.setColor('#ff0000') // 紅色
+            } else if (i === 1) {
+                healthText.setColor('#dddd00') // 黃色
+            } else {
+                healthText.setColor('#00CC00') // 綠色
+            }
+
+            // 設置文字的原點為左上角
+            healthText.setOrigin(0, 0)
+        }
+
+        // 將容器垂直居中
+        // healthContainer.setY(0 - (maxHealth * (textHeight + spacing)) / 2)
+        healthContainer.setY(100 - maxHealth * (textHeight + spacing) - 4)
+        healthContainer.setX(0 - 100 + 4)
+        return healthContainer
     }
 }
