@@ -49,14 +49,18 @@ export default class Card {
         const rectangle = scene.add.rectangle(0, 0, 100, 150, 0xffffff)
         rectangle.setStrokeStyle(2, 0x000000)
         // 創建卡牌數字
-        const number = scene.add.text(-50, -75, String(card.rank), {
+        const number = scene.add.text(-50, -75 + 5, String(card.rank), {
             fontSize: '24px',
             color: suits[card.suit].color,
+            fixedWidth: 32,
+            align: 'center',
         })
         // 創建卡牌花色
-        const rank = scene.add.text(-50, -75 + 24, suits[card.suit].symbol, {
+        const rank = scene.add.text(-50, -75 + 24 + 5, suits[card.suit].symbol, {
             fontSize: '24px',
             color: suits[card.suit].color,
+            fixedWidth: 32,
+            align: 'center',
         })
         // 創建文字
         const text = scene.add.text(0, 0, card.name, {

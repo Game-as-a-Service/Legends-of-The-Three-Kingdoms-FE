@@ -322,6 +322,8 @@ export default class Player {
             this.scene.tweens.add({
                 targets: equipmentContainer,
                 scale: 1.5,
+                x: equipmentContainer.x - 50,
+                y: equipmentContainer.y - 6,
                 duration: 150, // 持續時間（毫秒）
                 ease: 'Power2',
                 yoyo: true,
