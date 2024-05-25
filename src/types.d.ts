@@ -7,6 +7,7 @@ export type GamePhase = 'Initial' | 'Normal' | 'GeneralDying' | 'GameOver'
 export type RoundPhase = 'Judgement' | 'Drawing' | 'Action' | 'Discard'
 export type Role = keyof typeof roleMap
 export type PlayType = 'skip' | 'active' | 'inactive'
+export type EquipmentPlayType = 'equipmentSkip' | 'equipmentActive'
 export interface PlayerData {
     id: string
     generalId: string // 要改成對應的generalId

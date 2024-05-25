@@ -1,5 +1,10 @@
 import { useRuntimeConfig } from '#app'
-import type { ThreeKingdomsCardIds, ThreeKingdomsGeneralIds, PlayType } from '~/src/types'
+import type {
+    ThreeKingdomsCardIds,
+    ThreeKingdomsGeneralIds,
+    PlayType,
+    EquipmentPlayType,
+} from '~/src/types'
 import axios from 'axios'
 export function useApi() {
     const runtimeConfig = useRuntimeConfig()
@@ -42,6 +47,17 @@ export function useApi() {
     const discardCards = (gameId: string, params: any) => {
         return api.post(`/api/games/${gameId}/player:discardCards`, params)
     }
+    const useEquipmentEffect = (
+        gameId: string,
+        params: {
+            cardId: ThreeKingdomsCardIds
+            playerId: string
+            targetPlayerId: string
+            playType: EquipmentPlayType
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:useEquipmentEffect`, params)
+    }
     return {
         api,
         createGame,
@@ -50,5 +66,6 @@ export function useApi() {
         playCard,
         finishAction,
         discardCards,
+        useEquipmentEffect,
     }
 }

@@ -199,6 +199,21 @@ export default class Game {
                     scene: this.scene,
                 })
                 break
+            case 'AskPlayEquipmentEffectEvent':
+                // const data = {
+                //     event: 'AskPlayEquipmentEffectEvent',
+                //     data: {
+                //         playerId: 'Tux',
+                //         equipmentCardId: 'ES2015',
+                //         equipmentCardName: '八卦陣',
+                //     },
+                //     message: '請問要否要發動裝備卡八卦陣的效果',
+                // }
+                // 詢問是手使用裝備牌的效果
+                if (data.playerId === this.me.id) {
+                    this.me.askReaction('askPlayEquipmentEffect', event)
+                }
+                break
             case 'DrawCardEvent':
                 if (data.drawCardPlayerId === this.me.id) {
                     data.cards.forEach((cardId: ThreeKingdomsCardIds) => {
@@ -301,7 +316,7 @@ export default class Game {
         //     }
         // })
     }
-    createMe = ({ me, myCards }: { me: any; myCards: ThreeKingdomsCardIds[] }) => {
+    createMe({ me, myCards }: { me: any; myCards: ThreeKingdomsCardIds[] }) {
         this.me = new MainPlayer({
             ...me,
             handleClickPlayer: this.handleClickPlayer,

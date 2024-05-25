@@ -16,6 +16,7 @@ export default class MainPlayer extends Player {
     discardCards: Card[] = []
     game: Game | null = null
     discardCardsAction: ([]) => void = ([]) => {}
+    mainInstanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
     constructor({
         id,
         generral,
@@ -72,6 +73,7 @@ export default class MainPlayer extends Player {
         this.gamePlayCardHandler = gamePlayCardHandler
         this.discardCardsAction = discardCardsAction
         this.game = game
+        this.mainInstanceMap = {}
     }
     createInstance({ baseX, baseY, scene }: { baseX: number; baseY: number; scene: Phaser.Scene }) {
         // 創建一個白色的矩形
@@ -184,6 +186,11 @@ export default class MainPlayer extends Player {
         hintContainer.setPosition(baseX - 300, baseY - 220)
         hintContainer.setAlpha(0)
         this.hintInstance = hintContainer
+
+        this.createConfirmModal(scene)
+    }
+    test() {
+        console.log('test')
     }
     addHandCard = (cardId: ThreeKingdomsCardIds) => {
         const card = new Card({
@@ -346,7 +353,7 @@ export default class MainPlayer extends Player {
         // card.destroy()
         // this.arrangeCards()
     }
-    askReaction = (reactionType: string) => {
+    askReaction = (reactionType: string, event?: any) => {
         console.log('askReaction', reactionType)
         this.reactionType = reactionType
         this.reactionMode = true
@@ -358,6 +365,10 @@ export default class MainPlayer extends Player {
         } else if (reactionType === 'askPeach') {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('請出一張桃')
+            this.hintInstance?.setAlpha(1)
+        } else if (reactionType === 'askPlayEquipmentEffect') {
+            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+            hintText?.setText(event.message)
             this.hintInstance?.setAlpha(1)
         }
     }
@@ -402,5 +413,67 @@ export default class MainPlayer extends Player {
         this.seats.forEach((player) => {
             player.setOutOfDistance(false)
         })
+    }
+    useConfirmModal = ({
+        message = '提示訊息',
+        confirmText = '是',
+        cancelText = '否',
+        handleConfirm = () => {},
+        handleCancel = () => {},
+    }: {
+        message: string
+        confirmText: string
+        cancelText: string
+        handleConfirm: () => void
+        handleCancel: () => void
+    }) => {
+        // 創建一個容器來包含彈窗的所有組件
+        // const popupContainer = this.scene.add.container(100, 100, [background, yesButton, noButton])
+        // popupContainer.setSize(600, 400)
+        // popupContainer.setDepth(1000)
+    }
+    createConfirmModal(scene: Phaser.Scene) {
+        // 確認視窗
+        const background = scene.add.graphics()
+        background.fillStyle(0x000000, 0.5) // 黑色，50% 透明度
+        background.fillRect(0, 0, 600, 400) // 矩形位置和大小
+
+        // 添加 "訊息提示"
+        const messageText = scene.add.text(300, 100, '是否確定？', {
+            fontSize: '32px',
+            color: '#fff',
+        })
+
+        // 添加 "是" 按鈕
+        const yesButton = scene.add
+            .text(150, 150, '是', { fontSize: '32px', color: '#0f0' })
+            .setInteractive()
+            .on('pointerdown', () => {
+                console.log('是 按鈕被按下')
+                // 添加更多處理邏輯
+            })
+
+        // 添加 "否" 按鈕
+        const noButton = scene.add
+            .text(350, 150, '否', { fontSize: '32px', color: '#f00' })
+            .setInteractive()
+            .on('pointerdown', () => {
+                console.log('否 按鈕被按下')
+                // 添加更多處理邏輯
+            })
+
+        // 創建一個容器來包含彈窗的所有組件
+        const popupContainer = scene.add.container(100, 100, [
+            background,
+            messageText,
+            yesButton,
+            noButton,
+        ])
+        popupContainer.setSize(600, 400)
+        popupContainer.setDepth(1000)
+        console.log(this, '123')
+        this.mainInstanceMap.confirmModal = popupContainer
+
+        return
     }
 }
