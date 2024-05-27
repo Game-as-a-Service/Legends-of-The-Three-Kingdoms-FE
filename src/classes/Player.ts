@@ -69,9 +69,11 @@ export default class Player {
         this.x = x
         this.y = y
         this.scene = scene
-        this.createInstance({ baseX: x, baseY: y, scene })
     }
-    createInstance({ baseX, baseY, scene }: { baseX: number; baseY: number; scene: Phaser.Scene }) {
+    createInstance() {
+        const baseX = this.x
+        const baseY = this.y
+        const scene = this.scene
         // 創建一個白色的矩形
         const rectangle = scene.add.rectangle(0, 0, 200, 200, 0xffffff)
         // 創建文字

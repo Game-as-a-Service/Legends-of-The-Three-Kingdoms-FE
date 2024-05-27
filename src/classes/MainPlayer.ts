@@ -74,8 +74,12 @@ export default class MainPlayer extends Player {
         this.discardCardsAction = discardCardsAction
         this.game = game
         this.mainInstanceMap = {}
+        // this.createMainPlayerInstance({ baseX: x, baseY: y, scene })
     }
-    createInstance({ baseX, baseY, scene }: { baseX: number; baseY: number; scene: Phaser.Scene }) {
+    createInstance() {
+        const baseX = this.x
+        const baseY = this.y
+        const scene = this.scene
         // 創建一個白色的矩形
         const rectangle = scene.add.rectangle(0, 0, 200, 200, 0xffffff)
         // 創建文字
@@ -364,12 +368,31 @@ export default class MainPlayer extends Player {
             this.hintInstance?.setAlpha(1)
         } else if (reactionType === 'askPeach') {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-            hintText?.setText('請出一張桃')
+            hintText?.setText('請出一張x桃')
             this.hintInstance?.setAlpha(1)
         } else if (reactionType === 'askPlayEquipmentEffect') {
-            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-            hintText?.setText(event.message)
-            this.hintInstance?.setAlpha(1)
+            // const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+            // hintText?.setText(event.message)
+            // this.hintInstance?.setAlpha(1)
+            this.useConfirmModal({
+                message: event.message,
+                handleConfirm: () => {
+                    this.game?.useEquipmentEffect(
+                        event.data.equipmentCardId,
+                        event.targetPlayerId,
+                        'equipmentActive',
+                    )
+                    this.mainInstanceMap.confirmModal?.setAlpha(0)
+                },
+                handleCancel: () => {
+                    this.game?.useEquipmentEffect(
+                        event.data.equipmentCardId,
+                        event.targetPlayerId,
+                        'equipmentSkip',
+                    )
+                    this.mainInstanceMap.confirmModal?.setAlpha(0)
+                },
+            })
         }
     }
     updatePlayerData(data: any) {
@@ -421,12 +444,21 @@ export default class MainPlayer extends Player {
         handleConfirm = () => {},
         handleCancel = () => {},
     }: {
-        message: string
-        confirmText: string
-        cancelText: string
-        handleConfirm: () => void
-        handleCancel: () => void
+        message?: string
+        confirmText?: string
+        cancelText?: string
+        handleConfirm?: () => void
+        handleCancel?: () => void
     }) => {
+        const modelText: Phaser.GameObjects.Text = this.mainInstanceMap.confirmModal?.getAt(1)
+        modelText.setText(message)
+        const yesButton: Phaser.GameObjects.Text = this.mainInstanceMap.confirmModal?.getAt(2)
+        yesButton.setText(confirmText)
+        const noButton: Phaser.GameObjects.Text = this.mainInstanceMap.confirmModal?.getAt(3)
+        noButton.setText(cancelText)
+        yesButton.setInteractive().on('pointerdown', handleConfirm)
+        noButton.setInteractive().on('pointerdown', handleCancel)
+        this.mainInstanceMap.confirmModal?.setAlpha(1)
         // 創建一個容器來包含彈窗的所有組件
         // const popupContainer = this.scene.add.container(100, 100, [background, yesButton, noButton])
         // popupContainer.setSize(600, 400)
@@ -439,29 +471,29 @@ export default class MainPlayer extends Player {
         background.fillRect(0, 0, 600, 400) // 矩形位置和大小
 
         // 添加 "訊息提示"
-        const messageText = scene.add.text(300, 100, '是否確定？', {
+        const messageText = scene.add.text(300, 100, '你要使用八卦陣嗎？', {
             fontSize: '32px',
             color: '#fff',
         })
-
+        messageText.setOrigin(0.5)
         // 添加 "是" 按鈕
         const yesButton = scene.add
-            .text(150, 150, '是', { fontSize: '32px', color: '#0f0' })
+            .text(200, 250, '是', { fontSize: '32px', color: '#0f0' })
             .setInteractive()
             .on('pointerdown', () => {
                 console.log('是 按鈕被按下')
                 // 添加更多處理邏輯
             })
-
+        yesButton.setOrigin(0.5)
         // 添加 "否" 按鈕
         const noButton = scene.add
-            .text(350, 150, '否', { fontSize: '32px', color: '#f00' })
+            .text(400, 250, '否', { fontSize: '32px', color: '#f00' })
             .setInteractive()
             .on('pointerdown', () => {
                 console.log('否 按鈕被按下')
                 // 添加更多處理邏輯
             })
-
+        noButton.setOrigin(0.5)
         // 創建一個容器來包含彈窗的所有組件
         const popupContainer = scene.add.container(100, 100, [
             background,
@@ -471,9 +503,8 @@ export default class MainPlayer extends Player {
         ])
         popupContainer.setSize(600, 400)
         popupContainer.setDepth(1000)
-        console.log(this, '123')
+        popupContainer.setAlpha(0)
         this.mainInstanceMap.confirmModal = popupContainer
-
         return
     }
 }

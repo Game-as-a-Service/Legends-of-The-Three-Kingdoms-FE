@@ -1,6 +1,6 @@
 import { Player, MainPlayer, Card } from './index'
 import { atkLine } from '../utils/drawing'
-import type { ThreeKingdomsCardIds, GameData, PlayType } from '~/src/types'
+import type { ThreeKingdomsCardIds, GameData, PlayType, EquipmentPlayType } from '~/src/types'
 // import api from '~/src/utils/api'
 const locations = [
     { x: 640, y: 160 },
@@ -55,16 +55,17 @@ export default class Game {
     constructor(gameData: any, scene: Phaser.Scene, api: any) {
         this.scene = scene
         this.api = api
-        this.seats = gameData.seats.map(
-            (player: any, index: number) =>
-                new Player({
-                    ...player,
-                    x: locations[index].x,
-                    y: locations[index].y,
-                    scene,
-                    handleClickPlayer: this.handleClickPlayer,
-                }),
-        )
+        this.seats = gameData.seats.map((player: any, index: number) => {
+            const playerInstance = new Player({
+                ...player,
+                x: locations[index].x,
+                y: locations[index].y,
+                scene,
+                handleClickPlayer: this.handleClickPlayer,
+            })
+            playerInstance.createInstance()
+            return playerInstance
+        })
         this.createMe({
             me: gameData.me,
             myCards: gameData.me.hand.cardIds,
@@ -153,6 +154,15 @@ export default class Game {
         // }
         this.api.discardCards(this.gameId, cardIds)
     }
+    useEquipmentEffect = (cardId: string, targetPlayerId: string, playType: EquipmentPlayType) => {
+        const params = {
+            playerId: this.me.id,
+            targetPlayerId,
+            cardId,
+            playType: playType,
+        }
+        this.api.useEquipmentEffect(this.gameId, params)
+    }
     async eventHandler(event: any) {
         // console.log(event)
         const data = event.data
@@ -213,6 +223,16 @@ export default class Game {
                 if (data.playerId === this.me.id) {
                     this.me.askReaction('askPlayEquipmentEffect', event)
                 }
+                break
+            case 'UseEquipmentEffectViewModel':
+                // {
+                //     "event": "UseEquipmentEffectViewModel",
+                //     "data": {
+                //         "drawCardId": "EH5044",
+                //         "success": true
+                //     },
+                //     "message": "發動效果"
+                // }
                 break
             case 'DrawCardEvent':
                 if (data.drawCardPlayerId === this.me.id) {
@@ -328,6 +348,7 @@ export default class Game {
             seats: this.seats,
             game: this,
         })
+        this.me.createInstance()
         myCards.forEach((cardId) => this.me.addHandCard(cardId))
         this.me.arrangeCards()
     }
