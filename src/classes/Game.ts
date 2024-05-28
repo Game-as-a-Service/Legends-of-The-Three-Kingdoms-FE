@@ -83,11 +83,12 @@ export default class Game {
     }
     gamePlayCardHandler = (card: Card, reactionType: string) => {
         if (reactionType === 'askDodge') {
+            const playType = card.id ? 'inactive' : 'skip'
             const params = {
-                cardId: '',
+                cardId: card.id,
                 playerId: this.me.id,
                 targetPlayerId: '',
-                playType: 'skip',
+                playType: playType,
             }
             this.api.playCard(this.gameId, params)
             return
