@@ -259,8 +259,13 @@ export default class MainPlayer extends Player {
             return
         }
         if (this.reactionType) {
+            // 對應出桃
             this.gamePlayCardHandler(card, this.reactionType)
             this.reactionType = ''
+            this.reactionMode = false
+            this.skipInstance?.setAlpha(0)
+            this.hintInstance?.setAlpha(0)
+            card.playCard()
             return
         }
         if (card.name === '殺' || card.name === '過河拆橋') {
@@ -359,21 +364,26 @@ export default class MainPlayer extends Player {
     }
     askReaction = (reactionType: string, event?: any) => {
         console.log('askReaction', reactionType)
+        // 八卦陣與出閃的處理
+        if (this.reactionType === 'askDodge' && reactionType === 'askPlayEquipmentEffect') {
+            // 先隱藏出閃的提示
+            this.hintInstance?.setAlpha(0)
+            this.skipInstance?.setAlpha(0)
+        }
         this.reactionType = reactionType
         this.reactionMode = true
-        this.skipInstance?.setAlpha(1)
+
         if (reactionType === 'askDodge') {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('請出一張閃')
             this.hintInstance?.setAlpha(1)
+            this.skipInstance?.setAlpha(1)
         } else if (reactionType === 'askPeach') {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-            hintText?.setText('請出一張x桃')
+            hintText?.setText('請出一張桃')
             this.hintInstance?.setAlpha(1)
+            this.skipInstance?.setAlpha(1)
         } else if (reactionType === 'askPlayEquipmentEffect') {
-            // const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-            // hintText?.setText(event.message)
-            // this.hintInstance?.setAlpha(1)
             this.useConfirmModal({
                 message: event.message,
                 handleConfirm: () => {

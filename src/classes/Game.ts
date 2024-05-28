@@ -233,6 +233,10 @@ export default class Game {
                 //     },
                 //     "message": "發動效果"
                 // }
+                if (!data.success && this.me.reactionType === 'askPlayEquipmentEffect') {
+                    // 效果發動失敗時重新要求出閃
+                    this.me.askReaction('askDodge')
+                }
                 break
             case 'DrawCardEvent':
                 if (data.drawCardPlayerId === this.me.id) {
