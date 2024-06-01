@@ -404,6 +404,7 @@ const eventTrigger = () => {
         eventSelectedCard.value === '赤兔馬' ||
         eventSelectedCard.value === '絕影' ||
         eventSelectedCard.value === '八卦陣' ||
+        eventSelectedCard.value === '麒麟弓' ||
         eventSelectedCard.value === '諸葛連弩'
     ) {
         const card = Object.values(threeKingdomsCards).find(
@@ -424,7 +425,7 @@ const eventTrigger = () => {
             equipments[2] = card.id
         } else if (card.name === '八卦陣') {
             equipments[1] = card.id
-        } else if (card.name === '諸葛連弩') {
+        } else if (card.name === '諸葛連弩' || card.name === '麒麟弓') {
             equipments[0] = card.id
         }
         player.updatePlayerData({ hand: player.hand, equipments })

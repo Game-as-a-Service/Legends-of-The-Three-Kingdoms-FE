@@ -39,6 +39,14 @@
         "type": "basic",
         "audio": "peach"
     },
+    "EH5031": {
+        "id": "EH5031",
+        "name": "麒麟弓",
+        "rank": 3,
+        "suit": "heart",
+        "type": "equipment",
+        "audio": ""
+    },
     "BHK039": {
         "id": "BHK039",
         "name": "閃",
