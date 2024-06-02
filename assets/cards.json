@@ -21,7 +21,7 @@
         "rank": 2,
         "suit": "spade",
         "type": "equipment",
-        "audio": ""
+        "audio": "eightDiagramFormation"
     },
     "ES5018": {
         "id": "ES5018",
@@ -29,7 +29,7 @@
         "rank": 5,
         "suit": "spade",
         "type": "equipment",
-        "audio": ""
+        "audio": "shadowrunner"
     },
     "BH4030": {
         "id": "BH4030",
@@ -45,7 +45,7 @@
         "rank": 3,
         "suit": "heart",
         "type": "equipment",
-        "audio": ""
+        "audio": "qilinBow"
     },
     "BHK039": {
         "id": "BHK039",
@@ -69,7 +69,7 @@
         "rank": 5,
         "suit": "heart",
         "type": "equipment",
-        "audio": ""
+        "audio": "redHare"
     },
     "SH7046": {
         "id": "SH7046",
@@ -93,7 +93,7 @@
         "rank": 1,
         "suit": "club",
         "type": "equipment",
-        "audio": ""
+        "audio": "chuKoNu"
     },
     "EC2067": {
         "id": "EC2067",
@@ -101,7 +101,7 @@
         "rank": 2,
         "suit": "club",
         "type": "equipment",
-        "audio": ""
+        "audio": "eightDiagramFormation"
     },
     "EDA092": {
         "id": "EDA092",
@@ -109,6 +109,6 @@
         "rank": 1,
         "suit": "diamond",
         "type": "equipment",
-        "audio": ""
+        "audio": "chuKoNu"
     }
 }

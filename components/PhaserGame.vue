@@ -7,6 +7,11 @@ import dismantleAudio from '~/assets/dismantle.mp3'
 import barbarianInvasionAudio from '~/assets/barbarianInvasion.mp3'
 import somethingForNothingAudio from '~/assets/somethingForNothing.mp3'
 import arrowBarrageAudio from '~/assets/arrowBarrage.mp3'
+import qilinBowAudio from '~/assets/qilinBow.mp3'
+import chuKoNuAudio from '~/assets/chuKoNu.mp3'
+import eightDiagramFormation from '~/assets/eightDiagramFormation.mp3'
+import redHare from '~/assets/redHare.mp3'
+import shadowrunner from '~/assets/shadowrunner.mp3'
 import { Card, Game } from '~/src/classes'
 import threeKingdomsCards from '~/assets/cards.json'
 import { atkLine } from '~/src/utils/drawing'
@@ -29,6 +34,11 @@ class BattleTable extends Phaser.Scene {
         this.load.audio('barbarianInvasion', barbarianInvasionAudio)
         this.load.audio('somethingForNothing', somethingForNothingAudio)
         this.load.audio('arrowBarrage', arrowBarrageAudio)
+        this.load.audio('qilinBow', qilinBowAudio)
+        this.load.audio('chuKoNu', chuKoNuAudio)
+        this.load.audio('eightDiagramFormation', eightDiagramFormation)
+        this.load.audio('shadowrunner', shadowrunner)
+        this.load.audio('redHare', redHare)
     }
     create() {
         myScene.value = this
