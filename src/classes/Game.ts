@@ -238,6 +238,11 @@ export default class Game {
                     // 效果發動失敗時重新要求出閃
                     this.me.askReaction('askDodge')
                 }
+                if (data.success && this.me.reactionType === 'askPlayEquipmentEffect') {
+                    // 效果成功時清除反應狀態
+                    this.me.reactionType = ''
+                    this.me.reactionMode = false
+                }
                 break
             case 'DrawCardEvent':
                 if (data.drawCardPlayerId === this.me.id) {
