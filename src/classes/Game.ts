@@ -85,7 +85,7 @@ export default class Game {
         if (reactionType === 'askDodge') {
             const playType = card.id ? 'inactive' : 'skip'
             const params = {
-                cardId: card.id,
+                cardId: '',
                 playerId: this.me.id,
                 targetPlayerId: '',
                 playType: playType,
