@@ -76,7 +76,8 @@ export default class MainPlayer extends Player {
         this.mainInstanceMap = {}
         // this.createMainPlayerInstance({ baseX: x, baseY: y, scene })
     }
-    createInstance() {
+    createMainInstance() {
+        super.createInstance()
         const baseX = this.x
         const baseY = this.y
         const scene = this.scene
@@ -95,10 +96,10 @@ export default class MainPlayer extends Player {
             fontSize: '20px',
             color: '#000',
         })
-        const hpText = scene.add.text(0, 40, `血量: ${this.hp}`, {
-            fontSize: '20px',
-            color: '#000',
-        })
+        // const hpText = scene.add.text(0, 40, `血量: ${this.hp}`, {
+        //     fontSize: '20px',
+        //     color: '#000',
+        // })
         const equipmentNames = this.equipments
             .filter((equipmentId) => equipmentId)
             .map((equipmentId) => {
@@ -111,7 +112,7 @@ export default class MainPlayer extends Player {
             color: '#000',
         })
         // 設置文字位置在矩形中心
-        const texts = [idText, generralText, roleText, hpText, equipmentText]
+        const texts = [idText, generralText, roleText, equipmentText]
         texts.forEach((text) => {
             text.setOrigin(0.5)
         })
@@ -121,7 +122,7 @@ export default class MainPlayer extends Player {
             idText,
             roleText,
             generralText,
-            hpText,
+            // hpText,
             equipmentText,
         ])
 
