@@ -2,6 +2,7 @@ import generalCards from '~/assets/generalCards.json'
 import threeKingdomsCards from '~/assets/cards.json'
 import { roleMap, suits } from '~/src/utils/domain'
 import type { ThreeKingdomsCardIds, ThreeKingdomsGeneralIds } from '~/src/types'
+import { BattleScene } from './index'
 export default class Player {
     id: string
     generral: string
@@ -16,7 +17,7 @@ export default class Player {
     equipments: ThreeKingdomsCardIds[]
     delayScrolls: string[]
     instance!: Phaser.GameObjects.Container
-    scene!: Phaser.Scene
+    scene!: BattleScene
     handleClickPlayer!: (player: Player) => void
     x: number = 0
     y: number = 0
@@ -54,7 +55,7 @@ export default class Player {
         handleClickPlayer: any
         x: number
         y: number
-        scene: Phaser.Scene
+        scene: BattleScene
     }) {
         this.id = id
         this.generral = generral

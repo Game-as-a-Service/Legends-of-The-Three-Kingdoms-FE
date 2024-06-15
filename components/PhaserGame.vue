@@ -12,39 +12,40 @@ import chuKoNuAudio from '~/assets/chuKoNu.mp3'
 import eightDiagramFormation from '~/assets/eightDiagramFormation.mp3'
 import redHare from '~/assets/redHare.mp3'
 import shadowrunner from '~/assets/shadowrunner.mp3'
-import { Card, Game } from '~/src/classes'
+import { Card, Game, BattleScene } from '~/src/classes'
 import threeKingdomsCards from '~/assets/cards.json'
 import { atkLine } from '~/src/utils/drawing'
 import { Client } from '@stomp/stompjs'
 // import api from '~/src/utils/api'
 import generalCards from '~/assets/generalCards.json'
+// import BattleScene from '~/src/classes'
 const api = useApi()
 const runtimeConfig = useRuntimeConfig()
 console.log(runtimeConfig, 'runtimeConfig')
-class BattleTable extends Phaser.Scene {
-    constructor() {
-        super('BattleTable')
-    }
-    preload() {
-        // 預加載
-        this.load.audio('peach', peachAudio)
-        this.load.audio('kill', killAudio)
-        this.load.audio('dodge', dodgeAudio)
-        this.load.audio('dismantle', dismantleAudio)
-        this.load.audio('barbarianInvasion', barbarianInvasionAudio)
-        this.load.audio('somethingForNothing', somethingForNothingAudio)
-        this.load.audio('arrowBarrage', arrowBarrageAudio)
-        this.load.audio('qilinBow', qilinBowAudio)
-        this.load.audio('chuKoNu', chuKoNuAudio)
-        this.load.audio('eightDiagramFormation', eightDiagramFormation)
-        this.load.audio('shadowrunner', shadowrunner)
-        this.load.audio('redHare', redHare)
-    }
-    create() {
-        myScene.value = this
-        // myGame.value = new Game(gameData.value, this)
-    }
-}
+// class BattleTable extends Phaser.Scene {
+//     constructor() {
+//         super('BattleTable')
+//     }
+//     preload() {
+//         // 預加載
+//         this.load.audio('peach', peachAudio)
+//         this.load.audio('kill', killAudio)
+//         this.load.audio('dodge', dodgeAudio)
+//         this.load.audio('dismantle', dismantleAudio)
+//         this.load.audio('barbarianInvasion', barbarianInvasionAudio)
+//         this.load.audio('somethingForNothing', somethingForNothingAudio)
+//         this.load.audio('arrowBarrage', arrowBarrageAudio)
+//         this.load.audio('qilinBow', qilinBowAudio)
+//         this.load.audio('chuKoNu', chuKoNuAudio)
+//         this.load.audio('eightDiagramFormation', eightDiagramFormation)
+//         this.load.audio('shadowrunner', shadowrunner)
+//         this.load.audio('redHare', redHare)
+//     }
+//     create() {
+//         myScene.value = this
+//         // myGame.value = new Game(gameData.value, this)
+//     }
+// }
 const roleText = {
     MONARCH: '主公',
     REBEL: '反賊',
@@ -159,6 +160,20 @@ const initDemo = () => {
 }
 onMounted(() => {
     if (process.client) {
+        const audios = {
+            peach: peachAudio,
+            kill: killAudio,
+            dodge: dodgeAudio,
+            dismantle: dismantleAudio,
+            barbarianInvasion: barbarianInvasionAudio,
+            somethingForNothing: somethingForNothingAudio,
+            arrowBarrage: arrowBarrageAudio,
+            qilinBow: qilinBowAudio,
+            chuKoNu: chuKoNuAudio,
+            eightDiagramFormation: eightDiagramFormation,
+            shadowrunner: shadowrunner,
+            redHare: redHare,
+        }
         const config = {
             type: Phaser.AUTO,
             parent: 'phaser-game',
@@ -167,9 +182,18 @@ onMounted(() => {
             },
             width: 800,
             height: 600,
-            scene: BattleTable,
+            // scene: BattleScene,
+            scene: [],
         }
         game.value = new Phaser.Game(config)
+        game.value.scene.add('battleScene', BattleScene)
+        game.value.scene.start('battleScene', { audios })
+        game.value.events.on('ready', () => {
+            // console.log('ready')
+            // console.log(game.value, 'game')
+            console.log(game.value.scene.scenes[0], 'myScene')
+            myScene.value = game.value.scene.scenes[0]
+        })
         socketClient = new Client({
             // brokerURL: 'ws://localhost:8080/legendsOfTheThreeKingdoms',
             brokerURL:

@@ -1,4 +1,4 @@
-import { Player, MainPlayer, Card } from './index'
+import { Player, MainPlayer, Card, BattleScene } from './index'
 import { atkLine } from '../utils/drawing'
 import type { ThreeKingdomsCardIds, GameData, PlayType, EquipmentPlayType } from '~/src/types'
 // import api from '~/src/utils/api'
@@ -37,7 +37,7 @@ export default class Game {
         handCards: [],
     }
     me!: MainPlayer
-    scene!: Phaser.Scene
+    scene!: BattleScene
     gameId: string = 'my-id'
     gameData: GameData = {
         gamePhase: 'Initial',
@@ -52,7 +52,7 @@ export default class Game {
     }
     hintInstance!: Phaser.GameObjects.Container
     api: any
-    constructor(gameData: any, scene: Phaser.Scene, api: any) {
+    constructor(gameData: any, scene: BattleScene, api: any) {
         this.scene = scene
         this.api = api
         this.seats = gameData.seats.map((player: any, index: number) => {

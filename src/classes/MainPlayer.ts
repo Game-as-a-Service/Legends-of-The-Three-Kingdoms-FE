@@ -1,4 +1,4 @@
-import { Card, Player } from './index'
+import { Card, Player, BattleScene } from './index'
 import threeKingdomsCards from '~/assets/cards.json'
 import { atkLine } from '../utils/drawing'
 import { roleMap } from '~/src/utils/domain'
@@ -51,7 +51,7 @@ export default class MainPlayer extends Player {
         discardCardsAction: ([]) => void
         x: number
         y: number
-        scene: Phaser.Scene
+        scene: BattleScene
         seats: any
         game: any
     }) {

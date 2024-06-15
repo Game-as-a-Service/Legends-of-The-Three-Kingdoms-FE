@@ -1,10 +1,11 @@
 import threeKingdomsCards from '~/assets/cards.json'
+import { BattleScene } from './index'
 import { suits } from '~/src/utils/domain'
 export default class Card {
     id: keyof typeof threeKingdomsCards
     name: string = ''
     instance!: Phaser.GameObjects.Container
-    scene!: Phaser.Scene
+    scene!: BattleScene
     audio: Phaser.Sound.BaseSound | null = null
     x: number = 0
     y: number = 0
@@ -22,7 +23,7 @@ export default class Card {
         cardId: keyof typeof threeKingdomsCards
         x: number
         y: number
-        scene: Phaser.Scene
+        scene: BattleScene
         playCardHandler?: any
     }) {
         this.id = cardId
@@ -40,7 +41,7 @@ export default class Card {
     }: {
         baseX: number
         baseY: number
-        scene: Phaser.Scene
+        scene: BattleScene
     }) {
         // 創建一個白色的矩形
         const card = threeKingdomsCards[this.id]
@@ -106,8 +107,8 @@ export default class Card {
     }
     playCard({ x = 400, y = 300 }: { x?: number; y?: number } = { x: 400, y: 300 }) {
         const instance = this.instance
-        if (this.audio) this.audio.play()
         if (instance === null || this.scene === null) return
+        if (this.audio && !this.scene.audioMute) this.audio.play()
         this.scene.tweens.add({
             targets: instance,
             x: x,

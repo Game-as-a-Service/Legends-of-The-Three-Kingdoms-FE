@@ -31,3 +31,18 @@ export interface GameData {
     }
     gamePhase: GamePhase
 }
+
+export interface Audios {
+    peach: string
+    kill: string
+    dodge: string
+    dismantle: string
+    barbarianInvasion: string
+    somethingForNothing: string
+    arrowBarrage: string
+    qilinBow: string
+    chuKoNu: string
+    eightDiagramFormation: string
+    shadowrunner: string
+    redHare: string
+}
