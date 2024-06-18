@@ -76,65 +76,65 @@ export default class MainPlayer extends Player {
         this.mainInstanceMap = {}
         // this.createMainPlayerInstance({ baseX: x, baseY: y, scene })
     }
-    createMainInstance() {
+    createInstance() {
         super.createInstance()
         const baseX = this.x
         const baseY = this.y
         const scene = this.scene
-        // 創建一個白色的矩形
-        const rectangle = scene.add.rectangle(0, 0, 200, 200, 0xffffff)
-        // 創建文字
-        const idText = scene.add.text(0, -80, this.id, {
-            fontSize: '24px',
-            color: '#000000',
-        })
-        const generralText = scene.add.text(0, -40, this.general.name, {
-            fontSize: '20px',
-            color: '#000',
-        })
-        const roleText = scene.add.text(0, 0, roleMap[this.roleId] || '?', {
-            fontSize: '20px',
-            color: '#000',
-        })
-        // const hpText = scene.add.text(0, 40, `血量: ${this.hp}`, {
+        // // 創建一個白色的矩形
+        // const rectangle = scene.add.rectangle(0, 0, 200, 200, 0xffffff)
+        // // 創建文字
+        // const idText = scene.add.text(0, -80, this.id, {
+        //     fontSize: '24px',
+        //     color: '#000000',
+        // })
+        // const generralText = scene.add.text(0, -40, this.general.name, {
         //     fontSize: '20px',
         //     color: '#000',
         // })
-        const equipmentNames = this.equipments
-            .filter((equipmentId) => equipmentId)
-            .map((equipmentId) => {
-                const equipment = threeKingdomsCards[equipmentId]
-                return equipment.name
-            })
-            .join(', ')
-        const equipmentText = scene.add.text(0, 70, `裝備: ${equipmentNames}`, {
-            fontSize: '20px',
-            color: '#000',
-        })
-        // 設置文字位置在矩形中心
-        const texts = [idText, generralText, roleText, equipmentText]
-        texts.forEach((text) => {
-            text.setOrigin(0.5)
-        })
-        // 將矩形和文字添加到容器中，以便一起操作
-        const container = scene.add.container(0, 0, [
-            rectangle,
-            idText,
-            roleText,
-            generralText,
-            // hpText,
-            equipmentText,
-        ])
+        // const roleText = scene.add.text(0, 0, roleMap[this.roleId] || '?', {
+        //     fontSize: '20px',
+        //     color: '#000',
+        // })
+        // // const hpText = scene.add.text(0, 40, `血量: ${this.hp}`, {
+        // //     fontSize: '20px',
+        // //     color: '#000',
+        // // })
+        // const equipmentNames = this.equipments
+        //     .filter((equipmentId) => equipmentId)
+        //     .map((equipmentId) => {
+        //         const equipment = threeKingdomsCards[equipmentId]
+        //         return equipment.name
+        //     })
+        //     .join(', ')
+        // const equipmentText = scene.add.text(0, 70, `裝備: ${equipmentNames}`, {
+        //     fontSize: '20px',
+        //     color: '#000',
+        // })
+        // // 設置文字位置在矩形中心
+        // const texts = [idText, generralText, roleText, equipmentText]
+        // texts.forEach((text) => {
+        //     text.setOrigin(0.5)
+        // })
+        // // 將矩形和文字添加到容器中，以便一起操作
+        // const container = scene.add.container(0, 0, [
+        //     rectangle,
+        //     idText,
+        //     roleText,
+        //     generralText,
+        //     // hpText,
+        //     equipmentText,
+        // ])
 
-        // 設置容器位置在遊戲場景中心
-        container.setPosition(baseX, baseY)
-        this.instance = container
-        this.scene = scene
-        // return container
-        rectangle.setInteractive()
-        rectangle.on('pointerdown', () => {
-            this.handleClickPlayer(this)
-        })
+        // // 設置容器位置在遊戲場景中心
+        // container.setPosition(baseX, baseY)
+        // this.instance = container
+        // this.scene = scene
+        // // return container
+        // rectangle.setInteractive()
+        // rectangle.on('pointerdown', () => {
+        //     this.handleClickPlayer(this)
+        // })
         // 棄牌按鈕
         const checkbtn = scene.add.rectangle(0, 80, 100, 40, 0x00ff00)
         checkbtn.setInteractive()
@@ -406,43 +406,43 @@ export default class MainPlayer extends Player {
             })
         }
     }
-    updatePlayerData(data: any) {
-        // 手牌數確認
-        // if (data.hand.size !== this.hand.size) {
-        //     this.hand.size = data.hand.size
-        //     const handText: Phaser.GameObjects.Text = this.instance.getAt(5)
-        //     handText.setText(`手牌: ${this.hand.size}`)
-        //     this.scene.tweens.add({
-        //         targets: handText,
-        //         scale: 1.5,
-        //         duration: 150, // 持續時間（毫秒）
-        //         ease: 'Power2',
-        //         yoyo: true,
-        //         repeat: 1,
-        //     })
-        // }
-        // 裝備數確認
-        if (data.equipments.join() !== this.equipments.join()) {
-            this.equipments = data.equipments
-            const equipmentNames = this.equipments
-                .filter((equipmentId) => equipmentId)
-                .map((equipmentId) => {
-                    const equipment = threeKingdomsCards[equipmentId]
-                    return equipment.name
-                })
-                .join(', ')
-            const equipmentText: Phaser.GameObjects.Text = this.instance.getAt(5)
-            equipmentText.setText(`裝備: ${equipmentNames}`)
-            this.scene.tweens.add({
-                targets: equipmentText,
-                scale: 1.5,
-                duration: 150, // 持續時間（毫秒）
-                ease: 'Power2',
-                yoyo: true,
-                repeat: 1,
-            })
-        }
-    }
+    // updatePlayerData(data: any) {
+    //     // 手牌數確認
+    //     // if (data.hand.size !== this.hand.size) {
+    //     //     this.hand.size = data.hand.size
+    //     //     const handText: Phaser.GameObjects.Text = this.instance.getAt(5)
+    //     //     handText.setText(`手牌: ${this.hand.size}`)
+    //     //     this.scene.tweens.add({
+    //     //         targets: handText,
+    //     //         scale: 1.5,
+    //     //         duration: 150, // 持續時間（毫秒）
+    //     //         ease: 'Power2',
+    //     //         yoyo: true,
+    //     //         repeat: 1,
+    //     //     })
+    //     // }
+    //     // 裝備數確認
+    //     if (data.equipments.join() !== this.equipments.join()) {
+    //         this.equipments = data.equipments
+    //         const equipmentNames = this.equipments
+    //             .filter((equipmentId) => equipmentId)
+    //             .map((equipmentId) => {
+    //                 const equipment = threeKingdomsCards[equipmentId]
+    //                 return equipment.name
+    //             })
+    //             .join(', ')
+    //         const equipmentText: Phaser.GameObjects.Text = this.instance.getAt(5)
+    //         equipmentText.setText(`裝備: ${equipmentNames}`)
+    //         this.scene.tweens.add({
+    //             targets: equipmentText,
+    //             scale: 1.5,
+    //             duration: 150, // 持續時間（毫秒）
+    //             ease: 'Power2',
+    //             yoyo: true,
+    //             repeat: 1,
+    //         })
+    //     }
+    // }
     resetOutofDistance = () => {
         this.seats.forEach((player) => {
             player.setOutOfDistance(false)

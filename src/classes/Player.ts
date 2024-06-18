@@ -247,70 +247,29 @@ export default class Player {
         }
         // 裝備數確認
         if (data.equipments.join() !== this.equipments.join()) {
-            if (data.equipments[0] !== this.equipments[0]) {
-                this.equipments[0] = data.equipments[0]
-                this.updateEquipments(0)
+            for (let i = 0; i < 4; i++) {
+                if (data.equipments[i] !== this.equipments[i]) {
+                    this.equipments[i] = data.equipments[i]
+                    this.updateEquipments(i)
+                }
             }
-            if (data.equipments[1] !== this.equipments[1]) {
-                this.equipments[1] = data.equipments[1]
-                this.updateEquipments(1)
-                // const armorText: Phaser.GameObjects.Text = this.instance.getAt(7)
-                // armorText.setText(`${threeKingdomsCards[this.equipments[1]].name}`)
-                // this.scene.tweens.add({
-                //     targets: armorText,
-                //     scale: 1.5,
-                //     duration: 150, // 持續時間（毫秒）
-                //     ease: 'Power2',
-                //     yoyo: true,
-                //     repeat: 1,
-                // })
-            }
-            if (data.equipments[2] !== this.equipments[2]) {
-                this.equipments[2] = data.equipments[2]
-                this.updateEquipments(2)
-                // const horsePlusText: Phaser.GameObjects.Text = this.instance.getAt(8)
-                // horsePlusText.setText(`${threeKingdomsCards[this.equipments[2]].name}`)
-                // this.scene.tweens.add({
-                //     targets: horsePlusText,
-                //     scale: 1.5,
-                //     duration: 150, // 持續時間（毫秒）
-                //     ease: 'Power2',
-                //     yoyo: true,
-                //     repeat: 1,
-                // })
-            }
-            if (data.equipments[3] !== this.equipments[3]) {
-                this.equipments[3] = data.equipments[3]
-                this.updateEquipments(3)
-                // const horseMinusText: Phaser.GameObjects.Text = this.instance.getAt(9)
-                // horseMinusText.setText(`${threeKingdomsCards[this.equipments[3]].name}`)
-                // this.scene.tweens.add({
-                //     targets: horseMinusText,
-                //     scale: 1.5,
-                //     duration: 150, // 持續時間（毫秒）
-                //     ease: 'Power2',
-                //     yoyo: true,
-                //     repeat: 1,
-                // })
-            }
+            // if (data.equipments[0] !== this.equipments[0]) {
+            //     this.equipments[0] = data.equipments[0]
+            //     this.updateEquipments(0)
+            // }
+            // if (data.equipments[1] !== this.equipments[1]) {
+            //     this.equipments[1] = data.equipments[1]
+            //     this.updateEquipments(1)
+            // }
+            // if (data.equipments[2] !== this.equipments[2]) {
+            //     this.equipments[2] = data.equipments[2]
+            //     this.updateEquipments(2)
+            // }
+            // if (data.equipments[3] !== this.equipments[3]) {
+            //     this.equipments[3] = data.equipments[3]
+            //     this.updateEquipments(3)
+            // }
             this.equipments = data.equipments
-            // const equipmentNames = this.equipments
-            //     .filter((equipmentId) => equipmentId)
-            //     .map((equipmentId) => {
-            //         const equipment = threeKingdomsCards[equipmentId]
-            //         return equipment.name
-            //     })
-            //     .join(', ')
-            // const equipmentText: Phaser.GameObjects.Text = this.instance.getAt(6)
-            // equipmentText.setText(`裝備: ${equipmentNames}`)
-            // this.scene.tweens.add({
-            //     targets: equipmentText,
-            //     scale: 1.5,
-            //     duration: 150, // 持續時間（毫秒）
-            //     ease: 'Power2',
-            //     yoyo: true,
-            //     repeat: 1,
-            // })
         }
     }
     setOutOfDistance(isOutofDistance: boolean) {
