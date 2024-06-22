@@ -301,6 +301,10 @@ export default class Player {
                 yoyo: true,
                 repeat: 1,
             })
+        } else {
+            if (this.instanceMap[equipments[index]]) {
+                this.instanceMap[equipments[index]].destroy()
+            }
         }
     }
     initEquipmentInstance(weapon: any) {
