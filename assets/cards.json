@@ -34,7 +34,7 @@
     "BH4030": {
         "id": "BH4030",
         "name": "桃",
-        "rank": 3,
+        "rank": 4,
         "suit": "heart",
         "type": "basic",
         "audio": "peach"
@@ -42,7 +42,7 @@
     "EH5031": {
         "id": "EH5031",
         "name": "麒麟弓",
-        "rank": 3,
+        "rank": 5,
         "suit": "heart",
         "type": "equipment",
         "audio": "qilinBow"
@@ -50,7 +50,7 @@
     "BHK039": {
         "id": "BHK039",
         "name": "閃",
-        "rank": 2,
+        "rank": 13,
         "suit": "heart",
         "type": "basic",
         "audio": "dodge"
