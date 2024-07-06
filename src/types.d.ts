@@ -1,5 +1,6 @@
 import threeKingdomsCards from '~/assets/cards.json'
 import threeKingdomsGenerals from '~/assets/generalCards.json'
+import weaponFeatures from '~/assets/weaponFeatures.json'
 import { roleMap } from './utils/domain'
 export type ThreeKingdomsCardIds = keyof typeof threeKingdomsCards
 export type ThreeKingdomsGeneralIds = keyof typeof threeKingdomsGenerals
@@ -45,4 +46,15 @@ export interface Audios {
     eightDiagramFormation: string
     shadowrunner: string
     redHare: string
+}
+export interface ThreeKingdomsCard {
+    id: ThreeKingdomsCardIds
+    name: string
+    rank: number
+    suit: string
+    audio: string
+}
+
+export interface WeaponFeature {
+    attackDistance: number
 }

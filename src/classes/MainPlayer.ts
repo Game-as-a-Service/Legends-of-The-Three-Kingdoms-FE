@@ -1,9 +1,19 @@
 import { Card, Player, BattleScene } from './index'
-import threeKingdomsCards from '~/assets/cards.json'
+import threeKingdomsCardsJson from '~/assets/cards.json'
 import { atkLine } from '../utils/drawing'
 import { roleMap } from '~/src/utils/domain'
-import type { ThreeKingdomsCardIds, ThreeKingdomsGeneralIds } from '~/src/types'
+import weaponFeaturesJson from '~/assets/weaponFeatures.json'
+import type {
+    ThreeKingdomsCardIds,
+    ThreeKingdomsGeneralIds,
+    ThreeKingdomsCard,
+    WeaponFeature,
+} from '~/src/types'
 import Game from './Game'
+
+const threeKingdomsCards: { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard } =
+    threeKingdomsCardsJson as { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard }
+const weaponFeatures: { [key: string]: WeaponFeature } = weaponFeaturesJson
 export default class MainPlayer extends Player {
     handCards: Card[] = []
     selectedCard: Card | null = null
@@ -318,6 +328,14 @@ export default class MainPlayer extends Player {
                 }
                 if (this.equipments[1]) {
                     distance -= 1
+                }
+                if (this.equipments[3]) {
+                    // 考慮武器攻擊距離
+                    const weaponCard = threeKingdomsCards[this.equipments[3]]
+                    const weaponFeature = weaponFeatures[weaponCard.name]
+                    if (weaponFeature?.attackDistance) {
+                        distance -= weaponFeature.attackDistance - 1
+                    }
                 }
                 if (distance > 1) player.setOutOfDistance(true)
             })
