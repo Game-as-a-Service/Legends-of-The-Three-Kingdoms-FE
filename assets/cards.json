@@ -15,6 +15,14 @@
         "type": "basic",
         "audio": "kill"
     },
+    "SSK013": {
+        "id": "SSK013",
+        "name": "南蠻入侵",
+        "rank": 13,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": "barbarianInvasion"
+    },
     "ES2015": {
         "id": "ES2015",
         "name": "八卦陣",
@@ -102,6 +110,14 @@
         "suit": "club",
         "type": "equipment",
         "audio": "eightDiagramFormation"
+    },
+    "SC7072": {
+        "id": "SC7072",
+        "name": "南蠻入侵",
+        "rank": 7,
+        "suit": "club",
+        "type": "scroll",
+        "audio": "barbarianInvasion"
     },
     "EDA092": {
         "id": "EDA092",
