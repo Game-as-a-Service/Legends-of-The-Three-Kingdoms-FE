@@ -203,6 +203,7 @@ export default class MainPlayer extends Player {
         this.hintInstance = hintContainer
 
         this.createConfirmModal(scene)
+        this.createSelectCardModal(scene)
     }
     test() {
         console.log('test')
@@ -408,7 +409,7 @@ export default class MainPlayer extends Player {
                 handleConfirm: () => {
                     this.game?.useEquipmentEffect(
                         event.data.equipmentCardId,
-                        event.targetPlayerId,
+                        event.data.targetPlayerIds[0],
                         'equipmentActive',
                     )
                     this.mainInstanceMap.confirmModal?.setAlpha(0)
@@ -416,10 +417,25 @@ export default class MainPlayer extends Player {
                 handleCancel: () => {
                     this.game?.useEquipmentEffect(
                         event.data.equipmentCardId,
-                        event.targetPlayerId,
+                        event.data.targetPlayerIds[0],
                         'equipmentSkip',
                     )
                     this.mainInstanceMap.confirmModal?.setAlpha(0)
+                },
+            })
+        } else if (reactionType === 'AskChooseMountCardEvent') {
+            console.log('AskChooseMountCardEvent')
+            this.useSelectCardModal({
+                message: event.message,
+                cardIds: event.data.mountCardIds,
+                confirmText: '選擇',
+                cancelText: '取消',
+                handleConfirm: (cardId) => {
+                    console.log('選擇', cardId)
+                    this.game?.chooseHorseCard(cardId)
+                },
+                handleCancel: () => {
+                    console.log('取消')
                 },
             })
         }
@@ -535,5 +551,135 @@ export default class MainPlayer extends Player {
         popupContainer.setAlpha(0)
         this.mainInstanceMap.confirmModal = popupContainer
         return
+    }
+    createSelectCardModal(scene: Phaser.Scene) {
+        // 確認視窗
+        const background = scene.add.graphics()
+        background.fillStyle(0x000000, 0.5) // 黑色，50% 透明度
+        background.fillRect(0, 0, 600, 400) // 矩形位置和大小
+
+        // 添加 "訊息提示"
+        const messageText = scene.add.text(300, 75, '請選擇卡牌？', {
+            fontSize: '32px',
+            color: '#fff',
+        })
+        messageText.setOrigin(0.5)
+        // 添加 "是" 按鈕
+        const yesButton = scene.add
+            .text(200, 350, '是', { fontSize: '32px', color: '#0f0' })
+            .setInteractive()
+            .on('pointerdown', () => {
+                console.log('是 按鈕被按下')
+                // 添加更多處理邏輯
+            })
+        yesButton.setOrigin(0.5)
+        // 添加 "否" 按鈕
+        const noButton = scene.add
+            .text(400, 350, '否', { fontSize: '32px', color: '#f00' })
+            .setInteractive()
+            .on('pointerdown', () => {
+                console.log('否 按鈕被按下')
+                // 添加更多處理邏輯
+            })
+        noButton.setOrigin(0.5)
+        // 創建一個容器來包含彈窗的所有組件
+        const popupContainer = scene.add.container(100, 100, [
+            background,
+            messageText,
+            yesButton,
+            noButton,
+        ])
+        popupContainer.setSize(600, 400)
+        popupContainer.setDepth(1000)
+        popupContainer.setAlpha(0)
+        popupContainer.setData('selectedCard', null)
+        popupContainer.setData('cards', [])
+        this.mainInstanceMap.selectCardModal = popupContainer
+        return
+    }
+    useSelectCardModal = ({
+        message = '提示訊息',
+        cardIds = [],
+        confirmText = '是',
+        cancelText = '否',
+        handleConfirm = (cardId) => {},
+        handleCancel = () => {},
+    }: {
+        message?: string
+        cardIds?: ThreeKingdomsCardIds[]
+        confirmText?: string
+        cancelText?: string
+        handleConfirm?: (cardId: ThreeKingdomsCardIds) => void
+        handleCancel?: () => void
+    }) => {
+        const modelText: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(1)
+        modelText.setText(message)
+        const yesButton: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(2)
+        yesButton.setText(confirmText)
+        const noButton: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(3)
+        noButton.setText(cancelText)
+        console.log('cards', cardIds)
+        cardIds.forEach((cardId, index) => {
+            const card = new Card({
+                cardId,
+                x: 240 + index * 120,
+                y: 200,
+                scene: this.scene,
+                playCardHandler: (card: Card) => {
+                    // 卡片向上移動 10 px
+                    if (card.selected) {
+                        this.scene.tweens.add({
+                            targets: card.instance,
+                            x: card.instance.x,
+                            y: card.instance.y + 20,
+                            duration: 500, // 持續時間（毫秒）
+                            ease: 'Power2',
+                        })
+                        card.selected = false
+                        this.mainInstanceMap.selectCardModal?.setData('selectedCard', null)
+                    } else {
+                        this.scene.tweens.add({
+                            targets: card.instance,
+                            x: card.instance.x,
+                            y: card.instance.y - 20,
+                            duration: 500, // 持續時間（毫秒）
+                            ease: 'Power2',
+                        })
+                        card.selected = true
+                        const preCard =
+                            this.mainInstanceMap.selectCardModal?.getData('selectedCard')
+                        if (preCard) {
+                            this.scene.tweens.add({
+                                targets: preCard.instance,
+                                x: preCard.instance.x,
+                                y: preCard.instance.y + 20,
+                                duration: 500, // 持續時間（毫秒）
+                                ease: 'Power2',
+                            })
+                            preCard.selected = false
+                        }
+                        this.mainInstanceMap.selectCardModal?.setData('selectedCard', card)
+                    }
+                },
+            })
+            this.mainInstanceMap.selectCardModal?.add(card.instance)
+            this.mainInstanceMap.selectCardModal?.getData('cards').push(card)
+        })
+        yesButton.setInteractive().on('pointerdown', () => {
+            const card = this.mainInstanceMap.selectCardModal?.getData('selectedCard')
+            if (!card) {
+                console.log('請選擇一張卡牌')
+                return
+            }
+            handleConfirm(card.id)
+            this.mainInstanceMap.selectCardModal?.setAlpha(0)
+            this.mainInstanceMap.selectCardModal?.getData('cards').forEach((c: Card) => {
+                this.mainInstanceMap.selectCardModal?.remove(c.instance)
+                c.instance.destroy()
+            })
+            this.mainInstanceMap.selectCardModal?.setData('cards', [])
+        })
+        noButton.setInteractive().on('pointerdown', handleCancel)
+        this.mainInstanceMap.selectCardModal?.setAlpha(1)
     }
 }

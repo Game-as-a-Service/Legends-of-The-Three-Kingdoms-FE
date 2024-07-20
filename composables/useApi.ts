@@ -58,6 +58,15 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:useEquipmentEffect`, params)
     }
+    const chooseHorseCard = (
+        gameId: string,
+        params: {
+            cardId: ThreeKingdomsCardIds
+            playerId: string // 自己的id
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:chooseHorseCard`, params)
+    }
     return {
         api,
         createGame,
@@ -67,5 +76,6 @@ export function useApi() {
         finishAction,
         discardCards,
         useEquipmentEffect,
+        chooseHorseCard,
     }
 }

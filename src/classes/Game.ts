@@ -164,6 +164,13 @@ export default class Game {
         }
         this.api.useEquipmentEffect(this.gameId, params)
     }
+    chooseHorseCard = (cardId: string) => {
+        const params = {
+            playerId: this.me.id,
+            cardId,
+        }
+        this.api.chooseHorseCard(this.gameId, params)
+    }
     async eventHandler(event: any) {
         // console.log(event)
         const data = event.data
@@ -223,6 +230,17 @@ export default class Game {
                 // 詢問是手使用裝備牌的效果
                 if (data.playerId === this.me.id) {
                     this.me.askReaction('askPlayEquipmentEffect', event)
+                }
+                break
+            case 'AskChooseMountCardEvent':
+                // const data = {
+                //     chooseMountCardPlayerId: 'Scolley',
+                //     targetPlayerId: 'YangJun',
+                //     mountCardIds: ['ES5018', 'EH5044'],
+                // }
+                // 詢問是手使用裝備牌的效果
+                if (data.chooseMountCardPlayerId === this.me.id) {
+                    this.me.askReaction('AskChooseMountCardEvent', event)
                 }
                 break
             case 'UseEquipmentEffectViewModel':
