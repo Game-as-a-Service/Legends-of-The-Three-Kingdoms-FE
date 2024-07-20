@@ -513,6 +513,20 @@ const getTimeString = () => {
 const discardCard = () => {
     myGame.value.me.askDiscardCards(2)
 }
+const handleShowSelectCardModal = () => {
+    myGame.value.me.useSelectCardModal({
+        message: '請選擇一匹馬',
+        cardIds: ['ES5018', 'EH5044'],
+        confirmText: '確定',
+        cancelText: '取消',
+        handleConfirm: (cardId) => {
+            console.log('確定', cardId)
+        },
+        handleCancel: () => {
+            console.log('取消')
+        },
+    })
+}
 </script>
 <template>
     <div class="bg-black text-2xl">
@@ -685,6 +699,13 @@ const discardCard = () => {
                     class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
                 >
                     棄牌
+                </button>
+                <button
+                    @click="handleShowSelectCardModal"
+                    type="button"
+                    class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
+                >
+                    打開選馬彈窗
                 </button>
                 <button
                     @click="startTurn"
