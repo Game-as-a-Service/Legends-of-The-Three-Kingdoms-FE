@@ -100,13 +100,6 @@ export default class Player {
             fontSize: '20px',
             color: '#000',
         })
-        // const equipmentNames = this.equipments
-        //     .filter((equipmentId) => equipmentId)
-        //     .map((equipmentId) => {
-        //         const equipment = threeKingdomsCards[equipmentId]
-        //         return equipment.name
-        //     })
-        //     .join(', ')
         const weapon = this.equipments[0] ? threeKingdomsCards[this.equipments[0]] : null
         const armor = this.equipments[1] ? threeKingdomsCards[this.equipments[1]].name : ''
         const horsePlus = this.equipments[2] ? threeKingdomsCards[this.equipments[2]].name : ''
@@ -253,22 +246,6 @@ export default class Player {
                     this.updateEquipments(i)
                 }
             }
-            // if (data.equipments[0] !== this.equipments[0]) {
-            //     this.equipments[0] = data.equipments[0]
-            //     this.updateEquipments(0)
-            // }
-            // if (data.equipments[1] !== this.equipments[1]) {
-            //     this.equipments[1] = data.equipments[1]
-            //     this.updateEquipments(1)
-            // }
-            // if (data.equipments[2] !== this.equipments[2]) {
-            //     this.equipments[2] = data.equipments[2]
-            //     this.updateEquipments(2)
-            // }
-            // if (data.equipments[3] !== this.equipments[3]) {
-            //     this.equipments[3] = data.equipments[3]
-            //     this.updateEquipments(3)
-            // }
             this.equipments = data.equipments
         }
     }

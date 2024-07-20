@@ -324,15 +324,15 @@ export default class MainPlayer extends Player {
                 // index 就是距離
                 // 考慮裝備
                 let distance = Math.min(index + 1, this.seats.length - index)
-                if (player.equipments[0]) {
+                if (player.equipments[2]) {
                     distance += 1
                 }
-                if (this.equipments[1]) {
+                if (this.equipments[3]) {
                     distance -= 1
                 }
-                if (this.equipments[3]) {
+                if (this.equipments[0]) {
                     // 考慮武器攻擊距離
-                    const weaponCard = threeKingdomsCards[this.equipments[3]]
+                    const weaponCard = threeKingdomsCards[this.equipments[0]]
                     const weaponFeature = weaponFeatures[weaponCard.name]
                     if (weaponFeature?.attackDistance) {
                         distance -= weaponFeature.attackDistance - 1
