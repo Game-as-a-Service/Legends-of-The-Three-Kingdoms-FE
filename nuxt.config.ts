@@ -3,8 +3,10 @@
 export default defineNuxtConfig({
     runtimeConfig: {
         public: {
-            apiBaseUrl: 'http://54.238.232.62:8080/',
-            brokerUrl: 'ws://54.238.232.62:8080/legendsOfTheThreeKingdoms',
+            apiBaseUrl: 'https://scolley31.com/',
+            brokerUrl: 'wss://scolley31.com/legendsOfTheThreeKingdoms',
+            // apiBaseUrl: 'http://54.238.232.62:8080/',
+            // brokerUrl: 'ws://54.238.232.62:8080/legendsOfTheThreeKingdoms',
         },
     },
     production: {
