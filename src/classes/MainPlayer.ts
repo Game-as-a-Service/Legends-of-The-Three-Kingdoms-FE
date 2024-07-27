@@ -438,6 +438,11 @@ export default class MainPlayer extends Player {
                     console.log('取消')
                 },
             })
+        } else if (reactionType === 'askKill') {
+            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+            hintText?.setText('請出一張殺')
+            this.hintInstance?.setAlpha(1)
+            this.skipInstance?.setAlpha(1)
         }
     }
     // updatePlayerData(data: any) {

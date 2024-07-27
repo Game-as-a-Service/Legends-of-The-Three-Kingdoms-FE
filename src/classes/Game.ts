@@ -104,6 +104,17 @@ export default class Game {
             this.api.playCard(this.gameId, params)
             return
         }
+        if (reactionType === 'askKill') {
+            const playType = card.id ? 'inactive' : 'skip'
+            const params = {
+                cardId: card.id || '',
+                playerId: this.me.id,
+                targetPlayerId: this.gameData.round?.dyingPlayer,
+                playType: playType,
+            }
+            this.api.playCard(this.gameId, params)
+            return
+        }
         const params = {
             playerId: this.me.id,
             targetPlayerId: this.me.id,
@@ -294,6 +305,11 @@ export default class Game {
             case 'AskPeachEvent':
                 if (data.playerId === this.me.id) {
                     this.me.askReaction('askPeach')
+                }
+                break
+            case 'AskKillEvent':
+                if (data.playerId === this.me.id) {
+                    this.me.askReaction('askKill')
                 }
                 break
             case 'GameOverEvent':
