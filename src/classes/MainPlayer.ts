@@ -159,6 +159,7 @@ export default class MainPlayer extends Player {
         this.checkBtnInstance = checkContainer
         checkbtn.on('pointerdown', () => {
             if (this.discardMode) {
+                if (this.discardCards.length < this.discardCount) return
                 this.discardMode = false
                 this.discardCardsAction(this.discardCards.map((card) => card.id))
                 this.handCards.forEach((card) => {
