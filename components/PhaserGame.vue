@@ -597,7 +597,8 @@ const handleShowSelectCardModal = () => {
                             v-if="
                                 isConnected &&
                                 startGameFlag &&
-                                round.currentRoundPlayer === playerId
+                                round.currentRoundPlayer === playerId &&
+                                round.activePlayer === playerId
                             "
                             @click="finishAction"
                             type="button"
