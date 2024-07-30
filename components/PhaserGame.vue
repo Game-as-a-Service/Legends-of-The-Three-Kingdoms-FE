@@ -187,7 +187,7 @@ onMounted(() => {
                     const res = JSON.parse(greeting.body)
                     console.log(res)
                     messages.value.push(`${getTimeString()}: ${res.message}`)
-                    if (messages.value.length > 5) {
+                    if (messages.value.length > 10) {
                         messages.value.shift()
                     }
                     // showGreeting(greeting.body)
