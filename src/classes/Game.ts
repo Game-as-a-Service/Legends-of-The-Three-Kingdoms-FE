@@ -254,6 +254,21 @@ export default class Game {
                     this.me.askReaction('AskChooseMountCardEvent', event)
                 }
                 break
+            case 'SkipEquipmentEffectViewModel':
+                // {
+                //     "event": "SkipEquipmentEffectViewModel",
+                //     "data": {
+                //         "playerId": "Scolley",
+                //         "cardId": "ES2015"
+                //     },
+                //     "message": "跳過裝備效果"
+                // }
+                if (data.playerId === this.me.id) {
+                    this.me.reactionType = ''
+                    this.me.reactionMode = false
+                    this.me.askReaction('askDodge')
+                }
+                break
             case 'UseEquipmentEffectViewModel':
                 // {
                 //     "event": "UseEquipmentEffectViewModel",
