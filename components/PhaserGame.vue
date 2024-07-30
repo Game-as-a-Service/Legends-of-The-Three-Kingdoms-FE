@@ -228,6 +228,10 @@ onMounted(() => {
                         }
                         for (let i = 0; i < res.events.length; i++) {
                             const event = res.events[i]
+                            messages.value.push(`${getTimeString()}: ${event.message}`)
+                            if (messages.value.length > 10) {
+                                messages.value.shift()
+                            }
                             await myGame.value.eventHandler(event)
                         }
                         return
