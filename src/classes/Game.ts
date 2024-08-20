@@ -289,15 +289,16 @@ export default class Game {
                 }
                 break
             case 'DrawCardEvent':
-                if (data.drawCardPlayerId === this.me.id) {
-                    data.cards.forEach((cardId: ThreeKingdomsCardIds) => {
-                        this.me.addHandCard(cardId)
-                    })
-                    // this.me.addHandCard('EH5044')
-                    this.me.arrangeCards()
-                    return
-                }
-                this.addHandCardsToPlayer(data.drawCardPlayerId, data.size)
+                // 由遊戲狀態中的手牌來判斷抽牌
+                // if (data.drawCardPlayerId === this.me.id) {
+                //     data.cards.forEach((cardId: ThreeKingdomsCardIds) => {
+                //         this.me.addHandCard(cardId)
+                //     })
+                //     // this.me.addHandCard('EH5044')
+                //     this.me.arrangeCards()
+                //     return
+                // }
+                // this.addHandCardsToPlayer(data.drawCardPlayerId, data.size)
                 break
             case 'NotifyDiscardEvent':
                 if (data.discardPlayerId === this.me.id && data.discardCount > 0) {

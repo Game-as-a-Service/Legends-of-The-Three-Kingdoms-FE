@@ -446,6 +446,43 @@ export default class MainPlayer extends Player {
             this.skipInstance?.setAlpha(1)
         }
     }
+    updatePlayerData(data: any): void {
+        super.updatePlayerData(data)
+        if (data.hand.cardIds.join() !== this.hand.cardIds.join()) {
+            // 保留相同的卡片 只處理不同的卡片
+            console.log('updatePlayerData', data.hand.cardIds.join(), this.hand.cardIds.join())
+            this.hand.size = data.hand.size
+            this.hand.cardIds = data.hand.cardIds
+            // 從第一張開始檢查手牌與當前手牌是否相同，找到不同處之後 刪除後面的卡片 並新增新的卡片
+            const diffIndex = this.handCards.findIndex(
+                (card, i) => card.id !== data.hand.cardIds[i],
+            )
+            console.log('diffIndex', diffIndex)
+            if (diffIndex === -1) {
+                // 沒有要刪除的卡片
+                for (let i = this.handCards.length; i < data.hand.cardIds.length; i++) {
+                    this.addHandCard(data.hand.cardIds[i])
+                }
+            } else {
+                for (let i = diffIndex; i < this.handCards.length; i++) {
+                    this.handCards[i].instance.destroy()
+                }
+                this.handCards = this.handCards.slice(0, diffIndex)
+                for (let i = diffIndex; i < data.hand.cardIds.length; i++) {
+                    this.addHandCard(data.hand.cardIds[i])
+                }
+            }
+            this.arrangeCards()
+            // this.handCards.forEach((card) => {
+            //     card.instance.destroy()
+            // })
+            // this.handCards = []
+            // data.hand.cardIds.forEach((cardId: ThreeKingdomsCardIds) => {
+            //     this.addHandCard(cardId)
+            // })
+            // this.arrangeCards()
+        }
+    }
     // updatePlayerData(data: any) {
     //     // 手牌數確認
     //     // if (data.hand.size !== this.hand.size) {

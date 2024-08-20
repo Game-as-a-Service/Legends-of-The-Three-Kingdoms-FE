@@ -12,7 +12,7 @@ export default class Player {
     hp: number
     hand: {
         size: number
-        cards: string[]
+        cardIds: string[]
     }
     equipments: ThreeKingdomsCardIds[]
     delayScrolls: string[]
@@ -48,7 +48,7 @@ export default class Player {
         hp: number
         hand: {
             size: number
-            cards: string[]
+            cardIds: string[]
         }
         equipments: ThreeKingdomsCardIds[]
         delayScrolls: string[]
