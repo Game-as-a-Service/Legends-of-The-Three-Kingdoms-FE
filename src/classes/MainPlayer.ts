@@ -27,6 +27,7 @@ export default class MainPlayer extends Player {
     game: Game | null = null
     discardCardsAction: ([]) => void = ([]) => {}
     mainInstanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
+    event: string = ''
     constructor({
         id,
         generral,
@@ -52,7 +53,7 @@ export default class MainPlayer extends Player {
         hp: number
         hand: {
             size: number
-            cards: string[]
+            cardIds: string[]
         }
         equipments: ThreeKingdomsCardIds[]
         delayScrolls: string[]
@@ -191,6 +192,12 @@ export default class MainPlayer extends Player {
             this.reactionType = ''
             if (this.skipInstance) this.skipInstance.setAlpha(0)
             if (this.hintInstance) this.hintInstance.setAlpha(0)
+            if (this.event === 'AskKillEvent') {
+                this.handCards.forEach((card) => {
+                    card.instance.setAlpha(1)
+                })
+                this.event = ''
+            }
         })
         // 提示文字
         const hintText = scene.add.text(0, 0, '請選擇要棄的牌', {
@@ -244,6 +251,15 @@ export default class MainPlayer extends Player {
         if (this.game === null) return
         if (this.game.getActivePlayer() !== this.id) {
             return
+        }
+        if (this.event === 'AskKillEvent') {
+            if (card.name !== '殺') {
+                return
+            } else {
+                this.handCards.forEach((card) => {
+                    card.instance.setAlpha(1)
+                })
+            }
         }
         if (this.discardMode) {
             if (card.selected) {
@@ -440,10 +456,17 @@ export default class MainPlayer extends Player {
                 },
             })
         } else if (reactionType === 'askKill') {
+            this.event = 'AskKillEvent'
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('請出一張殺')
             this.hintInstance?.setAlpha(1)
             this.skipInstance?.setAlpha(1)
+            // 只能出殺 其他不能出
+            this.handCards.forEach((card) => {
+                if (card.name !== '殺') {
+                    card.instance.setAlpha(0.3)
+                }
+            })
         }
     }
     updatePlayerData(data: any): void {
