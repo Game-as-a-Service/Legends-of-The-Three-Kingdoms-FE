@@ -80,6 +80,7 @@ export default class Game {
         hintContainer.setPosition(400, 300)
         hintContainer.setAlpha(0)
         this.hintInstance = hintContainer
+        this.gameData = gameData
     }
     gamePlayCardHandler = (card: Card, reactionType: string) => {
         if (reactionType === 'askDodge') {
