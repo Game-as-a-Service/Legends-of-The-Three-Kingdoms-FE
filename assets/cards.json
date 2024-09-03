@@ -95,6 +95,22 @@
         "type": "scroll",
         "audio": "dismantle"
     },
+    "SCQ064": {
+        "id": "SCQ064",
+        "name": "借刀殺人",
+        "rank": 12,
+        "suit": "club",
+        "type": "scroll",
+        "audio": ""
+    },
+    "SCK065": {
+        "id": "SCK065",
+        "name": "借刀殺人",
+        "rank": 13,
+        "suit": "club",
+        "type": "scroll",
+        "audio": ""
+    },
     "ECA066": {
         "id": "ECA066",
         "name": "諸葛連弩",
