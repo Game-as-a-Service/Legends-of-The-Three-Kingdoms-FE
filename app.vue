@@ -1,7 +1,5 @@
 <template>
-  <div>
-    <ClientOnly>
-      <PhaserGame />
-    </ClientOnly>
-  </div>
+    <div>
+        <NuxtPage />
+    </div>
 </template>
