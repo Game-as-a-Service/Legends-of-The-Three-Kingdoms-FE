@@ -1,8 +1,11 @@
 import generalCards from '~/assets/generalCards.json'
 import threeKingdomsCards from '~/assets/cards.json'
 import { roleMap, suits } from '~/src/utils/domain'
-import type { ThreeKingdomsCardIds, ThreeKingdomsGeneralIds } from '~/src/types'
+import type { ThreeKingdomsCardIds, ThreeKingdomsGeneralIds, WeaponFeature } from '~/src/types'
 import { BattleScene } from './index'
+import Game from './Game'
+import weaponFeaturesJson from '~/assets/weaponFeatures.json'
+const weaponFeatures: { [key: string]: WeaponFeature } = weaponFeaturesJson
 export default class Player {
     id: string
     generral: string
@@ -26,6 +29,7 @@ export default class Player {
     hintInstance!: Phaser.GameObjects.Container
     isOutofDistance: boolean = false
     instanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
+    game: Game | null = null
     // properties and methods go here
     constructor({
         id,
@@ -40,6 +44,7 @@ export default class Player {
         x,
         y,
         scene,
+        game,
     }: {
         id: string
         generral: string
@@ -56,6 +61,7 @@ export default class Player {
         x: number
         y: number
         scene: BattleScene
+        game: Game
     }) {
         this.id = id
         this.generral = generral
@@ -70,6 +76,7 @@ export default class Player {
         this.x = x
         this.y = y
         this.scene = scene
+        this.game = game
     }
     createInstance() {
         const baseX = this.x
@@ -255,6 +262,25 @@ export default class Player {
             this.instance.setAlpha(0.5)
         } else {
             this.instance.setAlpha(1)
+        }
+    }
+    setPlayerSelected(isSelected: boolean, type: 'from' | 'to') {
+        // 讓物件邊緣發光
+        const rectangle: Phaser.GameObjects.Rectangle = this.instance.getAt(0)
+        if (isSelected) {
+            // 如果是 from 就是綠色，to 就是紅色
+            const color = type === 'from' ? 0x00ff00 : 0xff0000
+            const fx = rectangle.postFX.addGlow(color, 20, 0.5)
+            this.scene.tweens.add({
+                targets: fx,
+                outerStrength: 4,
+                duration: 1000,
+                ease: 'Sine.easeInOut',
+                yoyo: true,
+                loop: -1,
+            })
+        } else {
+            rectangle.postFX.clear()
         }
     }
     updateEquipments(index: number) {

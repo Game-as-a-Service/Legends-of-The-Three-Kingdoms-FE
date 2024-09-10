@@ -30,7 +30,16 @@ const roleText = {
     TRAITOR: '內奸',
 }
 const game = ref(null)
-const myCards = ref(['BHK039', 'BH4030', 'BS8008', 'SHQ051', 'SS7007', 'SH7046', 'SHA040'])
+const myCards = ref([
+    'BHK039',
+    'BH4030',
+    'BS8008',
+    'SHQ051',
+    'SS7007',
+    'SH7046',
+    'SHA040',
+    'SCQ064',
+])
 const myGameData = ref({})
 const myGame = ref(null)
 const myScene = ref(null)
@@ -66,7 +75,7 @@ const initDemo = () => {
                 ) === index,
         )
         .map(([key, value]) => key)
-        .splice(0, 4)
+    // .splice(0, 4)
     const gameData = {
         seats: [
             {
@@ -129,6 +138,13 @@ const initDemo = () => {
             },
             equipments: [],
             delayScrolls: [],
+        },
+        round: {
+            roundPhase: '',
+            currentRoundPlayer: 'Tux',
+            activePlayer: 'Tux',
+            dyingPlayer: '',
+            showKill: false,
         },
     }
     demo.value = true

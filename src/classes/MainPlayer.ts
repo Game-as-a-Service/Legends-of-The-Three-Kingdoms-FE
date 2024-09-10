@@ -24,7 +24,6 @@ export default class MainPlayer extends Player {
     reactionType: string = ''
     discardCount: number = 0
     discardCards: Card[] = []
-    game: Game | null = null
     discardCardsAction: ([]) => void = ([]) => {}
     mainInstanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
     event: string = ''
@@ -64,7 +63,7 @@ export default class MainPlayer extends Player {
         y: number
         scene: BattleScene
         seats: any
-        game: any
+        game: Game
     }) {
         super({
             id,
@@ -79,11 +78,11 @@ export default class MainPlayer extends Player {
             x,
             y,
             scene,
+            game,
         })
         this.seats = seats
         this.gamePlayCardHandler = gamePlayCardHandler
         this.discardCardsAction = discardCardsAction
-        this.game = game
         this.mainInstanceMap = {}
         // this.createMainPlayerInstance({ baseX: x, baseY: y, scene })
     }
@@ -248,10 +247,11 @@ export default class MainPlayer extends Player {
         }
     }
     playCardHandler = (card: Card) => {
-        if (this.game === null) return
-        if (this.game.getActivePlayer() !== this.id) {
+        // 非自己回合不能出牌
+        if (this.game!.getActivePlayer() !== this.id) {
             return
         }
+        /// event check
         if (this.event === 'AskKillEvent') {
             if (card.name !== '殺') {
                 return
@@ -370,6 +370,43 @@ export default class MainPlayer extends Player {
             // this.seats[0].hpChange(-1)
             // card.destroy()
             // this.selectedCard = null
+        }
+        if (card.name === '借刀殺人') {
+            if (this.selectedCard == card) {
+                // 卡片下移
+                this.scene.tweens.add({
+                    targets: card.instance,
+                    x: card.instance.x,
+                    y: card.instance.y + 20,
+                    duration: 500, // 持續時間（毫秒）
+                    ease: 'Power2',
+                    onComplete: () => {
+                        this.selectedCard = null
+                    },
+                })
+                this.resetOutofDistance()
+                return
+            }
+            // 判斷是否有可以施放的對象
+            // 該玩家身上有武器
+            const targetPlayers = this.seats.filter((player) => !player.equipments[0])
+            console.log('targetPlayers', targetPlayers)
+            targetPlayers.forEach((player) => {
+                player.setOutOfDistance(true)
+            })
+            // 卡片上移
+            this.selectedCard = card
+            let x = card.instance.x
+            let y = card.instance.y
+            this.scene.tweens.add({
+                targets: card.instance,
+                x: x,
+                y: y - 20,
+                // yoyo: true,
+                duration: 500, // 持續時間（毫秒）
+                ease: 'Power2',
+            })
+            return
         }
         card.playCard()
         this.gamePlayCardHandler(card)

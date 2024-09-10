@@ -1,12 +1,24 @@
 import { Player, MainPlayer, Card, BattleScene } from './index'
 import { atkLine } from '../utils/drawing'
-import type { ThreeKingdomsCardIds, GameData, PlayType, EquipmentPlayType } from '~/src/types'
+import type {
+    ThreeKingdomsCardIds,
+    GameData,
+    ThreeKingdomsCard,
+    PlayType,
+    EquipmentPlayType,
+    WeaponFeature,
+} from '~/src/types'
+import threeKingdomsCardsJson from '~/assets/cards.json'
+import weaponFeaturesJson from '~/assets/weaponFeatures.json'
 // import api from '~/src/utils/api'
 const locations = [
     { x: 640, y: 160 },
     { x: 400, y: 120 },
     { x: 160, y: 160 },
 ]
+const threeKingdomsCards: { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard } =
+    threeKingdomsCardsJson as { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard }
+const weaponFeatures: { [key: string]: WeaponFeature } = weaponFeaturesJson
 // const playCard = async (
 //     gameId: string,
 //     params: {
@@ -52,6 +64,7 @@ export default class Game {
     }
     hintInstance!: Phaser.GameObjects.Container
     api: any
+    selectTargetPlayers: Player[] = []
     constructor(gameData: any, scene: BattleScene, api: any) {
         this.scene = scene
         this.api = api
@@ -62,6 +75,7 @@ export default class Game {
                 y: locations[index].y,
                 scene,
                 handleClickPlayer: this.handleClickPlayer,
+                game: this,
             })
             playerInstance.createInstance()
             return playerInstance
@@ -143,6 +157,23 @@ export default class Game {
             card.playCard()
             console.log(player, this.me)
             this.seats.forEach((player) => player.setOutOfDistance(false))
+        }
+        if (this.me.selectedCard!.name === '借刀殺人') {
+            // 借刀殺人要依序選擇目標
+            if (this.selectTargetPlayers.length === 0) {
+                player.setPlayerSelected(true, 'from')
+                this.selectTargetPlayers.push(player)
+                // 把此玩家攻擊範圍內的玩家設定為可選擇
+                this.seats.forEach((p) => {
+                    if (p.id !== player.id && this.canAttack(player, p)) {
+                        p.setOutOfDistance(false)
+                    }
+                })
+            } else if (this.selectTargetPlayers.length === 1) {
+                // 已有選擇攻擊玩家，選擇被攻擊玩家
+                player.setPlayerSelected(true, 'to')
+                this.selectTargetPlayers.push(player)
+            }
         }
     }
     skipPlayCard = () => {
@@ -448,5 +479,25 @@ export default class Game {
     }
     getActivePlayer = () => {
         return this.gameData.round?.activePlayer || this.gameData.round?.currentRoundPlayer
+    }
+    canAttack = (player: Player, targetPlayer: Player) => {
+        // 計算兩者的距離
+        const seats = [...this.seats, this.me]
+        const index1 = seats.findIndex((p) => p.id === player.id)
+        const index2 = seats.findIndex((p) => p.id === targetPlayer.id)
+        let distance = Math.abs(index1 - index2)
+        if (targetPlayer.equipments[3]) distance += 1
+        if (player.equipments[2]) {
+            distance -= 1
+        }
+        if (player.equipments[0]) {
+            // 考慮武器攻擊距離
+            const weaponCard = threeKingdomsCards[player.equipments[0]]
+            const weaponFeature = weaponFeatures[weaponCard.name]
+            if (weaponFeature?.attackDistance) {
+                distance -= weaponFeature.attackDistance - 1
+            }
+        }
+        return distance <= 1
     }
 }
