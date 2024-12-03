@@ -140,7 +140,11 @@ export default class Game {
     }
     handleClickPlayer = (player: Player) => {
         if (!this.me.selectedCard || player.isOutofDistance) return
-        if (this.me.selectedCard.name === '殺' || this.me.selectedCard.name === '過河拆橋') {
+        if (
+            this.me.selectedCard.name === '殺' ||
+            this.me.selectedCard.name === '過河拆橋' ||
+            this.me.selectedCard.name === '決鬥'
+        ) {
             const params = {
                 playerId: this.me.id,
                 targetPlayerId: player.id,

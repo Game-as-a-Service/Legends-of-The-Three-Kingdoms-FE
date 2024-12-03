@@ -53,6 +53,7 @@ export interface ThreeKingdomsCard {
     rank: number
     suit: string
     audio: string
+    type: string
 }
 
 export interface WeaponFeature {

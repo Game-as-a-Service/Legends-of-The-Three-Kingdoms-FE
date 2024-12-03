@@ -1,4 +1,12 @@
 {
+    "SSA001": {
+        "id": "SSA001",
+        "name": "決鬥",
+        "rank": 1,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": ""
+    },
     "SS7007": {
         "id": "SS7007",
         "name": "南蠻入侵",
@@ -95,6 +103,14 @@
         "type": "scroll",
         "audio": "dismantle"
     },
+    "SCA053": {
+        "id": "SCA053",
+        "name": "決鬥",
+        "rank": 1,
+        "suit": "heart",
+        "type": "scroll",
+        "audio": ""
+    },
     "SCQ064": {
         "id": "SCQ064",
         "name": "借刀殺人",
@@ -134,6 +150,14 @@
         "suit": "club",
         "type": "scroll",
         "audio": "barbarianInvasion"
+    },
+    "SDA079": {
+        "id": "SDA079",
+        "name": "決鬥",
+        "rank": 1,
+        "suit": "diamond",
+        "type": "scroll",
+        "audio": ""
     },
     "EDA092": {
         "id": "EDA092",

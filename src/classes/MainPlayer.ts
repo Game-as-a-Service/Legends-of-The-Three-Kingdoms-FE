@@ -210,6 +210,7 @@ export default class MainPlayer extends Player {
         this.hintInstance = hintContainer
 
         this.createConfirmModal(scene)
+        // this.createCheckModal(scene)
         this.createSelectCardModal(scene)
     }
     test() {
@@ -297,7 +298,7 @@ export default class MainPlayer extends Player {
             card.playCard()
             return
         }
-        if (card.name === '殺' || card.name === '過河拆橋') {
+        if (card.name === '殺' || card.name === '過河拆橋' || card.name === '決鬥') {
             if (this.selectedCard == card) {
                 // 卡片下移
                 this.scene.tweens.add({
@@ -337,6 +338,11 @@ export default class MainPlayer extends Player {
                 ease: 'Power2',
             })
             // 計算每個人的距離
+            // 錦囊卡不用看距離
+            const cardInfo = threeKingdomsCards[card.id]
+            if (cardInfo.type === 'scroll') {
+                return
+            }
             const distances = this.seats.forEach((player, index) => {
                 // index 就是距離
                 // 考慮裝備
@@ -652,6 +658,47 @@ export default class MainPlayer extends Player {
         popupContainer.setSize(600, 400)
         popupContainer.setDepth(1000)
         popupContainer.setAlpha(0)
+        this.mainInstanceMap.confirmModal = popupContainer
+        return
+    }
+    handleCheckClick = () => {
+        console.log('是 按鈕被按下')
+        if (this.selectedCard?.name === '借刀殺人') {
+            if (this.game?.selectTargetPlayers.length !== 2) {
+                console.log('請選擇兩名玩家')
+                return
+            } else {
+                console.log('選擇完成')
+            }
+        }
+    }
+    createCheckModal(scene: Phaser.Scene) {
+        // 出牌確認視窗
+        const background = scene.add.graphics()
+        background.fillStyle(0x000000, 0.5) // 黑色，50% 透明度
+        background.fillRect(0, 0, 200, 60) // 矩形位置和大小
+        // 添加 "是" 按鈕
+        const yesButton = scene.add
+            .text(50, 30, '確定', { fontSize: '32px', color: '#0f0' })
+            .setInteractive()
+            .on('pointerdown', () => {
+                this.handleCheckClick()
+            })
+        yesButton.setOrigin(0.5)
+        // 添加 "否" 按鈕
+        const noButton = scene.add
+            .text(150, 30, '取消', { fontSize: '32px', color: '#f00' })
+            .setInteractive()
+            .on('pointerdown', () => {
+                console.log('否 按鈕被按下')
+                // 添加更多處理邏輯
+            })
+        noButton.setOrigin(0.5)
+        // 創建一個容器來包含彈窗的所有組件
+        const popupContainer = scene.add.container(600, 320, [background, yesButton, noButton])
+        popupContainer.setSize(200, 80)
+        popupContainer.setDepth(1000)
+        popupContainer.setAlpha(1)
         this.mainInstanceMap.confirmModal = popupContainer
         return
     }

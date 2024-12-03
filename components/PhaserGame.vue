@@ -352,7 +352,11 @@ const eventTrigger = () => {
         if (eventSelectedCard.value === '無中生有') {
             getCards()
         }
-    } else if (eventSelectedCard.value === '殺' || eventSelectedCard.value === '過河拆橋') {
+    } else if (
+        eventSelectedCard.value === '殺' ||
+        eventSelectedCard.value === '過河拆橋' ||
+        eventSelectedCard.value === '決鬥'
+    ) {
         const card = Object.values(threeKingdomsCards).find(
             (value) => value.name === eventSelectedCard.value,
         )
