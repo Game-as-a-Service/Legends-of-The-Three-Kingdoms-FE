@@ -67,6 +67,16 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:chooseHorseCard`, params)
     }
+    const useBorrowedSwordEffect = (
+        gameId: string,
+        params: {
+            currentPlayerId: string
+            borrowedPlayerId: string
+            attackTargetPlayerId: string
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:useBorrowedSwordEffect`, params)
+    }
     return {
         api,
         createGame,
@@ -77,5 +87,6 @@ export function useApi() {
         discardCards,
         useEquipmentEffect,
         chooseHorseCard,
+        useBorrowedSwordEffect,
     }
 }

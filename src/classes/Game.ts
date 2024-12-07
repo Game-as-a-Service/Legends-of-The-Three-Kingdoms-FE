@@ -130,6 +130,17 @@ export default class Game {
             this.api.playCard(this.gameId, params)
             return
         }
+        if (card.name === '借刀殺人') {
+            const params = {
+                playerId: this.me.id,
+                targetPlayerId: this.selectTargetPlayers[0].id,
+                cardId: card.id,
+                playType: 'active',
+            }
+            this.api.playCard(this.gameId, params)
+            this.seats.forEach((player) => player.setOutOfDistance(true))
+            return
+        }
         const params = {
             playerId: this.me.id,
             targetPlayerId: this.me.id,
@@ -219,11 +230,25 @@ export default class Game {
         this.api.chooseHorseCard(this.gameId, params)
     }
     async eventHandler(event: any) {
-        // console.log(event)
+        console.log(event)
         const data = event.data
         switch (event.event) {
             case 'PlayCardEvent':
                 if (data.playType === 'skip') {
+                    return
+                }
+                // 借刀殺人特殊處理
+                // 如果是自己出借刀殺人，收到event要再呼叫借刀殺人api
+                const cardInfo = threeKingdomsCards[data.cardId as ThreeKingdomsCardIds]
+                console.log(cardInfo, data.playerId, this.me.id)
+                if (cardInfo.name === '借刀殺人' && data.playerId === this.me.id) {
+                    const params = {
+                        currentPlayerId: this.me.id,
+                        borrowedPlayerId: this.selectTargetPlayers[0].id,
+                        attackTargetPlayerId: this.selectTargetPlayers[1].id,
+                    }
+                    this.api.useBorrowedSwordEffect(this.gameId, params)
+                    this.selectTargetPlayers = []
                     return
                 }
                 if (data.playerId === this.me.id) {
@@ -299,6 +324,10 @@ export default class Game {
                 //     },
                 //     "message": "跳過裝備效果"
                 // }
+                if (data.cardId === 'EH5031') {
+                    // 麒麟弓不用觸發要求出閃
+                    break
+                }
                 if (data.playerId === this.me.id) {
                     this.me.reactionType = ''
                     this.me.reactionMode = false
