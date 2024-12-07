@@ -210,7 +210,7 @@ export default class MainPlayer extends Player {
         this.hintInstance = hintContainer
 
         this.createConfirmModal(scene)
-        // this.createCheckModal(scene)
+        this.createCheckModal(scene)
         this.createSelectCardModal(scene)
     }
     test() {
@@ -412,6 +412,7 @@ export default class MainPlayer extends Player {
                 duration: 500, // 持續時間（毫秒）
                 ease: 'Power2',
             })
+            this.mainInstanceMap.checkModal?.setAlpha(1)
             return
         }
         card.playCard()
@@ -668,6 +669,10 @@ export default class MainPlayer extends Player {
                 console.log('請選擇兩名玩家')
                 return
             } else {
+                this.gamePlayCardHandler(this.selectedCard)
+                this.selectedCard.playCard()
+                this.selectedCard = null
+                this.mainInstanceMap.checkModal?.setAlpha(0)
                 console.log('選擇完成')
             }
         }
@@ -698,8 +703,8 @@ export default class MainPlayer extends Player {
         const popupContainer = scene.add.container(600, 320, [background, yesButton, noButton])
         popupContainer.setSize(200, 80)
         popupContainer.setDepth(1000)
-        popupContainer.setAlpha(1)
-        this.mainInstanceMap.confirmModal = popupContainer
+        popupContainer.setAlpha(0)
+        this.mainInstanceMap.checkModal = popupContainer
         return
     }
     createSelectCardModal(scene: Phaser.Scene) {
