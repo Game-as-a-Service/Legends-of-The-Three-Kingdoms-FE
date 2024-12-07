@@ -7,6 +7,22 @@
         "type": "scroll",
         "audio": ""
     },
+    "SS3003": {
+        "id": "SS3003",
+        "name": "過河拆橋",
+        "rank": 3,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": ""
+    },
+    "SS4004": {
+        "id": "SS4004",
+        "name": "過河拆橋",
+        "rank": 4,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": ""
+    },
     "SS7007": {
         "id": "SS7007",
         "name": "南蠻入侵",
@@ -18,10 +34,18 @@
     "BS8008": {
         "id": "BS8008",
         "name": "殺",
-        "rank": 10,
+        "rank": 8,
         "suit": "heart",
         "type": "basic",
         "audio": "kill"
+    },
+    "SSQ012": {
+        "id": "SSQ012",
+        "name": "過河拆橋",
+        "rank": 12,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": ""
     },
     "SSK013": {
         "id": "SSK013",
@@ -142,6 +166,22 @@
         "suit": "club",
         "type": "equipment",
         "audio": "eightDiagramFormation"
+    },
+    "SC3068": {
+        "id": "SC3068",
+        "name": "過河拆橋",
+        "rank": 3,
+        "suit": "club",
+        "type": "scroll",
+        "audio": ""
+    },
+    "SC4069": {
+        "id": "SC4069",
+        "name": "過河拆橋",
+        "rank": 4,
+        "suit": "club",
+        "type": "scroll",
+        "audio": ""
     },
     "SC7072": {
         "id": "SC7072",
