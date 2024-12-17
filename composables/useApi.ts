@@ -77,6 +77,29 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:useBorrowedSwordEffect`, params)
     }
+    /// 過河拆橋
+    /**
+     *
+     * @param gameId
+     * @param params {
+     * currentPlayerId: string
+     * targetPlayerId: string
+     * cardId?: ThreeKingdomsCardIds //要拆的卡(裝備)
+     * targetCardIndex?: number //要拆的卡在手牌的位置(手牌)
+     * }
+     * @returns
+     */
+    const useDismantleEffect = (
+        gameId: string,
+        params: {
+            currentPlayerId: string
+            targetPlayerId: string
+            cardId?: ThreeKingdomsCardIds
+            targetCardIndex?: number
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:useDismantleEffect`, params)
+    }
     return {
         api,
         createGame,
@@ -88,5 +111,6 @@ export function useApi() {
         useEquipmentEffect,
         chooseHorseCard,
         useBorrowedSwordEffect,
+        useDismantleEffect,
     }
 }

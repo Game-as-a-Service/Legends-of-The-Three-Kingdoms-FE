@@ -190,6 +190,13 @@ export default class Game {
                 this.selectTargetPlayers.push(player)
             }
         }
+        if (this.me.selectedCard!.name === '過河拆橋') {
+            // 開啟選擇面板
+            const event = {
+                targetPlayer: player,
+            }
+            this.me.askReaction('useDismantleEffect', event)
+        }
     }
     skipPlayCard = () => {
         const params = {
