@@ -260,6 +260,8 @@ export default class MainPlayer extends Player {
                 this.handCards.forEach((card) => {
                     card.instance.setAlpha(1)
                 })
+                // 出玩牌後清空event
+                this.event = ''
             }
         }
         if (this.discardMode) {
@@ -510,6 +512,20 @@ export default class MainPlayer extends Player {
                 if (card.name !== '殺') {
                     card.instance.setAlpha(0.3)
                 }
+            })
+        } else if (reactionType === 'useDismantleEffect') {
+            this.useSelectCardModal({
+                message: event.message,
+                cardIds: event.data.mountCardIds,
+                confirmText: '選擇',
+                cancelText: '取消',
+                handleConfirm: (cardId) => {
+                    console.log('選擇', cardId)
+                    this.game?.chooseHorseCard(cardId)
+                },
+                handleCancel: () => {
+                    console.log('取消')
+                },
             })
         }
     }
