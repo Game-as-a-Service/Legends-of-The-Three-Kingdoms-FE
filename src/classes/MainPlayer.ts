@@ -514,14 +514,17 @@ export default class MainPlayer extends Player {
                 }
             })
         } else if (reactionType === 'useDismantleEffect') {
+            const player = event.targetPlayer
+            console.log('useDismantleEffect', player)
             this.useSelectCardModal({
-                message: event.message,
-                cardIds: event.data.mountCardIds,
+                message: '請選擇要拆的卡',
+                handCardCount: player.hand.size,
+                cardIds: player.equipments.filter((cardId) => cardId),
                 confirmText: '選擇',
                 cancelText: '取消',
                 handleConfirm: (cardId) => {
                     console.log('選擇', cardId)
-                    this.game?.chooseHorseCard(cardId)
+                    this.game?.useDismantleEffect(player.id, cardId)
                 },
                 handleCancel: () => {
                     console.log('取消')
@@ -770,6 +773,7 @@ export default class MainPlayer extends Player {
     }
     useSelectCardModal = ({
         message = '提示訊息',
+        handCardCount = 0,
         cardIds = [],
         confirmText = '是',
         cancelText = '否',
@@ -777,12 +781,18 @@ export default class MainPlayer extends Player {
         handleCancel = () => {},
     }: {
         message?: string
+        handCardCount?: number
         cardIds?: ThreeKingdomsCardIds[]
         confirmText?: string
         cancelText?: string
         handleConfirm?: (cardId: ThreeKingdomsCardIds) => void
         handleCancel?: () => void
     }) => {
+        // 如果有handCardCount 產生同樣數量的手牌卡片 卡片小小的可以點就行
+        // for (let i = 0; i < handCardCount; i++) {
+        //     this.scene.add.rectangle(240 + i * 120, 200, 100, 150, 0x000000)
+
+        // }
         const modelText: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(1)
         modelText.setText(message)
         const yesButton: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(2)

@@ -168,10 +168,17 @@ export default class Game {
                 scene: this.scene,
             })
             const card = this.me.selectedCard
-            this.me.selectedCard = null
             card.playCard()
             console.log(player, this.me)
             this.seats.forEach((player) => player.setOutOfDistance(false))
+            if (this.me.selectedCard!.name === '過河拆橋') {
+                // 開啟選擇面板
+                const event = {
+                    targetPlayer: player,
+                }
+                this.me.askReaction('useDismantleEffect', event)
+            }
+            this.me.selectedCard = null
         }
         if (this.me.selectedCard!.name === '借刀殺人') {
             // 借刀殺人要依序選擇目標
@@ -189,13 +196,6 @@ export default class Game {
                 player.setPlayerSelected(true, 'to')
                 this.selectTargetPlayers.push(player)
             }
-        }
-        if (this.me.selectedCard!.name === '過河拆橋') {
-            // 開啟選擇面板
-            const event = {
-                targetPlayer: player,
-            }
-            this.me.askReaction('useDismantleEffect', event)
         }
     }
     skipPlayCard = () => {
@@ -235,6 +235,19 @@ export default class Game {
             cardId,
         }
         this.api.chooseHorseCard(this.gameId, params)
+    }
+    useDismantleEffect = (
+        targetPlayerId: string,
+        cardId: ThreeKingdomsCardIds,
+        targetCardIndex?: number,
+    ) => {
+        const params = {
+            currentPlayerId: this.me.id,
+            targetPlayerId,
+            cardId,
+            targetCardIndex,
+        }
+        this.api.useDismantleEffect(this.gameId, params)
     }
     async eventHandler(event: any) {
         console.log(event)
