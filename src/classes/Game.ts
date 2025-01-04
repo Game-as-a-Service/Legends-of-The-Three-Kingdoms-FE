@@ -180,7 +180,7 @@ export default class Game {
             }
             this.me.selectedCard = null
         }
-        if (this.me.selectedCard!.name === '借刀殺人') {
+        if (this.me.selectedCard?.name === '借刀殺人') {
             // 借刀殺人要依序選擇目標
             if (this.selectTargetPlayers.length === 0) {
                 player.setPlayerSelected(true, 'from')
@@ -238,7 +238,7 @@ export default class Game {
     }
     useDismantleEffect = (
         targetPlayerId: string,
-        cardId: ThreeKingdomsCardIds,
+        cardId: ThreeKingdomsCardIds | undefined,
         targetCardIndex?: number,
     ) => {
         const params = {

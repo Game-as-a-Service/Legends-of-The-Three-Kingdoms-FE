@@ -524,7 +524,12 @@ export default class MainPlayer extends Player {
                 cancelText: '取消',
                 handleConfirm: (cardId) => {
                     console.log('選擇', cardId)
-                    this.game?.useDismantleEffect(player.id, cardId)
+                    if (cardId.includes('handCard')) {
+                        const cardIndex = Number(cardId.split('-')[1])
+                        this.game?.useDismantleEffect(player.id, undefined, cardIndex)
+                    } else {
+                        this.game?.useDismantleEffect(player.id, cardId)
+                    }
                 },
                 handleCancel: () => {
                     console.log('取消')
@@ -789,10 +794,66 @@ export default class MainPlayer extends Player {
         handleCancel?: () => void
     }) => {
         // 如果有handCardCount 產生同樣數量的手牌卡片 卡片小小的可以點就行
-        // for (let i = 0; i < handCardCount; i++) {
-        //     this.scene.add.rectangle(240 + i * 120, 200, 100, 150, 0x000000)
-
-        // }
+        for (let i = 0; i < handCardCount; i++) {
+            // 灰色
+            const r = this.scene.add.rectangle(240 + i * 120, 200, 100, 40, 0x808080)
+            const t = this.scene.add.text(240 + i * 120, 200, `手牌${i + 1}`, {
+                fontSize: '20px',
+                color: '#fff',
+            })
+            t.setOrigin(0.5)
+            const container = this.scene.add.container(0, 0, [r, t])
+            container.setSize(100, 40)
+            r.setInteractive().on('pointerdown', () => {
+                console.log('選擇手牌', i)
+                const preCard = this.mainInstanceMap.selectCardModal?.getData('selectedCard')
+                const preCardId = this.mainInstanceMap.selectCardModal?.getData('selectedCardId')
+                if (preCardId === `handCard-${i}`) {
+                    this.scene.tweens.add({
+                        targets: preCard,
+                        x: preCard.x,
+                        y: preCard.y + 20,
+                        duration: 500, // 持續時間（毫秒）
+                        ease: 'Power2',
+                    })
+                    this.mainInstanceMap.selectCardModal?.setData('selectedCard', null)
+                    this.mainInstanceMap.selectCardModal?.setData('selectedCardId', null)
+                    return
+                }
+                //點擊後向上移動10px
+                this.scene.tweens.add({
+                    targets: container,
+                    x: container.x,
+                    y: container.y - 20,
+                    duration: 500, // 持續時間（毫秒）
+                    ease: 'Power2',
+                })
+                // 判斷是裝備卡還是手牌卡
+                if (preCard) {
+                    if (preCardId?.includes('handCard')) {
+                        this.scene.tweens.add({
+                            targets: preCard,
+                            x: preCard.x,
+                            y: preCard.y + 20,
+                            duration: 500, // 持續時間（毫秒）
+                            ease: 'Power2',
+                        })
+                    } else {
+                        this.scene.tweens.add({
+                            targets: preCard.instance,
+                            x: preCard.instance.x,
+                            y: preCard.instance.y + 20,
+                            duration: 500, // 持續時間（毫秒）
+                            ease: 'Power2',
+                        })
+                        preCard.selected = false
+                    }
+                }
+                this.mainInstanceMap.selectCardModal?.setData('selectedCard', container)
+                this.mainInstanceMap.selectCardModal?.setData('selectedCardId', `handCard-${i}`)
+            })
+            this.mainInstanceMap.selectCardModal?.add(container)
+        }
         const modelText: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(1)
         modelText.setText(message)
         const yesButton: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(2)
@@ -818,6 +879,7 @@ export default class MainPlayer extends Player {
                         })
                         card.selected = false
                         this.mainInstanceMap.selectCardModal?.setData('selectedCard', null)
+                        this.mainInstanceMap.selectCardModal?.setData('selectedCardId', null)
                     } else {
                         this.scene.tweens.add({
                             targets: card.instance,
@@ -840,6 +902,7 @@ export default class MainPlayer extends Player {
                             preCard.selected = false
                         }
                         this.mainInstanceMap.selectCardModal?.setData('selectedCard', card)
+                        this.mainInstanceMap.selectCardModal?.setData('selectedCardId', card.id)
                     }
                 },
             })
@@ -848,11 +911,12 @@ export default class MainPlayer extends Player {
         })
         yesButton.setInteractive().on('pointerdown', () => {
             const card = this.mainInstanceMap.selectCardModal?.getData('selectedCard')
+            const selectedCardId = this.mainInstanceMap.selectCardModal?.getData('selectedCardId')
             if (!card) {
                 console.log('請選擇一張卡牌')
                 return
             }
-            handleConfirm(card.id)
+            handleConfirm(selectedCardId)
             this.mainInstanceMap.selectCardModal?.setAlpha(0)
             this.mainInstanceMap.selectCardModal?.getData('cards').forEach((c: Card) => {
                 this.mainInstanceMap.selectCardModal?.remove(c.instance)
