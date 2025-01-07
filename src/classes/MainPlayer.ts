@@ -248,6 +248,16 @@ export default class MainPlayer extends Player {
         }
     }
     playCardHandler = (card: Card) => {
+        // console.log(
+        //     'playCardHandler',
+        //     card,
+        //     'event: ',
+        //     this.event,
+        //     'discardMode: ',
+        //     this.discardMode,
+        //     'reactionType: ',
+        //     this.reactionType,
+        // )
         // 非自己回合不能出牌
         if (this.game!.getActivePlayer() !== this.id) {
             return
@@ -530,9 +540,11 @@ export default class MainPlayer extends Player {
                     } else {
                         this.game?.useDismantleEffect(player.id, cardId)
                     }
+                    this.reactionType = ''
                 },
                 handleCancel: () => {
                     console.log('取消')
+                    this.reactionType = ''
                 },
             })
         }
