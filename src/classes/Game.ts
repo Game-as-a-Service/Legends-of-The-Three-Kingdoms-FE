@@ -154,7 +154,8 @@ export default class Game {
         if (
             this.me.selectedCard.name === '殺' ||
             this.me.selectedCard.name === '過河拆橋' ||
-            this.me.selectedCard.name === '決鬥'
+            this.me.selectedCard.name === '決鬥' ||
+            this.me.selectedCard.name === '樂不思蜀'
         ) {
             const params = {
                 playerId: this.me.id,

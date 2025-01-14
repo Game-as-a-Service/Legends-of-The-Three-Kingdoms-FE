@@ -23,6 +23,14 @@
         "type": "scroll",
         "audio": ""
     },
+    "SS6006": {
+        "id": "SS6006",
+        "name": "樂不思蜀",
+        "rank": 6,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": ""
+    },
     "SS7007": {
         "id": "SS7007",
         "name": "南蠻入侵",
@@ -111,10 +119,42 @@
         "type": "equipment",
         "audio": "redHare"
     },
+    "SH6045": {
+        "id": "SH6045",
+        "name": "樂不思蜀",
+        "rank": 6,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": ""
+    },
     "SH7046": {
         "id": "SH7046",
         "name": "無中生有",
         "rank": 7,
+        "suit": "heart",
+        "type": "scroll",
+        "audio": "somethingForNothing"
+    },
+    "SH8047": {
+        "id": "SH8047",
+        "name": "無中生有",
+        "rank": 8,
+        "suit": "heart",
+        "type": "scroll",
+        "audio": "somethingForNothing"
+    },
+    "SH9048": {
+        "id": "SH9048",
+        "name": "無中生有",
+        "rank": 9,
+        "suit": "heart",
+        "type": "scroll",
+        "audio": "somethingForNothing"
+    },
+    "SHJ050": {
+        "id": "SHJ050",
+        "name": "無中生有",
+        "rank": 11,
         "suit": "heart",
         "type": "scroll",
         "audio": "somethingForNothing"
@@ -179,6 +219,14 @@
         "id": "SC4069",
         "name": "過河拆橋",
         "rank": 4,
+        "suit": "club",
+        "type": "scroll",
+        "audio": ""
+    },
+    "SC6071": {
+        "id": "SC6071",
+        "name": "樂不思蜀",
+        "rank": 6,
         "suit": "club",
         "type": "scroll",
         "audio": ""

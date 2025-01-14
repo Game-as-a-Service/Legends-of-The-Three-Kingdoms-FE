@@ -310,7 +310,12 @@ export default class MainPlayer extends Player {
             card.playCard()
             return
         }
-        if (card.name === '殺' || card.name === '過河拆橋' || card.name === '決鬥') {
+        if (
+            card.name === '殺' ||
+            card.name === '過河拆橋' ||
+            card.name === '決鬥' ||
+            card.name === '樂不思蜀'
+        ) {
             if (this.selectedCard == card) {
                 // 卡片下移
                 this.scene.tweens.add({
