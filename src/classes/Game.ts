@@ -310,6 +310,11 @@ export default class Game {
                     scene: this.scene,
                 })
                 break
+            case 'AskDodgeEvent':
+                if (data.playerId === this.me.id) {
+                    this.me.askReaction('askDodge')
+                }
+                break
             case 'AskPlayEquipmentEffectEvent':
                 // const data = {
                 //     event: 'AskPlayEquipmentEffectEvent',
