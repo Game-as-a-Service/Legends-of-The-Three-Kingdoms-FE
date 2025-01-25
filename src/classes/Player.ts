@@ -18,7 +18,7 @@ export default class Player {
         cardIds: string[]
     }
     equipments: ThreeKingdomsCardIds[]
-    delayScrolls: string[]
+    delayScrolls: ThreeKingdomsCardIds[]
     instance!: Phaser.GameObjects.Container
     scene!: BattleScene
     handleClickPlayer!: (player: Player) => void
@@ -56,7 +56,7 @@ export default class Player {
             cardIds: string[]
         }
         equipments: ThreeKingdomsCardIds[]
-        delayScrolls: string[]
+        delayScrolls: ThreeKingdomsCardIds[]
         handleClickPlayer: any
         x: number
         y: number
@@ -99,6 +99,9 @@ export default class Player {
         })
         const hpContainer = this.initHpInstance(this.hp, this.general.hp)
         this.instanceMap.hp = hpContainer
+
+        const delayScrollsContainer = this.initDelayScrollsInstance()
+        this.instanceMap.delayScrolls = delayScrollsContainer
         // const hpText = scene.add.text(0, -10, `血量: ${this.hp}`, {
         //     fontSize: '10px',
         //     color: '#000',
@@ -255,6 +258,14 @@ export default class Player {
             }
             this.equipments = data.equipments
         }
+        // 延遲錦囊卡確認
+        if (data.delayScrolls.join() !== this.delayScrolls.join()) {
+            this.delayScrolls = data.delayScrolls
+            this.instanceMap.delayScrolls.destroy()
+            const delayScrollsContainer = this.initDelayScrollsInstance()
+            this.instanceMap.delayScrolls = delayScrollsContainer
+            this.instance.add(delayScrollsContainer)
+        }
     }
     setOutOfDistance(isOutofDistance: boolean) {
         this.isOutofDistance = isOutofDistance
@@ -384,5 +395,24 @@ export default class Player {
         healthContainer.setY(100 - maxHealth * (textHeight + spacing) - 4)
         healthContainer.setX(0 - 100 + 4)
         return healthContainer
+    }
+    initDelayScrollsInstance() {
+        const delayScrollsContainer = this.scene.add.container(0, 0)
+        const delayScrolls = this.delayScrolls
+        for (let i = 0; i < delayScrolls.length; i++) {
+            const delayScroll = threeKingdomsCards[delayScrolls[i]]
+            const delayScrollText = this.scene.add.text(
+                -100 + 12, // 左邊界+位移
+                -100 + 12 + 22 * i, // 上邊界+位移
+                `${delayScroll.name[0]}`,
+                {
+                    fontSize: '20px',
+                    color: '#000',
+                },
+            )
+            delayScrollText.setOrigin(0.5)
+            delayScrollsContainer.add(delayScrollText)
+        }
+        return delayScrollsContainer
     }
 }
