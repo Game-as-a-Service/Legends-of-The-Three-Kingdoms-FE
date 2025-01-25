@@ -532,6 +532,7 @@ export default class MainPlayer extends Player {
             const player = event.targetPlayer
             console.log('useDismantleEffect', player)
             this.useSelectCardModal({
+                type: 'small',
                 message: '請選擇要拆的卡',
                 handCardCount: player.hand.size,
                 cardIds: player.equipments.filter((cardId) => cardId),
@@ -746,6 +747,7 @@ export default class MainPlayer extends Player {
         popupContainer.setDepth(1000)
         popupContainer.setAlpha(0)
         this.mainInstanceMap.checkModal = popupContainer
+        this.mainInstanceMap.selectCardModal?.setData('cardInstance', [])
         return
     }
     createSelectCardModal(scene: Phaser.Scene) {
@@ -794,6 +796,7 @@ export default class MainPlayer extends Player {
         return
     }
     useSelectCardModal = ({
+        type = 'big',
         message = '提示訊息',
         handCardCount = 0,
         cardIds = [],
@@ -802,6 +805,7 @@ export default class MainPlayer extends Player {
         handleConfirm = (cardId) => {},
         handleCancel = () => {},
     }: {
+        type?: 'big' | 'small'
         message?: string
         handCardCount?: number
         cardIds?: ThreeKingdomsCardIds[]
@@ -812,11 +816,11 @@ export default class MainPlayer extends Player {
     }) => {
         // 如果有handCardCount 產生同樣數量的手牌卡片 卡片小小的可以點就行
         for (let i = 0; i < handCardCount; i++) {
-            // 灰色
-            const r = this.scene.add.rectangle(240 + i * 120, 200, 100, 40, 0x808080)
-            const t = this.scene.add.text(240 + i * 120, 200, `手牌${i + 1}`, {
+            const leftBase = 300 - (handCardCount - 1) * 60
+            const r = this.scene.add.rectangle(leftBase + i * 120, 120, 100, 40, 0xffffff)
+            const t = this.scene.add.text(leftBase + i * 120, 120, `手牌${i + 1}`, {
                 fontSize: '20px',
-                color: '#fff',
+                color: '#000',
             })
             t.setOrigin(0.5)
             const container = this.scene.add.container(0, 0, [r, t])
@@ -870,45 +874,55 @@ export default class MainPlayer extends Player {
                 this.mainInstanceMap.selectCardModal?.setData('selectedCardId', `handCard-${i}`)
             })
             this.mainInstanceMap.selectCardModal?.add(container)
+            this.mainInstanceMap.selectCardModal?.getData('cardInstance').push(container)
         }
-        const modelText: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(1)
-        modelText.setText(message)
-        const yesButton: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(2)
-        yesButton.setText(confirmText)
-        const noButton: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(3)
-        noButton.setText(cancelText)
-        console.log('cards', cardIds)
-        cardIds.forEach((cardId, index) => {
-            const card = new Card({
-                cardId,
-                x: 240 + index * 120,
-                y: 200,
-                scene: this.scene,
-                playCardHandler: (card: Card) => {
-                    // 卡片向上移動 10 px
-                    if (card.selected) {
+        if (type === 'small') {
+            for (let i = 0; i < cardIds.length; i++) {
+                const leftBase = 300 - (cardIds.length - 1) * 60
+                const r = this.scene.add.rectangle(leftBase + i * 120, 170, 100, 40, 0xffffff)
+                const name = threeKingdomsCards[cardIds[i]].name
+                const t = this.scene.add.text(leftBase + i * 120, 170, `${name}`, {
+                    fontSize: '20px',
+                    color: '#000',
+                })
+                t.setOrigin(0.5)
+                const container = this.scene.add.container(0, 0, [r, t])
+                container.setSize(100, 40)
+                r.setInteractive().on('pointerdown', () => {
+                    const preCard = this.mainInstanceMap.selectCardModal?.getData('selectedCard')
+                    const preCardId =
+                        this.mainInstanceMap.selectCardModal?.getData('selectedCardId')
+                    if (preCardId === cardIds[i]) {
                         this.scene.tweens.add({
-                            targets: card.instance,
-                            x: card.instance.x,
-                            y: card.instance.y + 20,
+                            targets: preCard,
+                            x: preCard.x,
+                            y: preCard.y + 20,
                             duration: 500, // 持續時間（毫秒）
                             ease: 'Power2',
                         })
-                        card.selected = false
                         this.mainInstanceMap.selectCardModal?.setData('selectedCard', null)
                         this.mainInstanceMap.selectCardModal?.setData('selectedCardId', null)
-                    } else {
-                        this.scene.tweens.add({
-                            targets: card.instance,
-                            x: card.instance.x,
-                            y: card.instance.y - 20,
-                            duration: 500, // 持續時間（毫秒）
-                            ease: 'Power2',
-                        })
-                        card.selected = true
-                        const preCard =
-                            this.mainInstanceMap.selectCardModal?.getData('selectedCard')
-                        if (preCard) {
+                        return
+                    }
+                    //點擊後向上移動10px
+                    this.scene.tweens.add({
+                        targets: container,
+                        x: container.x,
+                        y: container.y - 20,
+                        duration: 500, // 持續時間（毫秒）
+                        ease: 'Power2',
+                    })
+                    // 判斷是裝備卡還是手牌卡
+                    if (preCard) {
+                        if (preCardId?.includes('handCard')) {
+                            this.scene.tweens.add({
+                                targets: preCard,
+                                x: preCard.x,
+                                y: preCard.y + 20,
+                                duration: 500, // 持續時間（毫秒）
+                                ease: 'Power2',
+                            })
+                        } else {
                             this.scene.tweens.add({
                                 targets: preCard.instance,
                                 x: preCard.instance.x,
@@ -918,14 +932,69 @@ export default class MainPlayer extends Player {
                             })
                             preCard.selected = false
                         }
-                        this.mainInstanceMap.selectCardModal?.setData('selectedCard', card)
-                        this.mainInstanceMap.selectCardModal?.setData('selectedCardId', card.id)
                     }
-                },
+                    this.mainInstanceMap.selectCardModal?.setData('selectedCard', container)
+                    this.mainInstanceMap.selectCardModal?.setData('selectedCardId', cardIds[i])
+                })
+                this.mainInstanceMap.selectCardModal?.add(container)
+                this.mainInstanceMap.selectCardModal?.getData('cardInstance').push(container)
+            }
+        } else {
+            cardIds.forEach((cardId, index) => {
+                const card = new Card({
+                    cardId,
+                    x: 240 + index * 120,
+                    y: 200,
+                    scene: this.scene,
+                    playCardHandler: (card: Card) => {
+                        // 卡片向上移動 10 px
+                        if (card.selected) {
+                            this.scene.tweens.add({
+                                targets: card.instance,
+                                x: card.instance.x,
+                                y: card.instance.y + 20,
+                                duration: 500, // 持續時間（毫秒）
+                                ease: 'Power2',
+                            })
+                            card.selected = false
+                            this.mainInstanceMap.selectCardModal?.setData('selectedCard', null)
+                            this.mainInstanceMap.selectCardModal?.setData('selectedCardId', null)
+                        } else {
+                            this.scene.tweens.add({
+                                targets: card.instance,
+                                x: card.instance.x,
+                                y: card.instance.y - 20,
+                                duration: 500, // 持續時間（毫秒）
+                                ease: 'Power2',
+                            })
+                            card.selected = true
+                            const preCard =
+                                this.mainInstanceMap.selectCardModal?.getData('selectedCard')
+                            if (preCard) {
+                                this.scene.tweens.add({
+                                    targets: preCard.instance,
+                                    x: preCard.instance.x,
+                                    y: preCard.instance.y + 20,
+                                    duration: 500, // 持續時間（毫秒）
+                                    ease: 'Power2',
+                                })
+                                preCard.selected = false
+                            }
+                            this.mainInstanceMap.selectCardModal?.setData('selectedCard', card)
+                            this.mainInstanceMap.selectCardModal?.setData('selectedCardId', card.id)
+                        }
+                    },
+                })
+                this.mainInstanceMap.selectCardModal?.add(card.instance)
+                this.mainInstanceMap.selectCardModal?.getData('cards').push(card)
             })
-            this.mainInstanceMap.selectCardModal?.add(card.instance)
-            this.mainInstanceMap.selectCardModal?.getData('cards').push(card)
-        })
+        }
+        const modelText: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(1)
+        modelText.setText(message)
+        const yesButton: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(2)
+        yesButton.setText(confirmText)
+        const noButton: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(3)
+        noButton.setText(cancelText)
         yesButton.setInteractive().on('pointerdown', () => {
             const card = this.mainInstanceMap.selectCardModal?.getData('selectedCard')
             const selectedCardId = this.mainInstanceMap.selectCardModal?.getData('selectedCardId')
@@ -937,9 +1006,16 @@ export default class MainPlayer extends Player {
             this.mainInstanceMap.selectCardModal?.setAlpha(0)
             this.mainInstanceMap.selectCardModal?.getData('cards').forEach((c: Card) => {
                 this.mainInstanceMap.selectCardModal?.remove(c.instance)
-                c.instance.destroy()
+                c.instance?.destroy()
             })
             this.mainInstanceMap.selectCardModal?.setData('cards', [])
+            this.mainInstanceMap.selectCardModal
+                ?.getData('cardInstance')
+                .forEach((c: Phaser.GameObjects.Container) => {
+                    this.mainInstanceMap.selectCardModal?.remove(c)
+                    c.destroy()
+                })
+            this.mainInstanceMap.selectCardModal?.setData('cardInstance', [])
         })
         noButton.setInteractive().on('pointerdown', handleCancel)
         this.mainInstanceMap.selectCardModal?.setAlpha(1)
