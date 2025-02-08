@@ -55,7 +55,7 @@ export default class MainPlayer extends Player {
             cardIds: string[]
         }
         equipments: ThreeKingdomsCardIds[]
-        delayScrolls: string[]
+        delayScrolls: ThreeKingdomsCardIds[]
         handleClickPlayer: any
         gamePlayCardHandler: any
         discardCardsAction: ([]) => void
@@ -529,7 +529,7 @@ export default class MainPlayer extends Player {
                 }
             })
         } else if (reactionType === 'useDismantleEffect') {
-            const player = event.targetPlayer
+            const player: Player = event.targetPlayer
             console.log('useDismantleEffect', player)
             this.useSelectCardModal({
                 type: 'small',
@@ -747,7 +747,6 @@ export default class MainPlayer extends Player {
         popupContainer.setDepth(1000)
         popupContainer.setAlpha(0)
         this.mainInstanceMap.checkModal = popupContainer
-        this.mainInstanceMap.selectCardModal?.setData('cardInstance', [])
         return
     }
     createSelectCardModal(scene: Phaser.Scene) {
@@ -793,6 +792,7 @@ export default class MainPlayer extends Player {
         popupContainer.setData('selectedCard', null)
         popupContainer.setData('cards', [])
         this.mainInstanceMap.selectCardModal = popupContainer
+        this.mainInstanceMap.selectCardModal?.setData('cardInstance', [])
         return
     }
     useSelectCardModal = ({
@@ -879,9 +879,9 @@ export default class MainPlayer extends Player {
         if (type === 'small') {
             for (let i = 0; i < cardIds.length; i++) {
                 const leftBase = 300 - (cardIds.length - 1) * 60
-                const r = this.scene.add.rectangle(leftBase + i * 120, 170, 100, 40, 0xffffff)
+                const r = this.scene.add.rectangle(leftBase + i * 120, 200, 100, 40, 0xffffff)
                 const name = threeKingdomsCards[cardIds[i]].name
-                const t = this.scene.add.text(leftBase + i * 120, 170, `${name}`, {
+                const t = this.scene.add.text(leftBase + i * 120, 200, `${name}`, {
                     fontSize: '20px',
                     color: '#000',
                 })
