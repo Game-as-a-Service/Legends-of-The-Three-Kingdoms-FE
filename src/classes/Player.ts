@@ -407,7 +407,8 @@ export default class Player {
                 `${delayScroll.name[0]}`,
                 {
                     fontSize: '20px',
-                    color: '#000',
+                    color: '#FFFFFF',
+                    backgroundColor: '#FF0000',
                 },
             )
             delayScrollText.setOrigin(0.5)
