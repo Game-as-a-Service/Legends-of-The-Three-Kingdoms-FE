@@ -197,6 +197,9 @@ export default class MainPlayer extends Player {
                 })
                 this.event = ''
             }
+            this.handCards.forEach((card) => {
+                card.instance.setAlpha(1)
+            })
         })
         // 提示文字
         const hintText = scene.add.text(0, 0, '請選擇要棄的牌', {
@@ -301,13 +304,16 @@ export default class MainPlayer extends Player {
             return
         }
         if (this.reactionType) {
-            // 對應出桃
+            // 對應出桃或閃
             this.gamePlayCardHandler(card, this.reactionType)
             this.reactionType = ''
             this.reactionMode = false
             this.skipInstance?.setAlpha(0)
             this.hintInstance?.setAlpha(0)
             card.playCard()
+            this.handCards.forEach((card) => {
+                card.instance.setAlpha(1)
+            })
             return
         }
         if (
@@ -476,6 +482,12 @@ export default class MainPlayer extends Player {
             hintText?.setText('請出一張閃')
             this.hintInstance?.setAlpha(1)
             this.skipInstance?.setAlpha(1)
+            // 只能出殺 其他不能出
+            this.handCards.forEach((card) => {
+                if (card.name !== '閃') {
+                    card.instance.setAlpha(0.3)
+                }
+            })
         } else if (reactionType === 'askPeach') {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('請出一張桃')
