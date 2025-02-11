@@ -294,7 +294,7 @@ export default class Game {
                         endPoint: new Phaser.Math.Vector2(400, 515),
                         scene: this.scene,
                     })
-                    if (data.cardId === 'BS8008') {
+                    if (data.cardId === 'BS8008' && data.playType === 'active') {
                         this.me.askReaction('askDodge')
                     }
                     return
