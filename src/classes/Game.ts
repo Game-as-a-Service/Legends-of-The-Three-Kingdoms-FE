@@ -366,10 +366,11 @@ export default class Game {
                 //     },
                 //     "message": "發動效果"
                 // }
-                if (!data.success && this.me.reactionType === 'askPlayEquipmentEffect') {
-                    // 效果發動失敗時重新要求出閃
-                    this.me.askReaction('askDodge')
-                }
+                // 不用自己要求出閃
+                // if (!data.success && this.me.reactionType === 'askPlayEquipmentEffect') {
+                //     // 效果發動失敗時重新要求出閃
+                //     this.me.askReaction('askDodge')
+                // }
                 if (data.success && this.me.reactionType === 'askPlayEquipmentEffect') {
                     // 效果成功時清除反應狀態
                     this.me.reactionType = ''
