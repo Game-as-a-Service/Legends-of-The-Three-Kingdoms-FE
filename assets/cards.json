@@ -79,6 +79,14 @@
         "type": "equipment",
         "audio": "shadowrunner"
     },
+    "SHA027": {
+        "id": "SHA027",
+        "name": "桃園結義",
+        "rank": 1,
+        "suit": "heart",
+        "type": "scroll",
+        "audio": ""
+    },
     "BH4030": {
         "id": "BH4030",
         "name": "桃",
