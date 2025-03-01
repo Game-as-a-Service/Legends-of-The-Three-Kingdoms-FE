@@ -266,6 +266,10 @@ export default class Player {
             this.instanceMap.delayScrolls = delayScrollsContainer
             this.instance.add(delayScrollsContainer)
         }
+        // 血量確認
+        if (data.hp !== this.hp) {
+            this.hpChange(data.hp - this.hp)
+        }
     }
     setOutOfDistance(isOutofDistance: boolean) {
         this.isOutofDistance = isOutofDistance

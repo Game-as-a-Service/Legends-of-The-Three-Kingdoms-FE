@@ -395,17 +395,19 @@ export default class Game {
                 }
                 break
             case 'PlayerDamagedEvent':
-                const damage = data.from - data.to
-                if (damage <= 0) return
-                const damagedPlayer =
-                    this.seats.find((player) => player.id === data.playerId) || this.me
-                damagedPlayer.hpChange(-damage)
+                // 血量直接從data更新
+                // const damage = data.from - data.to
+                // if (damage <= 0) return
+                // const damagedPlayer =
+                //     this.seats.find((player) => player.id === data.playerId) || this.me
+                // damagedPlayer.hpChange(-damage)
                 break
             case 'PeachEvent':
-                const healHp = data.to - data.from
-                const healedPlayer =
-                    this.seats.find((player) => player.id === data.playerId) || this.me
-                healedPlayer.hpChange(healHp)
+                // 血量直接從data更新
+                // const healHp = data.to - data.from
+                // const healedPlayer =
+                //     this.seats.find((player) => player.id === data.playerId) || this.me
+                // healedPlayer.hpChange(healHp)
                 break
             case 'AskPeachEvent':
                 if (data.playerId === this.me.id) {
