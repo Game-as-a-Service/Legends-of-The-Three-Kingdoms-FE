@@ -230,6 +230,7 @@ export default class MainPlayer extends Player {
         this.handCards.push(card)
         // card.createInstance({ baseX: 1000, baseY: 515, scene: this.scene })
         card.arrangeCards = this.arrangeCards
+        console.log('addHandCard', cardId, this.handCards.length)
     }
     arrangeCards = () => {
         if (this.selectedCard || this.discardMode) return
@@ -572,7 +573,12 @@ export default class MainPlayer extends Player {
         super.updatePlayerData(data)
         if (data.hand.cardIds.join() !== this.hand.cardIds.join()) {
             // 保留相同的卡片 只處理不同的卡片
-            console.log('updatePlayerData', data.hand.cardIds.join(), this.hand.cardIds.join())
+            console.log(
+                'updatePlayerData',
+                data.hand.cardIds.join(),
+                this.hand.cardIds.join(),
+                this.handCards.length,
+            )
             this.hand.size = data.hand.size
             this.hand.cardIds = data.hand.cardIds
             // 從第一張開始檢查手牌與當前手牌是否相同，找到不同處之後 刪除後面的卡片 並新增新的卡片
@@ -582,8 +588,10 @@ export default class MainPlayer extends Player {
             console.log('diffIndex', diffIndex)
             if (diffIndex === -1) {
                 // 沒有要刪除的卡片
+                console.log(this.handCards.length, data.hand.cardIds.length)
                 for (let i = this.handCards.length; i < data.hand.cardIds.length; i++) {
                     this.addHandCard(data.hand.cardIds[i])
+                    console.log('addHandCard', data.hand.cardIds[i])
                 }
             } else {
                 for (let i = diffIndex; i < this.handCards.length; i++) {
@@ -1092,6 +1100,8 @@ export default class MainPlayer extends Player {
                     c.destroy()
                 })
             this.mainInstanceMap.selectCardModal?.setData('cardInstance', [])
+            this.mainInstanceMap.selectCardModal?.setData('selectedCard', null)
+            this.mainInstanceMap.selectCardModal?.setData('selectedCardId', null)
         })
         noButton.setInteractive().on('pointerdown', handleCancel)
         this.mainInstanceMap.selectCardModal?.setAlpha(1)
