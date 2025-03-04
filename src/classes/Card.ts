@@ -1,6 +1,7 @@
 import threeKingdomsCards from '~/assets/cards.json'
 import { BattleScene } from './index'
-import { suits } from '~/src/utils/domain'
+import { suits, ranks } from '~/src/utils/domain'
+
 export default class Card {
     id: keyof typeof threeKingdomsCards
     name: string = ''
@@ -50,14 +51,15 @@ export default class Card {
         const rectangle = scene.add.rectangle(0, 0, 100, 150, 0xffffff)
         rectangle.setStrokeStyle(2, 0x000000)
         // 創建卡牌數字
-        const number = scene.add.text(-50, -75 + 5, String(card.rank), {
+        const rank = ranks[card.rank] || card.rank
+        const number = scene.add.text(-50, -75 + 5, String(rank), {
             fontSize: '24px',
             color: suits[card.suit].color,
             fixedWidth: 32,
             align: 'center',
         })
         // 創建卡牌花色
-        const rank = scene.add.text(-50, -75 + 24 + 5, suits[card.suit].symbol, {
+        const suit = scene.add.text(-50, -75 + 24 + 5, suits[card.suit].symbol, {
             fontSize: '24px',
             color: suits[card.suit].color,
             fixedWidth: 32,
@@ -72,7 +74,7 @@ export default class Card {
         text.setOrigin(0.5)
 
         // 將矩形和文字添加到容器中，以便一起操作
-        const container = scene.add.container(0, 0, [rectangle, text, rank, number])
+        const container = scene.add.container(0, 0, [rectangle, text, suit, number])
 
         // 設置容器位置在遊戲場景中心
         container.setPosition(baseX, baseY)
