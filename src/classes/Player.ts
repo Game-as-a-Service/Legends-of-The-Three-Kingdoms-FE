@@ -385,7 +385,7 @@ export default class Player {
             } else if (i === 0) {
                 healthText.setColor('#ff0000') // 紅色
             } else if (i === 1) {
-                healthText.setColor('#dddd00') // 黃色
+                healthText.setColor('#FFA500') // 橙色
             } else {
                 healthText.setColor('#00CC00') // 綠色
             }
