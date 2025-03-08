@@ -61,6 +61,9 @@ const gameProcess = ref('')
 const me = computed(() => {
     return seats.value.find((seat) => seat.id === playerId.value)
 })
+const playerIdToGeneralName = (playerId) => {
+    return generalCards[players.value.find((seat) => seat.id === playerId).generalId].name
+}
 const demo = ref(false)
 const startGameFlag = ref(false)
 const round = ref({})
@@ -201,8 +204,9 @@ onMounted(() => {
                 `/websocket/legendsOfTheThreeKingdoms/${gameId.value}/${playerId.value}`,
                 async (greeting) => {
                     const res = JSON.parse(greeting.body)
-                    console.log(res)
-                    messages.value.push(`${getTimeString()}: ${res.message}`)
+                    console.log('Get socket message: ', res)
+                    // 大包的message不印出來
+                    // messages.value.push(`${getTimeString()}: ${res.message}`)
                     if (messages.value.length > 10) {
                         messages.value.shift()
                     }
@@ -244,7 +248,40 @@ onMounted(() => {
                         }
                         for (let i = 0; i < res.events.length; i++) {
                             const event = res.events[i]
-                            messages.value.push(`${getTimeString()}: ${event.message}`)
+                            let eventMessage = event.message
+                            switch (event.event) {
+                                case 'PlayCardEvent':
+                                    const generalName = playerIdToGeneralName(event.data.playerId)
+                                    // 處理不出牌的情況
+                                    if (event.data.playType === 'skip') {
+                                        eventMessage = `${generalName} 不出牌`
+                                        break
+                                    }
+                                    const cardName = threeKingdomsCards[event.data.cardId].name
+                                    // 有指定對象
+                                    if (
+                                        event.data.targetPlayerId &&
+                                        event.data.targetPlayerId !== event.data.playerId
+                                    ) {
+                                        const targetGeneralName = playerIdToGeneralName(
+                                            event.data.targetPlayerId,
+                                        )
+                                        eventMessage = `${generalName} 對 ${targetGeneralName} 使用 ${cardName}`
+                                        break
+                                    }
+                                    // 自己使用
+                                    eventMessage = `${generalName} 使出 ${cardName}`
+                                    break
+                                case 'GetGeneralCardEvent':
+                                    break
+                                case 'GetGeneralCardEventByOthers':
+                                    break
+                                case 'InitialEndViewModel':
+                                    break
+                                default:
+                                    break
+                            }
+                            messages.value.push(`${getTimeString()}: ${eventMessage}`)
                             if (messages.value.length > 10) {
                                 messages.value.shift()
                             }
@@ -287,7 +324,7 @@ onMounted(() => {
                         // })
                         // players.value = generalNames
                         players.value = res.data.seats
-                        // console.log(seats.value, 'seats')
+                        // console.log(players.value, 'seats')
                         const me = seats.value.find((seat) => seat.id === playerId.value)
                         // console.log(me, 'me')
                         // me.hand.cardIds.forEach((cardId) => {
