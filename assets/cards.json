@@ -119,6 +119,22 @@
         "type": "scroll",
         "audio": "arrowBarrage"
     },
+    "SH3042": {
+        "id": "SH3042",
+        "name": "五穀豐登",
+        "rank": 3,
+        "suit": "heart",
+        "type": "scroll",
+        "audio": ""
+    },
+    "SH4043": {
+        "id": "SH4043",
+        "name": "五穀豐登",
+        "rank": 4,
+        "suit": "heart",
+        "type": "scroll",
+        "audio": ""
+    },
     "EH5044": {
         "id": "EH5044",
         "name": "赤兔馬",

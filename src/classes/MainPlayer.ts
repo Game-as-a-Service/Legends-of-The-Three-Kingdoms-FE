@@ -567,6 +567,24 @@ export default class MainPlayer extends Player {
                     this.reactionType = ''
                 },
             })
+        } else if (reactionType === 'BountifulHarvestEvent') {
+            console.log('BountifulHarvestEvent')
+            this.useSelectCardModal({
+                type: 'small',
+                message: '請選擇一張卡',
+                cardIds: event.data.assignmentCardIds,
+                confirmText: '選擇',
+                cancelText: '取消',
+                handleConfirm: (cardId) => {
+                    console.log('選擇', cardId)
+                    this.game?.chooseCardFromBountifulHarvest(cardId)
+                    this.reactionType = ''
+                },
+                handleCancel: () => {
+                    console.log('取消')
+                    this.reactionType = ''
+                },
+            })
         }
     }
     updatePlayerData(data: any): void {

@@ -250,6 +250,13 @@ export default class Game {
         }
         this.api.useDismantleEffect(this.gameId, params)
     }
+    chooseCardFromBountifulHarvest = (cardId: ThreeKingdomsCardIds) => {
+        const params = {
+            playerId: this.me.id,
+            cardId,
+        }
+        this.api.chooseCardFromBountifulHarvest(this.gameId, params)
+    }
     async eventHandler(event: any) {
         console.log(event)
         const data = event.data
@@ -333,7 +340,7 @@ export default class Game {
                 //     targetPlayerId: 'YangJun',
                 //     mountCardIds: ['ES5018', 'EH5044'],
                 // }
-                // 詢問是手使用裝備牌的效果
+                // 詢問是否使用裝備牌的效果
                 if (data.chooseMountCardPlayerId === this.me.id) {
                     this.me.askReaction('AskChooseMountCardEvent', event)
                 }
@@ -375,6 +382,25 @@ export default class Game {
                     // 效果成功時清除反應狀態
                     this.me.reactionType = ''
                     this.me.reactionMode = false
+                }
+                break
+            case 'BountifulHarvestEvent':
+                // 五穀豐登選牌
+                // {
+                //     "event": "BountifulHarvestEvent",
+                //     "data": {
+                //         "nextChoosingPlayerId": "YangJun",
+                //         "assignmentCardIds": [
+                //             "SDA079",
+                //             "EH5044",
+                //             "SS6006",
+                //             "SCA053"
+                //         ]
+                //     },
+                //     "message": "輪到 諸葛亮 選牌"
+                // }
+                if (data.nextChoosingPlayerId === this.me.id) {
+                    this.me.askReaction('BountifulHarvestEvent', event)
                 }
                 break
             case 'DrawCardEvent':

@@ -100,6 +100,24 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:useDismantleEffect`, params)
     }
+    /// 五穀豐登
+    /**
+     *
+     * @param gameId
+     * @param params {
+     * playerId: string
+     * cardId: string
+     * }
+     * @returns
+     */ const chooseCardFromBountifulHarvest = (
+        gameId: string,
+        params: {
+            playerId: string
+            cardId: string
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:chooseCardFromBountifulHarvest`, params)
+    }
     return {
         api,
         createGame,
@@ -112,5 +130,6 @@ export function useApi() {
         chooseHorseCard,
         useBorrowedSwordEffect,
         useDismantleEffect,
+        chooseCardFromBountifulHarvest,
     }
 }
