@@ -1097,31 +1097,36 @@ export default class MainPlayer extends Player {
         yesButton.setText(confirmText)
         const noButton: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(3)
         noButton.setText(cancelText)
-        yesButton.setInteractive().on('pointerdown', () => {
-            const card = this.mainInstanceMap.selectCardModal?.getData('selectedCard')
-            const selectedCardId = this.mainInstanceMap.selectCardModal?.getData('selectedCardId')
-            if (!card) {
-                console.log('請選擇一張卡牌')
-                return
-            }
-            handleConfirm(selectedCardId)
-            this.mainInstanceMap.selectCardModal?.setAlpha(0)
-            this.mainInstanceMap.selectCardModal?.getData('cards').forEach((c: Card) => {
-                this.mainInstanceMap.selectCardModal?.remove(c.instance)
-                c.instance?.destroy()
-            })
-            this.mainInstanceMap.selectCardModal?.setData('cards', [])
-            this.mainInstanceMap.selectCardModal
-                ?.getData('cardInstance')
-                .forEach((c: Phaser.GameObjects.Container) => {
-                    this.mainInstanceMap.selectCardModal?.remove(c)
-                    c.destroy()
+        yesButton
+            .setInteractive()
+            .off('pointerdown')
+            .on('pointerdown', () => {
+                const card = this.mainInstanceMap.selectCardModal?.getData('selectedCard')
+                const selectedCardId =
+                    this.mainInstanceMap.selectCardModal?.getData('selectedCardId')
+                if (!card) {
+                    console.log('請選擇一張卡牌')
+                    return
+                }
+                console.log(handleConfirm, 'handleConfirm')
+                handleConfirm(selectedCardId)
+                this.mainInstanceMap.selectCardModal?.setAlpha(0)
+                this.mainInstanceMap.selectCardModal?.getData('cards').forEach((c: Card) => {
+                    this.mainInstanceMap.selectCardModal?.remove(c.instance)
+                    c.instance?.destroy()
                 })
-            this.mainInstanceMap.selectCardModal?.setData('cardInstance', [])
-            this.mainInstanceMap.selectCardModal?.setData('selectedCard', null)
-            this.mainInstanceMap.selectCardModal?.setData('selectedCardId', null)
-        })
-        noButton.setInteractive().on('pointerdown', handleCancel)
+                this.mainInstanceMap.selectCardModal?.setData('cards', [])
+                this.mainInstanceMap.selectCardModal
+                    ?.getData('cardInstance')
+                    .forEach((c: Phaser.GameObjects.Container) => {
+                        this.mainInstanceMap.selectCardModal?.remove(c)
+                        c.destroy()
+                    })
+                this.mainInstanceMap.selectCardModal?.setData('cardInstance', [])
+                this.mainInstanceMap.selectCardModal?.setData('selectedCard', null)
+                this.mainInstanceMap.selectCardModal?.setData('selectedCardId', null)
+            })
+        noButton.setInteractive().off('pointerdown').on('pointerdown', handleCancel)
         this.mainInstanceMap.selectCardModal?.setAlpha(1)
     }
 }
