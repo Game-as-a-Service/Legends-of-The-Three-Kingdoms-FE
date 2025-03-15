@@ -151,9 +151,19 @@ export default class Game {
     }
     handleClickPlayer = (player: Player) => {
         if (!this.me.selectedCard || player.isOutofDistance) return
+        if (this.me.selectedCard.name === '過河拆橋') {
+            this.seats.forEach((player) => player.setOutOfDistance(false))
+            if (this.me.selectedCard!.name === '過河拆橋') {
+                // 開啟選擇面板
+                const event = {
+                    targetPlayer: player,
+                }
+                this.me.askReaction('useDismantleEffect', event)
+            }
+            return
+        }
         if (
             this.me.selectedCard.name === '殺' ||
-            this.me.selectedCard.name === '過河拆橋' ||
             this.me.selectedCard.name === '決鬥' ||
             this.me.selectedCard.name === '樂不思蜀'
         ) {
@@ -172,13 +182,6 @@ export default class Game {
             card.playCard()
             console.log(player, this.me)
             this.seats.forEach((player) => player.setOutOfDistance(false))
-            if (this.me.selectedCard!.name === '過河拆橋') {
-                // 開啟選擇面板
-                const event = {
-                    targetPlayer: player,
-                }
-                this.me.askReaction('useDismantleEffect', event)
-            }
             this.me.selectedCard = null
         }
         if (this.me.selectedCard?.name === '借刀殺人') {
@@ -237,18 +240,36 @@ export default class Game {
         }
         this.api.chooseHorseCard(this.gameId, params)
     }
-    useDismantleEffect = (
+    useDismantleEffect = async (
         targetPlayerId: string,
         cardId: ThreeKingdomsCardIds | undefined,
         targetCardIndex?: number,
     ) => {
+        //先出過河拆橋
         const params = {
+            playerId: this.me.id,
+            targetPlayerId,
+            cardId: this.me.selectedCard!.id,
+            playType: 'active', //skip
+        }
+        await this.api.playCard(this.gameId, params)
+        const player = this.seats.find((player) => player.id === targetPlayerId)
+        if (player === undefined) return
+        atkLine({
+            endPoint: new Phaser.Math.Vector2(player.instance.x, player.instance.y),
+            scene: this.scene,
+        })
+        const card = this.me.selectedCard
+        card!.playCard()
+        // 指定要拆哪張牌
+        const params2 = {
             currentPlayerId: this.me.id,
             targetPlayerId,
             cardId,
             targetCardIndex,
         }
-        this.api.useDismantleEffect(this.gameId, params)
+        this.api.useDismantleEffect(this.gameId, params2)
+        this.me.selectedCard = null
     }
     chooseCardFromBountifulHarvest = (cardId: ThreeKingdomsCardIds) => {
         const params = {
