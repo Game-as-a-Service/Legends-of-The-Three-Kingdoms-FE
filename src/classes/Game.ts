@@ -297,6 +297,17 @@ export default class Game {
                         attackTargetPlayerId: this.selectTargetPlayers[1].id,
                     }
                     this.api.useBorrowedSwordEffect(this.gameId, params)
+                    const player1 = this.seats.find(
+                        (player) => player.id === this.selectTargetPlayers[0].id,
+                    )
+                    const player2 = this.seats.find(
+                        (player) => player.id === this.selectTargetPlayers[1].id,
+                    )
+                    if (player1) player1.setPlayerSelected(false)
+                    if (player2) player2.setPlayerSelected(false)
+                    this.seats.forEach((p) => {
+                        p.setOutOfDistance(false)
+                    })
                     this.selectTargetPlayers = []
                     return
                 }

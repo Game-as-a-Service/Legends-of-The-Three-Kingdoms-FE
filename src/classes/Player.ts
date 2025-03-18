@@ -279,7 +279,7 @@ export default class Player {
             this.instance.setAlpha(1)
         }
     }
-    setPlayerSelected(isSelected: boolean, type: 'from' | 'to') {
+    setPlayerSelected(isSelected: boolean, type?: 'from' | 'to') {
         // 讓物件邊緣發光
         const rectangle: Phaser.GameObjects.Rectangle = this.instance.getAt(0)
         if (isSelected) {
