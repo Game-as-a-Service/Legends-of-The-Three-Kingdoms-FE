@@ -561,11 +561,13 @@ export default class MainPlayer extends Player {
                         this.game?.useDismantleEffect(player.id, cardId)
                     }
                     this.reactionType = ''
+                    this.closeSelectCardModal()
                 },
                 handleCancel: () => {
                     console.log('取消')
                     this.reactionType = ''
                     this.closeSelectCardModal()
+                    this.selectedCard = null
                 },
             })
         } else if (reactionType === 'BountifulHarvestEvent') {

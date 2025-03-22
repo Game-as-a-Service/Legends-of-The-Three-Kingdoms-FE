@@ -260,6 +260,7 @@ export default class Game {
             scene: this.scene,
         })
         const card = this.me.selectedCard
+        this.me.selectedCard = null // 避免影響牌重整先設為null
         card!.playCard()
         // 指定要拆哪張牌
         const params2 = {
@@ -269,7 +270,6 @@ export default class Game {
             targetCardIndex,
         }
         this.api.useDismantleEffect(this.gameId, params2)
-        this.me.selectedCard = null
     }
     chooseCardFromBountifulHarvest = (cardId: ThreeKingdomsCardIds) => {
         const params = {
