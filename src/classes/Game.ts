@@ -97,7 +97,7 @@ export default class Game {
         this.gameData = gameData
     }
     gamePlayCardHandler = (card: Card, reactionType: string) => {
-        if (reactionType === 'askDodge') {
+        if (reactionType === 'AskDodgeEvent') {
             const playType = card.id ? 'inactive' : 'skip'
             const params = {
                 cardId: card.id || '',
@@ -348,7 +348,8 @@ export default class Game {
                 break
             case 'AskDodgeEvent':
                 if (data.playerId === this.me.id) {
-                    this.me.askReaction('askDodge')
+                    console.log('askDodge', event)
+                    this.me.askReaction('askDodge', event)
                 }
                 break
             case 'AskPlayEquipmentEffectEvent':
@@ -393,7 +394,8 @@ export default class Game {
                 if (data.playerId === this.me.id) {
                     this.me.reactionType = ''
                     this.me.reactionMode = false
-                    this.me.askReaction('askDodge')
+                    console.log('askDodge', event)
+                    this.me.askReaction('askDodge', event)
                 }
                 break
             case 'UseEquipmentEffectViewModel':

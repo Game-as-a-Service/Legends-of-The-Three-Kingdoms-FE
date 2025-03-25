@@ -187,7 +187,12 @@ export default class MainPlayer extends Player {
         skipContainer.setAlpha(0)
         this.skipInstance = skipContainer
         skipbtn.on('pointerdown', () => {
-            this.gamePlayCardHandler({}, this.reactionType)
+            if (this.event === 'AskDodgeEvent') {
+                this.gamePlayCardHandler({}, this.event)
+                this.event = ''
+            } else {
+                this.gamePlayCardHandler({}, this.reactionType)
+            }
             this.reactionType = ''
             if (this.skipInstance) this.skipInstance.setAlpha(0)
             if (this.hintInstance) this.hintInstance.setAlpha(0)
@@ -315,6 +320,9 @@ export default class MainPlayer extends Player {
             this.handCards.forEach((card) => {
                 card.instance.setAlpha(1)
             })
+            if (this.event === 'AskDodgeEvent') {
+                this.event = ''
+            }
             return
         }
         if (
@@ -468,9 +476,12 @@ export default class MainPlayer extends Player {
         // this.arrangeCards()
     }
     askReaction = (reactionType: string, event?: any) => {
+        if (event.event === 'AskDodgeEvent') {
+            this.event = 'AskDodgeEvent'
+        }
         console.log('askReaction', reactionType)
         // 八卦陣與出閃的處理
-        if (this.reactionType === 'askDodge' && reactionType === 'askPlayEquipmentEffect') {
+        if (this.event === 'AskDodgeEvent' && reactionType === 'askPlayEquipmentEffect') {
             // 先隱藏出閃的提示
             this.hintInstance?.setAlpha(0)
             this.skipInstance?.setAlpha(0)
@@ -478,7 +489,7 @@ export default class MainPlayer extends Player {
         this.reactionType = reactionType
         this.reactionMode = true
 
-        if (reactionType === 'askDodge') {
+        if (this.event === 'AskDodgeEvent') {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('請出一張閃')
             this.hintInstance?.setAlpha(1)
