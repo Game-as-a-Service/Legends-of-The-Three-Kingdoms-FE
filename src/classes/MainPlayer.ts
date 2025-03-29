@@ -475,7 +475,7 @@ export default class MainPlayer extends Player {
         // card.destroy()
         // this.arrangeCards()
     }
-    askReaction = (reactionType: string, event?: any) => {
+    askReaction = (reactionType: string, event: any = {}) => {
         if (event.event === 'AskDodgeEvent') {
             this.event = 'AskDodgeEvent'
         }
