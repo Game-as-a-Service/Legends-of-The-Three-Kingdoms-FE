@@ -63,6 +63,14 @@
         "type": "scroll",
         "audio": "barbarianInvasion"
     },
+    "SSA014": {
+        "id": "SSA014",
+        "name": "閃電",
+        "rank": 1,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": ""
+    },
     "ES2015": {
         "id": "ES2015",
         "name": "八卦陣",
