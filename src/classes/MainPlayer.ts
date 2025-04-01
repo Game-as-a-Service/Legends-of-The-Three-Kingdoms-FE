@@ -283,6 +283,37 @@ export default class MainPlayer extends Player {
                 this.event = ''
             }
         }
+        if (this.event === 'AskDodgeEvent') {
+            if (card.name !== '閃') {
+                return
+            }
+            if (this.selectedCard == card) {
+                // 卡片下移
+                this.scene.tweens.add({
+                    targets: card.instance,
+                    x: card.instance.x,
+                    y: card.instance.y + 20,
+                    duration: 500, // 持續時間（毫秒）
+                    ease: 'Power2',
+                    onComplete: () => {
+                        this.selectedCard = null
+                    },
+                })
+                return
+            }
+            this.selectedCard = card
+            let x = card.instance.x
+            let y = card.instance.y
+            this.scene.tweens.add({
+                targets: card.instance,
+                x: x,
+                y: y - 20,
+                // yoyo: true,
+                duration: 500, // 持續時間（毫秒）
+                ease: 'Power2',
+            })
+            return
+        }
         if (this.discardMode) {
             if (card.selected) {
                 card.selected = false
@@ -493,13 +524,14 @@ export default class MainPlayer extends Player {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('請出一張閃')
             this.hintInstance?.setAlpha(1)
-            this.skipInstance?.setAlpha(1)
-            // 只能出殺 其他不能出
+            // 只能出閃 其他不能出
             this.handCards.forEach((card) => {
                 if (card.name !== '閃') {
                     card.instance.setAlpha(0.3)
                 }
             })
+            // 打開確認 取消按鈕
+            this.mainInstanceMap.checkModal?.setAlpha(1)
         } else if (reactionType === 'askPeach') {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('請出一張桃')
@@ -771,6 +803,42 @@ export default class MainPlayer extends Player {
                 console.log('選擇完成')
             }
         }
+        if (this.event === 'AskDodgeEvent') {
+            if (this.selectedCard?.name !== '閃') {
+                return
+            }
+            this.gamePlayCardHandler(this.selectedCard, this.event)
+            this.selectedCard.playCard()
+            this.selectedCard = null
+            this.mainInstanceMap.checkModal?.setAlpha(0)
+
+            this.reactionType = ''
+            this.reactionMode = false
+            this.hintInstance?.setAlpha(0)
+            this.handCards.forEach((card) => {
+                card.instance.setAlpha(1)
+            })
+            this.event = ''
+        }
+    }
+    handleCancelClick = () => {
+        console.log('否 按鈕被按下')
+        if (this.event === 'AskDodgeEvent') {
+            this.gamePlayCardHandler({}, this.event)
+            this.event = ''
+        }
+        this.reactionType = ''
+        if (this.hintInstance) this.hintInstance.setAlpha(0)
+        // if (this.event === 'AskKillEvent') {
+        //     this.handCards.forEach((card) => {
+        //         card.instance.setAlpha(1)
+        //     })
+        //     this.event = ''
+        // }
+        this.handCards.forEach((card) => {
+            card.instance.setAlpha(1)
+        })
+        this.mainInstanceMap.checkModal?.setAlpha(0)
     }
     createCheckModal(scene: Phaser.Scene) {
         // 出牌確認視窗
@@ -791,7 +859,7 @@ export default class MainPlayer extends Player {
             .setInteractive()
             .on('pointerdown', () => {
                 console.log('否 按鈕被按下')
-                // 添加更多處理邏輯
+                this.handleCancelClick()
             })
         noButton.setOrigin(0.5)
         // 創建一個容器來包含彈窗的所有組件
