@@ -360,7 +360,8 @@ export default class MainPlayer extends Player {
             card.name === '殺' ||
             card.name === '過河拆橋' ||
             card.name === '決鬥' ||
-            card.name === '樂不思蜀'
+            card.name === '樂不思蜀' ||
+            card.name === '桃'
         ) {
             if (this.selectedCard == card) {
                 // 卡片下移
@@ -404,6 +405,11 @@ export default class MainPlayer extends Player {
             // 錦囊卡不用看距離
             const cardInfo = threeKingdomsCards[card.id]
             if (cardInfo.type === 'scroll') {
+                return
+            }
+            if (card.name === '桃') {
+                // 顯示確認
+                this.mainInstanceMap.checkModal?.setAlpha(1)
                 return
             }
             const distances = this.seats.forEach((player, index) => {
@@ -820,6 +826,18 @@ export default class MainPlayer extends Player {
                 card.instance.setAlpha(1)
             })
             this.event = ''
+        }
+        if (this.selectedCard?.name === '桃') {
+            const card = this.selectedCard
+            this.selectedCard = null
+            card.playCard()
+            this.gamePlayCardHandler(card)
+            this.mainInstanceMap.checkModal?.setAlpha(0)
+            // if (this.reactionMode) {
+            //     this.reactionMode = false
+            //     this.skipInstance?.setAlpha(0)
+            //     this.hintInstance?.setAlpha(0)
+            // }
         }
     }
     handleCancelClick = () => {
