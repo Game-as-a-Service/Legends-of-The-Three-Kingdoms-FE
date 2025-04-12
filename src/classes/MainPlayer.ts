@@ -808,8 +808,9 @@ export default class MainPlayer extends Player {
                 return
             }
             this.gamePlayCardHandler(this.selectedCard, this.event)
-            this.selectedCard.playCard()
+            const card = this.selectedCard
             this.selectedCard = null
+            card.playCard()
             this.mainInstanceMap.checkModal?.setAlpha(0)
 
             this.reactionType = ''
