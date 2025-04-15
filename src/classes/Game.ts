@@ -108,7 +108,7 @@ export default class Game {
             this.api.playCard(this.gameId, params)
             return
         }
-        if (reactionType === 'askPeach') {
+        if (reactionType === 'AskPeachEvent') {
             const playType = card.id ? 'inactive' : 'skip'
             const params = {
                 cardId: card.id,
@@ -471,7 +471,7 @@ export default class Game {
                 break
             case 'AskPeachEvent':
                 if (data.playerId === this.me.id) {
-                    this.me.askReaction('askPeach')
+                    this.me.askReaction('AskPeachEvent', event)
                 }
                 break
             case 'AskKillEvent':

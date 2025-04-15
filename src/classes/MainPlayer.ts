@@ -187,7 +187,7 @@ export default class MainPlayer extends Player {
         skipContainer.setAlpha(0)
         this.skipInstance = skipContainer
         skipbtn.on('pointerdown', () => {
-            if (this.event === 'AskDodgeEvent') {
+            if (this.event === 'AskDodgeEvent' || this.event === 'AskPeachEvent') {
                 this.gamePlayCardHandler({}, this.event)
                 this.event = ''
             } else {
@@ -314,6 +314,37 @@ export default class MainPlayer extends Player {
             })
             return
         }
+        if (this.event === 'AskPeachEvent') {
+            if (card.name !== '桃') {
+                return
+            }
+            if (this.selectedCard == card) {
+                // 卡片下移
+                this.scene.tweens.add({
+                    targets: card.instance,
+                    x: card.instance.x,
+                    y: card.instance.y + 20,
+                    duration: 500, // 持續時間（毫秒）
+                    ease: 'Power2',
+                    onComplete: () => {
+                        this.selectedCard = null
+                    },
+                })
+                return
+            }
+            this.selectedCard = card
+            let x = card.instance.x
+            let y = card.instance.y
+            this.scene.tweens.add({
+                targets: card.instance,
+                x: x,
+                y: y - 20,
+                // yoyo: true,
+                duration: 500, // 持續時間（毫秒）
+                ease: 'Power2',
+            })
+            return
+        }
         if (this.discardMode) {
             if (card.selected) {
                 card.selected = false
@@ -341,7 +372,7 @@ export default class MainPlayer extends Player {
             return
         }
         if (this.reactionType) {
-            // 對應出桃或閃
+            // 對應出桃
             this.gamePlayCardHandler(card, this.reactionType)
             this.reactionType = ''
             this.reactionMode = false
@@ -513,8 +544,8 @@ export default class MainPlayer extends Player {
         // this.arrangeCards()
     }
     askReaction = (reactionType: string, event: any = {}) => {
-        if (event.event === 'AskDodgeEvent') {
-            this.event = 'AskDodgeEvent'
+        if (event.event === 'AskDodgeEvent' || event.event === 'AskPeachEvent') {
+            this.event = event.event
         }
         console.log('askReaction', reactionType)
         // 八卦陣與出閃的處理
@@ -538,11 +569,12 @@ export default class MainPlayer extends Player {
             })
             // 打開確認 取消按鈕
             this.mainInstanceMap.checkModal?.setAlpha(1)
-        } else if (reactionType === 'askPeach') {
+        } else if (event.event === 'AskPeachEvent') {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('請出一張桃')
             this.hintInstance?.setAlpha(1)
-            this.skipInstance?.setAlpha(1)
+            this.mainInstanceMap.checkModal?.setAlpha(1)
+            // this.skipInstance?.setAlpha(1)
         } else if (reactionType === 'askPlayEquipmentEffect') {
             this.useConfirmModal({
                 message: event.message,
@@ -827,6 +859,24 @@ export default class MainPlayer extends Player {
             })
             this.event = ''
         }
+        if (this.event === 'AskPeachEvent') {
+            if (this.selectedCard?.name !== '桃') {
+                return
+            }
+            this.gamePlayCardHandler(this.selectedCard, this.event)
+            const card = this.selectedCard
+            this.selectedCard = null
+            card.playCard()
+            this.mainInstanceMap.checkModal?.setAlpha(0)
+            this.reactionType = ''
+            this.reactionMode = false
+            this.hintInstance?.setAlpha(0)
+            this.handCards.forEach((card) => {
+                card.instance.setAlpha(1)
+            })
+            this.event = ''
+        }
+
         if (this.selectedCard?.name === '桃') {
             const card = this.selectedCard
             this.selectedCard = null
@@ -842,7 +892,7 @@ export default class MainPlayer extends Player {
     }
     handleCancelClick = () => {
         console.log('否 按鈕被按下')
-        if (this.event === 'AskDodgeEvent') {
+        if (this.event === 'AskDodgeEvent' || this.event === 'AskPeachEvent') {
             this.gamePlayCardHandler({}, this.event)
             this.event = ''
         }
