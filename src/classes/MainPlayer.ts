@@ -287,62 +287,14 @@ export default class MainPlayer extends Player {
             if (card.name !== '閃') {
                 return
             }
-            if (this.selectedCard == card) {
-                // 卡片下移
-                this.scene.tweens.add({
-                    targets: card.instance,
-                    x: card.instance.x,
-                    y: card.instance.y + 20,
-                    duration: 500, // 持續時間（毫秒）
-                    ease: 'Power2',
-                    onComplete: () => {
-                        this.selectedCard = null
-                    },
-                })
-                return
-            }
-            this.selectedCard = card
-            let x = card.instance.x
-            let y = card.instance.y
-            this.scene.tweens.add({
-                targets: card.instance,
-                x: x,
-                y: y - 20,
-                // yoyo: true,
-                duration: 500, // 持續時間（毫秒）
-                ease: 'Power2',
-            })
+            this.handleSelectCard(card)
             return
         }
         if (this.event === 'AskPeachEvent') {
             if (card.name !== '桃') {
                 return
             }
-            if (this.selectedCard == card) {
-                // 卡片下移
-                this.scene.tweens.add({
-                    targets: card.instance,
-                    x: card.instance.x,
-                    y: card.instance.y + 20,
-                    duration: 500, // 持續時間（毫秒）
-                    ease: 'Power2',
-                    onComplete: () => {
-                        this.selectedCard = null
-                    },
-                })
-                return
-            }
-            this.selectedCard = card
-            let x = card.instance.x
-            let y = card.instance.y
-            this.scene.tweens.add({
-                targets: card.instance,
-                x: x,
-                y: y - 20,
-                // yoyo: true,
-                duration: 500, // 持續時間（毫秒）
-                ease: 'Power2',
-            })
+            this.handleSelectCard(card)
             return
         }
         if (this.discardMode) {
@@ -1296,5 +1248,31 @@ export default class MainPlayer extends Player {
         this.mainInstanceMap.selectCardModal?.setData('cardInstance', [])
         this.mainInstanceMap.selectCardModal?.setData('selectedCard', null)
         this.mainInstanceMap.selectCardModal?.setData('selectedCardId', null)
+    }
+    handleSelectCard = (card: Card) => {
+        if (this.selectedCard == card) {
+            this.selectedCard = null
+            // 卡片下移
+            this.scene.tweens.add({
+                targets: card.instance,
+                x: card.instance.x,
+                y: card.instance.y + 20,
+                duration: 500, // 持續時間（毫秒）
+                ease: 'Power2',
+            })
+            return
+        }
+        this.selectedCard = card
+        let x = card.instance.x
+        let y = card.instance.y
+        this.scene.tweens.add({
+            targets: card.instance,
+            x: x,
+            y: y - 20,
+            // yoyo: true,
+            duration: 500, // 持續時間（毫秒）
+            ease: 'Power2',
+        })
+        return
     }
 }
