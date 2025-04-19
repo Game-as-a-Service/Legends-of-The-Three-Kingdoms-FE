@@ -344,7 +344,8 @@ export default class MainPlayer extends Player {
             card.name === '過河拆橋' ||
             card.name === '決鬥' ||
             card.name === '樂不思蜀' ||
-            card.name === '桃'
+            card.name === '桃' ||
+            card.name === '閃'
         ) {
             if (this.selectedCard == card) {
                 // 卡片下移
@@ -390,6 +391,7 @@ export default class MainPlayer extends Player {
             if (cardInfo.type === 'scroll') {
                 return
             }
+            if (card.name === '閃') return
             if (card.name === '桃') {
                 // 顯示確認
                 this.mainInstanceMap.checkModal?.setAlpha(1)
