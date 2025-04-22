@@ -323,29 +323,15 @@ export default class MainPlayer extends Player {
             }
             return
         }
-        if (this.reactionType) {
-            // 對應出桃
-            this.gamePlayCardHandler(card, this.reactionType)
-            this.reactionType = ''
-            this.reactionMode = false
-            this.skipInstance?.setAlpha(0)
-            this.hintInstance?.setAlpha(0)
-            card.playCard()
-            this.handCards.forEach((card) => {
-                card.instance.setAlpha(1)
-            })
-            if (this.event === 'AskDodgeEvent') {
-                this.event = ''
-            }
-            return
-        }
         if (
             card.name === '殺' ||
             card.name === '過河拆橋' ||
             card.name === '決鬥' ||
             card.name === '樂不思蜀' ||
             card.name === '桃' ||
-            card.name === '閃'
+            card.name === '閃' ||
+            card.name === '南蠻入侵' ||
+            card.name === '萬箭齊發'
         ) {
             if (this.selectedCard == card) {
                 // 卡片下移
@@ -388,6 +374,9 @@ export default class MainPlayer extends Player {
             // 計算每個人的距離
             // 錦囊卡不用看距離
             const cardInfo = threeKingdomsCards[card.id]
+            if (card.name === '南蠻入侵' || card.name === '萬箭齊發') {
+                this.mainInstanceMap.checkModal?.setAlpha(1)
+            }
             if (cardInfo.type === 'scroll') {
                 return
             }
@@ -782,7 +771,7 @@ export default class MainPlayer extends Player {
         return
     }
     handleCheckClick = () => {
-        console.log('是 按鈕被按下')
+        console.log('是 按鈕被按下', this.selectedCard)
         if (this.selectedCard?.name === '借刀殺人') {
             if (this.game?.selectTargetPlayers.length !== 2) {
                 console.log('請選擇兩名玩家')
@@ -837,11 +826,20 @@ export default class MainPlayer extends Player {
             card.playCard()
             this.gamePlayCardHandler(card)
             this.mainInstanceMap.checkModal?.setAlpha(0)
-            // if (this.reactionMode) {
-            //     this.reactionMode = false
-            //     this.skipInstance?.setAlpha(0)
-            //     this.hintInstance?.setAlpha(0)
-            // }
+            return
+        }
+        if (this.selectedCard?.name === '南蠻入侵' || this.selectedCard?.name === '萬箭齊發') {
+            this.seats.forEach((player) => {
+                atkLine({
+                    endPoint: new Phaser.Math.Vector2(player.instance.x, player.instance.y),
+                    scene: this.scene,
+                })
+            })
+            const card = this.selectedCard
+            this.selectedCard = null
+            card.playCard()
+            this.gamePlayCardHandler(card)
+            this.mainInstanceMap.checkModal?.setAlpha(0)
         }
     }
     handleCancelClick = () => {
@@ -862,6 +860,19 @@ export default class MainPlayer extends Player {
             card.instance.setAlpha(1)
         })
         this.mainInstanceMap.checkModal?.setAlpha(0)
+        if (this.selectedCard) {
+            this.selectedCard.instance.setAlpha(1)
+            this.scene.tweens.add({
+                targets: this.selectedCard.instance,
+                x: this.selectedCard.instance.x,
+                y: this.selectedCard.instance.y + 20,
+                duration: 500, // 持續時間（毫秒）
+                ease: 'Power2',
+                onComplete: () => {
+                    this.selectedCard = null
+                },
+            })
+        }
     }
     createCheckModal(scene: Phaser.Scene) {
         // 出牌確認視窗
