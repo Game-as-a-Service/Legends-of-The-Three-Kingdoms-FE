@@ -97,6 +97,7 @@ export default class Game {
         this.gameData = gameData
     }
     gamePlayCardHandler = (card: Card, reactionType: string) => {
+        console.log('gamePlayCardHandler', card, reactionType)
         if (reactionType === 'AskDodgeEvent') {
             const playType = card.id ? 'inactive' : 'skip'
             const params = {
@@ -119,7 +120,7 @@ export default class Game {
             this.api.playCard(this.gameId, params)
             return
         }
-        if (reactionType === 'askKill') {
+        if (reactionType === 'AskKillEvent') {
             const playType = card.id ? 'inactive' : 'skip'
             const params = {
                 cardId: card.id || '',
@@ -348,8 +349,7 @@ export default class Game {
                 break
             case 'AskDodgeEvent':
                 if (data.playerId === this.me.id) {
-                    console.log('askDodge', event)
-                    this.me.askReaction('askDodge', event)
+                    this.me.askReaction('AskDodgeEvent', event)
                 }
                 break
             case 'AskPlayEquipmentEffectEvent':
@@ -362,7 +362,7 @@ export default class Game {
                 //     },
                 //     message: '請問要否要發動裝備卡八卦陣的效果',
                 // }
-                // 詢問是手使用裝備牌的效果
+                // 詢問是否使用裝備牌的效果
                 if (data.playerId === this.me.id) {
                     this.me.askReaction('askPlayEquipmentEffect', event)
                 }
@@ -476,7 +476,7 @@ export default class Game {
                 break
             case 'AskKillEvent':
                 if (data.playerId === this.me.id) {
-                    this.me.askReaction('askKill')
+                    this.me.askReaction('AskKillEvent', event)
                 }
                 break
             case 'GameOverEvent':

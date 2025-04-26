@@ -276,11 +276,11 @@ export default class MainPlayer extends Player {
             if (card.name !== '殺') {
                 return
             } else {
-                this.handCards.forEach((card) => {
-                    card.instance.setAlpha(1)
-                })
+                // this.handCards.forEach((card) => {
+                //     card.instance.setAlpha(1)
+                // })
                 // 出玩牌後清空event
-                this.event = ''
+                // this.event = ''
             }
         }
         if (this.event === 'AskDodgeEvent') {
@@ -490,7 +490,7 @@ export default class MainPlayer extends Player {
         if (event.event === 'AskDodgeEvent' || event.event === 'AskPeachEvent') {
             this.event = event.event
         }
-        console.log('askReaction', reactionType)
+        console.log('askReaction', reactionType, event)
         // 八卦陣與出閃的處理
         if (this.event === 'AskDodgeEvent' && reactionType === 'askPlayEquipmentEffect') {
             // 先隱藏出閃的提示
@@ -512,13 +512,13 @@ export default class MainPlayer extends Player {
             })
             // 打開確認 取消按鈕
             this.mainInstanceMap.checkModal?.setAlpha(1)
-        } else if (event.event === 'AskPeachEvent') {
+        } else if (this.event === 'AskPeachEvent') {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('請出一張桃')
             this.hintInstance?.setAlpha(1)
             this.mainInstanceMap.checkModal?.setAlpha(1)
             // this.skipInstance?.setAlpha(1)
-        } else if (reactionType === 'askPlayEquipmentEffect') {
+        } else if (event.event === 'askPlayEquipmentEffect') {
             this.useConfirmModal({
                 message: event.message,
                 handleConfirm: () => {
@@ -553,18 +553,20 @@ export default class MainPlayer extends Player {
                     console.log('取消')
                 },
             })
-        } else if (reactionType === 'askKill') {
+        } else if (event.event === 'AskKillEvent') {
             this.event = 'AskKillEvent'
+            console.log('AskKillEvent', this.event)
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('請出一張殺')
             this.hintInstance?.setAlpha(1)
-            this.skipInstance?.setAlpha(1)
+            // this.skipInstance?.setAlpha(1)
             // 只能出殺 其他不能出
             this.handCards.forEach((card) => {
                 if (card.name !== '殺') {
                     card.instance.setAlpha(0.3)
                 }
             })
+            this.mainInstanceMap.checkModal?.setAlpha(1)
         } else if (reactionType === 'useDismantleEffect') {
             const player: Player = event.targetPlayer
             console.log('useDismantleEffect', player)
@@ -771,7 +773,7 @@ export default class MainPlayer extends Player {
         return
     }
     handleCheckClick = () => {
-        console.log('是 按鈕被按下', this.selectedCard)
+        console.log('確認 按鈕被按下', this.selectedCard, this.event)
         if (this.selectedCard?.name === '借刀殺人') {
             if (this.game?.selectTargetPlayers.length !== 2) {
                 console.log('請選擇兩名玩家')
@@ -784,26 +786,14 @@ export default class MainPlayer extends Player {
                 console.log('選擇完成')
             }
         }
-        if (this.event === 'AskDodgeEvent') {
-            if (this.selectedCard?.name !== '閃') {
+        if (this.event === 'AskDodgeEvent' || this.event === 'AskPeachEvent') {
+            if (this.selectedCard === null) {
                 return
             }
-            this.gamePlayCardHandler(this.selectedCard, this.event)
-            const card = this.selectedCard
-            this.selectedCard = null
-            card.playCard()
-            this.mainInstanceMap.checkModal?.setAlpha(0)
-
-            this.reactionType = ''
-            this.reactionMode = false
-            this.hintInstance?.setAlpha(0)
-            this.handCards.forEach((card) => {
-                card.instance.setAlpha(1)
-            })
-            this.event = ''
-        }
-        if (this.event === 'AskPeachEvent') {
-            if (this.selectedCard?.name !== '桃') {
+            if (this.event === 'AskDodgeEvent' && this.selectedCard.name !== '閃') {
+                return
+            }
+            if (this.event === 'AskPeachEvent' && this.selectedCard.name !== '桃') {
                 return
             }
             this.gamePlayCardHandler(this.selectedCard, this.event)
@@ -819,8 +809,8 @@ export default class MainPlayer extends Player {
             })
             this.event = ''
         }
-
         if (this.selectedCard?.name === '桃') {
+            // 主動出桃
             const card = this.selectedCard
             this.selectedCard = null
             card.playCard()
@@ -840,6 +830,23 @@ export default class MainPlayer extends Player {
             card.playCard()
             this.gamePlayCardHandler(card)
             this.mainInstanceMap.checkModal?.setAlpha(0)
+        }
+        if (this.event === 'AskKillEvent') {
+            if (this.selectedCard?.name !== '殺') {
+                return
+            }
+            this.gamePlayCardHandler(this.selectedCard, this.event)
+            const card = this.selectedCard
+            this.selectedCard = null
+            card.playCard()
+            this.mainInstanceMap.checkModal?.setAlpha(0)
+            this.hintInstance?.setAlpha(0)
+            this.handCards.forEach((card) => {
+                card.instance.setAlpha(1)
+            })
+            this.event = ''
+            this.reactionType = ''
+            this.reactionMode = false
         }
     }
     handleCancelClick = () => {
