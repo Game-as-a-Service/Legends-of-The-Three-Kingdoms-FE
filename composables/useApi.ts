@@ -118,6 +118,26 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:chooseCardFromBountifulHarvest`, params)
     }
+    /// 是否出無懈可擊
+    /**
+     *
+     * @param gameId
+     * @param params {
+     * playerId: string
+     * cardId: string
+     * playType: PlayType // 'skip' | 'active' | 'inactive'
+     * }
+     * @returns
+     */ const playWardCard = (
+        gameId: string,
+        params: {
+            playerId: string
+            cardId: string
+            playType: PlayType
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:playWardCard`, params)
+    }
     return {
         api,
         createGame,
@@ -131,5 +151,6 @@ export function useApi() {
         useBorrowedSwordEffect,
         useDismantleEffect,
         chooseCardFromBountifulHarvest,
+        playWardCard,
     }
 }

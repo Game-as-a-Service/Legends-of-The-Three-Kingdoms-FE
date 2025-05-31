@@ -47,6 +47,14 @@
         "type": "basic",
         "audio": "kill"
     },
+    "SSJ011": {
+        "id": "SSJ011",
+        "name": "無懈可擊",
+        "rank": 11,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": ""
+    },
     "SSQ012": {
         "id": "SSQ012",
         "name": "過河拆橋",
@@ -270,6 +278,22 @@
         "suit": "club",
         "type": "scroll",
         "audio": "barbarianInvasion"
+    },
+    "SCQ077": {
+        "id": "SCQ077",
+        "name": "無懈可擊",
+        "rank": 12,
+        "suit": "club",
+        "type": "scroll",
+        "audio": ""
+    },
+    "SCK078": {
+        "id": "SCK078",
+        "name": "無懈可擊",
+        "rank": 13,
+        "suit": "club",
+        "type": "scroll",
+        "audio": ""
     },
     "SDA079": {
         "id": "SDA079",

@@ -131,6 +131,16 @@ export default class Game {
             this.api.playCard(this.gameId, params)
             return
         }
+        if (reactionType === 'AskPlayWardViewModel') {
+            const playType = card.id ? 'active' : 'skip'
+            const params = {
+                cardId: card.id || '',
+                playerId: this.me.id,
+                playType: playType,
+            }
+            this.api.playWardCard(this.gameId, params)
+            return
+        }
         if (card.name === '借刀殺人') {
             const params = {
                 playerId: this.me.id,
@@ -279,6 +289,14 @@ export default class Game {
         }
         this.api.chooseCardFromBountifulHarvest(this.gameId, params)
     }
+    playWardCard = (cardId: ThreeKingdomsCardIds, playType: PlayType) => {
+        const params = {
+            playerId: this.me.id,
+            cardId: this.me.selectedCard?.id || '',
+            playType: playType,
+        }
+        this.api.playWardCard(this.gameId, params)
+    }
     async eventHandler(event: any) {
         console.log(event)
         const data = event.data
@@ -377,6 +395,17 @@ export default class Game {
                 if (data.chooseMountCardPlayerId === this.me.id) {
                     this.me.askReaction('AskChooseMountCardEvent', event)
                 }
+                break
+            case 'AskPlayWardViewModel':
+                // {
+                //     "event": "AskPlayWardViewModel",
+                //     "data": {
+                //         "wardTriggerCardId": "SH7046",
+                //         "wardTriggerPlayerId": "Scolley"
+                //     },
+                //     "message": "請選擇是否要出無懈可擊"
+                // }
+                this.me.processEvent(event)
                 break
             case 'SkipEquipmentEffectViewModel':
                 // {

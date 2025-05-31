@@ -268,7 +268,7 @@ export default class MainPlayer extends Player {
         //     this.reactionType,
         // )
         // 非自己回合不能出牌
-        if (this.game!.getActivePlayer() !== this.id) {
+        if (this.game!.getActivePlayer() !== this.id && this.event !== 'AskPlayWardViewModel') {
             return
         }
         /// event check
@@ -292,6 +292,14 @@ export default class MainPlayer extends Player {
         }
         if (this.event === 'AskPeachEvent') {
             if (card.name !== '桃') {
+                return
+            }
+            this.handleSelectCard(card)
+            return
+        }
+        if (this.event === 'AskPlayWardViewModel') {
+            console.log('AskPlayWardViewModel', card.name)
+            if (card.name !== '無懈可擊') {
                 return
             }
             this.handleSelectCard(card)
@@ -616,6 +624,16 @@ export default class MainPlayer extends Player {
             })
         }
     }
+    processEvent = (event: any) => {
+        console.log('processEvent', event)
+        this.event = event.event
+        if (this.event === 'AskPlayWardViewModel') {
+            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+            hintText?.setText('是否要出無懈可擊？')
+            this.hintInstance?.setAlpha(1)
+        }
+        this.mainInstanceMap.checkModal?.setAlpha(1)
+    }
     updatePlayerData(data: any): void {
         super.updatePlayerData(data)
         if (data.hand.cardIds.join() !== this.hand.cardIds.join()) {
@@ -848,10 +866,29 @@ export default class MainPlayer extends Player {
             this.reactionType = ''
             this.reactionMode = false
         }
+        if (this.event === 'AskPlayWardViewModel') {
+            if (this.selectedCard?.name !== '無懈可擊') {
+                return
+            }
+            this.gamePlayCardHandler(this.selectedCard, this.event)
+            const card = this.selectedCard
+            this.selectedCard = null
+            card.playCard()
+            this.mainInstanceMap.checkModal?.setAlpha(0)
+            this.hintInstance?.setAlpha(0)
+            this.handCards.forEach((card) => {
+                card.instance.setAlpha(1)
+            })
+            this.event = ''
+        }
     }
     handleCancelClick = () => {
         console.log('否 按鈕被按下')
-        if (this.event === 'AskDodgeEvent' || this.event === 'AskPeachEvent') {
+        if (
+            this.event === 'AskDodgeEvent' ||
+            this.event === 'AskPeachEvent' ||
+            this.event === 'AskPlayWardViewModel'
+        ) {
             this.gamePlayCardHandler({}, this.event)
             this.event = ''
         }
