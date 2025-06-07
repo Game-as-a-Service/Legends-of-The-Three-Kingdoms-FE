@@ -505,7 +505,7 @@ export default class Game {
                 break
             case 'AskKillEvent':
                 if (data.playerId === this.me.id) {
-                    this.me.askReaction('AskKillEvent', event)
+                    this.me.processEvent(event)
                 }
                 break
             case 'GameOverEvent':

@@ -561,20 +561,6 @@ export default class MainPlayer extends Player {
                     console.log('取消')
                 },
             })
-        } else if (event.event === 'AskKillEvent') {
-            this.event = 'AskKillEvent'
-            console.log('AskKillEvent', this.event)
-            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-            hintText?.setText('請出一張殺')
-            this.hintInstance?.setAlpha(1)
-            // this.skipInstance?.setAlpha(1)
-            // 只能出殺 其他不能出
-            this.handCards.forEach((card) => {
-                if (card.name !== '殺') {
-                    card.instance.setAlpha(0.3)
-                }
-            })
-            this.mainInstanceMap.checkModal?.setAlpha(1)
         } else if (reactionType === 'useDismantleEffect') {
             const player: Player = event.targetPlayer
             console.log('useDismantleEffect', player)
@@ -631,6 +617,17 @@ export default class MainPlayer extends Player {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('是否要出無懈可擊？')
             this.hintInstance?.setAlpha(1)
+        } else if (this.event === 'AskKillEvent') {
+            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+            hintText?.setText('請出一張殺')
+            this.hintInstance?.setAlpha(1)
+            // this.skipInstance?.setAlpha(1)
+            // 只能出殺 其他不能出
+            this.handCards.forEach((card) => {
+                if (card.name !== '殺') {
+                    card.instance.setAlpha(0.3)
+                }
+            })
         }
         this.mainInstanceMap.checkModal?.setAlpha(1)
     }
@@ -887,6 +884,7 @@ export default class MainPlayer extends Player {
         if (
             this.event === 'AskDodgeEvent' ||
             this.event === 'AskPeachEvent' ||
+            this.event === 'AskKillEvent' ||
             this.event === 'AskPlayWardViewModel'
         ) {
             this.gamePlayCardHandler({}, this.event)
