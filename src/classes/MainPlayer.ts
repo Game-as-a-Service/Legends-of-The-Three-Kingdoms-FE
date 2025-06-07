@@ -271,6 +271,14 @@ export default class MainPlayer extends Player {
         if (this.game!.getActivePlayer() !== this.id && this.event !== 'AskPlayWardViewModel') {
             return
         }
+        // 自己的主動狀態不能出無懈可擊
+        if (
+            this.event !== 'AskPlayWardViewModel' &&
+            card.name === '無懈可擊' &&
+            !this.discardMode
+        ) {
+            return
+        }
         /// event check
         if (this.event === 'AskKillEvent') {
             if (card.name !== '殺') {
