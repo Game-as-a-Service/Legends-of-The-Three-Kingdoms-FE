@@ -283,12 +283,6 @@ export default class MainPlayer extends Player {
         if (this.event === 'AskKillEvent') {
             if (card.name !== '殺') {
                 return
-            } else {
-                // this.handCards.forEach((card) => {
-                //     card.instance.setAlpha(1)
-                // })
-                // 出玩牌後清空event
-                // this.event = ''
             }
         }
         if (this.event === 'AskDodgeEvent') {
@@ -503,32 +497,14 @@ export default class MainPlayer extends Player {
         // this.arrangeCards()
     }
     askReaction = (reactionType: string, event: any = {}) => {
-        if (event.event === 'AskDodgeEvent' || event.event === 'AskPeachEvent') {
+        if (event.event === 'AskPeachEvent') {
             this.event = event.event
         }
         console.log('askReaction', reactionType, event)
-        // 八卦陣與出閃的處理
-        if (this.event === 'AskDodgeEvent' && reactionType === 'askPlayEquipmentEffect') {
-            // 先隱藏出閃的提示
-            this.hintInstance?.setAlpha(0)
-            this.skipInstance?.setAlpha(0)
-        }
         this.reactionType = reactionType
         this.reactionMode = true
 
-        if (this.event === 'AskDodgeEvent') {
-            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-            hintText?.setText('請出一張閃')
-            this.hintInstance?.setAlpha(1)
-            // 只能出閃 其他不能出
-            this.handCards.forEach((card) => {
-                if (card.name !== '閃') {
-                    card.instance.setAlpha(0.3)
-                }
-            })
-            // 打開確認 取消按鈕
-            this.mainInstanceMap.checkModal?.setAlpha(1)
-        } else if (this.event === 'AskPeachEvent') {
+        if (this.event === 'AskPeachEvent') {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('請出一張桃')
             this.hintInstance?.setAlpha(1)
@@ -621,7 +597,19 @@ export default class MainPlayer extends Player {
     processEvent = (event: any) => {
         console.log('processEvent', event)
         this.event = event.event
-        if (this.event === 'AskPlayWardViewModel') {
+        if (this.event === 'AskDodgeEvent') {
+            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+            hintText?.setText('請出一張閃')
+            this.hintInstance?.setAlpha(1)
+            // 只能出閃 其他不能出
+            this.handCards.forEach((card) => {
+                if (card.name !== '閃') {
+                    card.instance.setAlpha(0.3)
+                }
+            })
+            // 打開確認 取消按鈕
+            this.mainInstanceMap.checkModal?.setAlpha(1)
+        } else if (this.event === 'AskPlayWardViewModel') {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('是否要出無懈可擊？')
             this.hintInstance?.setAlpha(1)

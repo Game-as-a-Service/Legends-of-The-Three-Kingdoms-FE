@@ -365,11 +365,6 @@ export default class Game {
                     scene: this.scene,
                 })
                 break
-            case 'AskDodgeEvent':
-                if (data.playerId === this.me.id) {
-                    this.me.askReaction('AskDodgeEvent', event)
-                }
-                break
             case 'AskPlayEquipmentEffectEvent':
                 // const data = {
                 //     event: 'AskPlayEquipmentEffectEvent',
@@ -504,6 +499,11 @@ export default class Game {
                 }
                 break
             case 'AskKillEvent':
+                if (data.playerId === this.me.id) {
+                    this.me.processEvent(event)
+                }
+                break
+            case 'AskDodgeEvent':
                 if (data.playerId === this.me.id) {
                     this.me.processEvent(event)
                 }
