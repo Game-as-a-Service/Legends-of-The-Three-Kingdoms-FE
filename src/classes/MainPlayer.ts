@@ -574,58 +574,66 @@ export default class MainPlayer extends Player {
                     this.selectedCard = null
                 },
             })
-        } else if (reactionType === 'BountifulHarvestEvent') {
-            console.log('BountifulHarvestEvent')
-            this.useSelectCardModal({
-                type: 'small',
-                message: '請選擇一張卡',
-                cardIds: event.data.assignmentCardIds,
-                confirmText: '選擇',
-                cancelText: '取消',
-                handleConfirm: (cardId) => {
-                    console.log('選擇', cardId)
-                    this.game?.chooseCardFromBountifulHarvest(cardId)
-                    this.reactionType = ''
-                },
-                handleCancel: () => {
-                    console.log('取消')
-                    this.reactionType = ''
-                },
-            })
         }
     }
     processEvent = (event: any) => {
         console.log('processEvent', event)
         this.event = event.event
-        if (this.event === 'AskDodgeEvent') {
-            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-            hintText?.setText('請出一張閃')
-            this.hintInstance?.setAlpha(1)
-            // 只能出閃 其他不能出
-            this.handCards.forEach((card) => {
-                if (card.name !== '閃') {
-                    card.instance.setAlpha(0.3)
-                }
-            })
-            // 打開確認 取消按鈕
-            this.mainInstanceMap.checkModal?.setAlpha(1)
-        } else if (this.event === 'AskPlayWardViewModel') {
-            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-            hintText?.setText('是否要出無懈可擊？')
-            this.hintInstance?.setAlpha(1)
-        } else if (this.event === 'AskKillEvent') {
-            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-            hintText?.setText('請出一張殺')
-            this.hintInstance?.setAlpha(1)
-            // this.skipInstance?.setAlpha(1)
-            // 只能出殺 其他不能出
-            this.handCards.forEach((card) => {
-                if (card.name !== '殺') {
-                    card.instance.setAlpha(0.3)
-                }
-            })
+        switch (this.event) {
+            case 'AskKillEvent': {
+                const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+                hintText?.setText('請出一張殺')
+                this.hintInstance?.setAlpha(1)
+                // this.skipInstance?.setAlpha(1)
+                // 只能出殺 其他不能出
+                this.handCards.forEach((card) => {
+                    if (card.name !== '殺') {
+                        card.instance.setAlpha(0.3)
+                    }
+                })
+                this.mainInstanceMap.checkModal?.setAlpha(1)
+                break
+            }
+            case 'AskDodgeEvent': {
+                const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+                hintText?.setText('請出一張閃')
+                this.hintInstance?.setAlpha(1)
+                // 只能出閃 其他不能出
+                this.handCards.forEach((card) => {
+                    if (card.name !== '閃') {
+                        card.instance.setAlpha(0.3)
+                    }
+                })
+                // 打開確認 取消按鈕
+                this.mainInstanceMap.checkModal?.setAlpha(1)
+                break
+            }
+            case 'AskPlayWardViewModel': {
+                const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+                hintText?.setText('是否要出無懈可擊？')
+                this.hintInstance?.setAlpha(1)
+                this.mainInstanceMap.checkModal?.setAlpha(1)
+                break
+            }
+            case 'BountifulHarvestEvent':
+                this.useSelectCardModal({
+                    type: 'small',
+                    message: '請選擇一張卡',
+                    cardIds: event.data.assignmentCardIds,
+                    confirmText: '選擇',
+                    cancelText: '取消',
+                    handleConfirm: (cardId) => {
+                        console.log('選擇', cardId)
+                        this.game?.chooseCardFromBountifulHarvest(cardId)
+                        this.reactionType = ''
+                    },
+                    handleCancel: () => {
+                        console.log('取消')
+                        this.reactionType = ''
+                    },
+                })
+                break
         }
-        this.mainInstanceMap.checkModal?.setAlpha(1)
     }
     updatePlayerData(data: any): void {
         super.updatePlayerData(data)

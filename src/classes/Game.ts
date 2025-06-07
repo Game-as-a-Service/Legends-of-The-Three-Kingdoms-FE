@@ -442,25 +442,6 @@ export default class Game {
                     this.me.reactionMode = false
                 }
                 break
-            case 'BountifulHarvestEvent':
-                // 五穀豐登選牌
-                // {
-                //     "event": "BountifulHarvestEvent",
-                //     "data": {
-                //         "nextChoosingPlayerId": "YangJun",
-                //         "assignmentCardIds": [
-                //             "SDA079",
-                //             "EH5044",
-                //             "SS6006",
-                //             "SCA053"
-                //         ]
-                //     },
-                //     "message": "輪到 諸葛亮 選牌"
-                // }
-                if (data.nextChoosingPlayerId === this.me.id) {
-                    this.me.askReaction('BountifulHarvestEvent', event)
-                }
-                break
             case 'DrawCardEvent':
                 // 由遊戲狀態中的手牌來判斷抽牌
                 // if (data.drawCardPlayerId === this.me.id) {
@@ -505,6 +486,25 @@ export default class Game {
                 break
             case 'AskDodgeEvent':
                 if (data.playerId === this.me.id) {
+                    this.me.processEvent(event)
+                }
+                break
+            case 'BountifulHarvestEvent':
+                // 五穀豐登選牌
+                // {
+                //     "event": "BountifulHarvestEvent",
+                //     "data": {
+                //         "nextChoosingPlayerId": "YangJun",
+                //         "assignmentCardIds": [
+                //             "SDA079",
+                //             "EH5044",
+                //             "SS6006",
+                //             "SCA053"
+                //         ]
+                //     },
+                //     "message": "輪到 諸葛亮 選牌"
+                // }
+                if (data.nextChoosingPlayerId === this.me.id) {
                     this.me.processEvent(event)
                 }
                 break
