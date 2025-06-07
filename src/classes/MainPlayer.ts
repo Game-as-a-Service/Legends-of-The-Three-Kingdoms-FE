@@ -534,7 +534,7 @@ export default class MainPlayer extends Player {
             this.hintInstance?.setAlpha(1)
             this.mainInstanceMap.checkModal?.setAlpha(1)
             // this.skipInstance?.setAlpha(1)
-        } else if (event.event === 'askPlayEquipmentEffect') {
+        } else if (event.event === 'AskPlayEquipmentEffectEvent') {
             this.useConfirmModal({
                 message: event.message,
                 handleConfirm: () => {
