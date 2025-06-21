@@ -476,7 +476,7 @@ export default class Game {
                 break
             case 'AskPeachEvent':
                 if (data.playerId === this.me.id) {
-                    this.me.askReaction('AskPeachEvent', event)
+                    this.me.processEvent(event)
                 }
                 break
             case 'AskKillEvent':

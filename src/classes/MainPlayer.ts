@@ -608,6 +608,13 @@ export default class MainPlayer extends Player {
                 this.mainInstanceMap.checkModal?.setAlpha(1)
                 break
             }
+            case 'AskPeachEvent': {
+                const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+                hintText?.setText('請出一張桃')
+                this.hintInstance?.setAlpha(1)
+                this.mainInstanceMap.checkModal?.setAlpha(1)
+                break
+            }
             case 'AskPlayWardViewModel': {
                 const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
                 hintText?.setText('是否要出無懈可擊？')
