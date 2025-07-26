@@ -377,7 +377,7 @@ export default class Game {
                 // }
                 // 詢問是否使用裝備牌的效果
                 if (data.playerId === this.me.id) {
-                    this.me.askReaction('askPlayEquipmentEffect', event)
+                    this.me.processEvent(event)
                 }
                 break
             case 'AskChooseMountCardEvent':

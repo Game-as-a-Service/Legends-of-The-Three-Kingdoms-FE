@@ -497,40 +497,11 @@ export default class MainPlayer extends Player {
         // this.arrangeCards()
     }
     askReaction = (reactionType: string, event: any = {}) => {
-        if (event.event === 'AskPeachEvent') {
-            this.event = event.event
-        }
         console.log('askReaction', reactionType, event)
         this.reactionType = reactionType
         this.reactionMode = true
 
-        if (this.event === 'AskPeachEvent') {
-            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-            hintText?.setText('請出一張桃')
-            this.hintInstance?.setAlpha(1)
-            this.mainInstanceMap.checkModal?.setAlpha(1)
-            // this.skipInstance?.setAlpha(1)
-        } else if (event.event === 'AskPlayEquipmentEffectEvent') {
-            this.useConfirmModal({
-                message: event.message,
-                handleConfirm: () => {
-                    this.game?.useEquipmentEffect(
-                        event.data.equipmentCardId,
-                        event.data.targetPlayerIds[0],
-                        'equipmentActive',
-                    )
-                    this.mainInstanceMap.confirmModal?.setAlpha(0)
-                },
-                handleCancel: () => {
-                    this.game?.useEquipmentEffect(
-                        event.data.equipmentCardId,
-                        event.data.targetPlayerIds[0],
-                        'equipmentSkip',
-                    )
-                    this.mainInstanceMap.confirmModal?.setAlpha(0)
-                },
-            })
-        } else if (reactionType === 'AskChooseMountCardEvent') {
+        if (reactionType === 'AskChooseMountCardEvent') {
             console.log('AskChooseMountCardEvent')
             this.useSelectCardModal({
                 message: event.message,
@@ -637,6 +608,27 @@ export default class MainPlayer extends Player {
                     handleCancel: () => {
                         console.log('取消')
                         this.reactionType = ''
+                    },
+                })
+                break
+            case 'AskPlayEquipmentEffectEvent':
+                this.useConfirmModal({
+                    message: event.message,
+                    handleConfirm: () => {
+                        this.game?.useEquipmentEffect(
+                            event.data.equipmentCardId,
+                            event.data.targetPlayerIds[0],
+                            'equipmentActive',
+                        )
+                        this.mainInstanceMap.confirmModal?.setAlpha(0)
+                    },
+                    handleCancel: () => {
+                        this.game?.useEquipmentEffect(
+                            event.data.equipmentCardId,
+                            event.data.targetPlayerIds[0],
+                            'equipmentSkip',
+                        )
+                        this.mainInstanceMap.confirmModal?.setAlpha(0)
                     },
                 })
                 break
