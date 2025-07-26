@@ -22,3 +22,6 @@ logs
 .env
 .env.*
 !.env.example
+
+# GitHub instructions folder
+.github
