@@ -289,14 +289,6 @@ export default class Game {
         }
         this.api.chooseCardFromBountifulHarvest(this.gameId, params)
     }
-    playWardCard = (cardId: ThreeKingdomsCardIds, playType: PlayType) => {
-        const params = {
-            playerId: this.me.id,
-            cardId: this.me.selectedCard?.id || '',
-            playType: playType,
-        }
-        this.api.playWardCard(this.gameId, params)
-    }
     async eventHandler(event: any) {
         console.log(event)
         const data = event.data
