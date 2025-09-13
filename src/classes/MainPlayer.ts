@@ -501,22 +501,7 @@ export default class MainPlayer extends Player {
         this.reactionType = reactionType
         this.reactionMode = true
 
-        if (reactionType === 'AskChooseMountCardEvent') {
-            console.log('AskChooseMountCardEvent')
-            this.useSelectCardModal({
-                message: event.message,
-                cardIds: event.data.mountCardIds,
-                confirmText: '選擇',
-                cancelText: '取消',
-                handleConfirm: (cardId) => {
-                    console.log('選擇', cardId)
-                    this.game?.chooseHorseCard(cardId)
-                },
-                handleCancel: () => {
-                    console.log('取消')
-                },
-            })
-        } else if (reactionType === 'useDismantleEffect') {
+        if (reactionType === 'useDismantleEffect') {
             const player: Player = event.targetPlayer
             console.log('useDismantleEffect', player)
             this.useSelectCardModal({
@@ -629,6 +614,22 @@ export default class MainPlayer extends Player {
                             'equipmentSkip',
                         )
                         this.mainInstanceMap.confirmModal?.setAlpha(0)
+                    },
+                })
+                break
+            case 'AskChooseMountCardEvent':
+                console.log('AskChooseMountCardEvent')
+                this.useSelectCardModal({
+                    message: event.message,
+                    cardIds: event.data.mountCardIds,
+                    confirmText: '選擇',
+                    cancelText: '取消',
+                    handleConfirm: (cardId) => {
+                        console.log('選擇', cardId)
+                        this.game?.chooseHorseCard(cardId)
+                    },
+                    handleCancel: () => {
+                        console.log('取消')
                     },
                 })
                 break

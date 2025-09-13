@@ -388,7 +388,7 @@ export default class Game {
                 // }
                 // 詢問是否使用裝備牌的效果
                 if (data.chooseMountCardPlayerId === this.me.id) {
-                    this.me.askReaction('AskChooseMountCardEvent', event)
+                    this.me.processEvent(event)
                 }
                 break
             case 'AskPlayWardViewModel':
@@ -401,26 +401,6 @@ export default class Game {
                 //     "message": "請選擇是否要出無懈可擊"
                 // }
                 this.me.processEvent(event)
-                break
-            case 'SkipEquipmentEffectViewModel':
-                // {
-                //     "event": "SkipEquipmentEffectViewModel",
-                //     "data": {
-                //         "playerId": "Scolley",
-                //         "cardId": "ES2015"
-                //     },
-                //     "message": "跳過裝備效果"
-                // }
-                if (data.cardId === 'EH5031') {
-                    // 麒麟弓不用觸發要求出閃
-                    break
-                }
-                if (data.playerId === this.me.id) {
-                    this.me.reactionType = ''
-                    this.me.reactionMode = false
-                    console.log('askDodge', event)
-                    this.me.askReaction('askDodge', event)
-                }
                 break
             case 'UseEquipmentEffectViewModel':
                 // {
