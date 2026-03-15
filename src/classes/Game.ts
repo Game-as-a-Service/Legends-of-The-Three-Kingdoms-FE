@@ -131,7 +131,7 @@ export default class Game {
             this.api.playCard(this.gameId, params)
             return
         }
-        if (reactionType === 'AskPlayWardViewModel') {
+        if (reactionType === 'AskPlayWardEvent') {
             const playType = card.id ? 'active' : 'skip'
             const params = {
                 cardId: card.id || '',
@@ -421,9 +421,9 @@ export default class Game {
                     this.me.processEvent(event)
                 }
                 break
-            case 'AskPlayWardViewModel':
+            case 'AskPlayWardEvent':
                 // {
-                //     "event": "AskPlayWardViewModel",
+                //     "event": "AskPlayWardEvent",
                 //     "data": {
                 //         "wardTriggerCardId": "SH7046",
                 //         "wardTriggerPlayerId": "Scolley"

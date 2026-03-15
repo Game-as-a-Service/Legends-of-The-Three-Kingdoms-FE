@@ -268,15 +268,11 @@ export default class MainPlayer extends Player {
         //     this.reactionType,
         // )
         // 非自己回合不能出牌
-        if (this.game!.getActivePlayer() !== this.id && this.event !== 'AskPlayWardViewModel') {
+        if (this.game!.getActivePlayer() !== this.id && this.event !== 'AskPlayWardEvent') {
             return
         }
         // 自己的主動狀態不能出無懈可擊
-        if (
-            this.event !== 'AskPlayWardViewModel' &&
-            card.name === '無懈可擊' &&
-            !this.discardMode
-        ) {
+        if (this.event !== 'AskPlayWardEvent' && card.name === '無懈可擊' && !this.discardMode) {
             return
         }
         /// event check
@@ -299,8 +295,8 @@ export default class MainPlayer extends Player {
             this.handleSelectCard(card)
             return
         }
-        if (this.event === 'AskPlayWardViewModel') {
-            console.log('AskPlayWardViewModel', card.name)
+        if (this.event === 'AskPlayWardEvent') {
+            console.log('AskPlayWardEvent', card.name)
             if (card.name !== '無懈可擊') {
                 return
             }
@@ -602,7 +598,7 @@ export default class MainPlayer extends Player {
                 this.mainInstanceMap.checkModal?.setAlpha(1)
                 break
             }
-            case 'AskPlayWardViewModel': {
+            case 'AskPlayWardEvent': {
                 const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
                 hintText?.setText('是否要出無懈可擊？')
                 this.hintInstance?.setAlpha(1)
@@ -898,7 +894,7 @@ export default class MainPlayer extends Player {
             this.reactionType = ''
             this.reactionMode = false
         }
-        if (this.event === 'AskPlayWardViewModel') {
+        if (this.event === 'AskPlayWardEvent') {
             if (this.selectedCard?.name !== '無懈可擊') {
                 return
             }
@@ -920,7 +916,7 @@ export default class MainPlayer extends Player {
             this.event === 'AskDodgeEvent' ||
             this.event === 'AskPeachEvent' ||
             this.event === 'AskKillEvent' ||
-            this.event === 'AskPlayWardViewModel'
+            this.event === 'AskPlayWardEvent'
         ) {
             this.gamePlayCardHandler({}, this.event)
             this.event = ''
