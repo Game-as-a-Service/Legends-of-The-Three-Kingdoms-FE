@@ -599,8 +599,19 @@ export default class MainPlayer extends Player {
                 break
             }
             case 'AskPlayWardEvent': {
+                const allPlayers = [...this.seats, this]
+                const triggerPlayer = allPlayers.find(
+                    (p) => p.id === event.data.wardTriggerPlayerId,
+                )
+                const triggerName = triggerPlayer?.general?.name || event.data.wardTriggerPlayerId
+                const targetIds: string[] = event.data.targetPlayerIds || []
+                let targetName = '全體'
+                if (targetIds.length === 1) {
+                    const targetPlayer = allPlayers.find((p) => p.id === targetIds[0])
+                    targetName = targetPlayer?.general?.name || targetIds[0]
+                }
                 const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-                hintText?.setText('是否要出無懈可擊？')
+                hintText?.setText(`是否要出無懈可擊？(${triggerName}對${targetName})`)
                 this.hintInstance?.setAlpha(1)
                 this.mainInstanceMap.checkModal?.setAlpha(1)
                 break

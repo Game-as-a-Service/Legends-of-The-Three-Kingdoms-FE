@@ -425,8 +425,11 @@ export default class Game {
                 // {
                 //     "event": "AskPlayWardEvent",
                 //     "data": {
-                //         "wardTriggerCardId": "SH7046",
-                //         "wardTriggerPlayerId": "Scolley"
+                //         "wardTriggerPlayerId": "Happypola",
+                //         "wardTriggerCardId": "SS7007",
+                //         "targetPlayerIds": [
+                //             "YangJun"
+                //         ]
                 //     },
                 //     "message": "請選擇是否要出無懈可擊"
                 // }
