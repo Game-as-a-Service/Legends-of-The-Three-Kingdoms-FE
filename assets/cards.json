@@ -7,6 +7,14 @@
         "type": "scroll",
         "audio": ""
     },
+    "ES2002": {
+        "id": "ES2002",
+        "name": "雌雄雙股劍",
+        "rank": 2,
+        "suit": "spade",
+        "type": "equipment",
+        "audio": ""
+    },
     "SS3003": {
         "id": "SS3003",
         "name": "過河拆橋",
@@ -21,6 +29,14 @@
         "rank": 4,
         "suit": "spade",
         "type": "scroll",
+        "audio": ""
+    },
+    "ES5005": {
+        "id": "ES5005",
+        "name": "青龍偃月刀",
+        "rank": 5,
+        "suit": "spade",
+        "type": "equipment",
         "audio": ""
     },
     "SS6006": {
@@ -44,6 +60,22 @@
         "name": "殺",
         "rank": 8,
         "suit": "heart",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BS9009": {
+        "id": "BS9009",
+        "name": "殺",
+        "rank": 9,
+        "suit": "spade",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BS0010": {
+        "id": "BS0010",
+        "name": "殺",
+        "rank": 10,
+        "suit": "spade",
         "type": "basic",
         "audio": "kill"
     },
@@ -87,6 +119,22 @@
         "type": "equipment",
         "audio": "eightDiagramFormation"
     },
+    "SS3016": {
+        "id": "SS3016",
+        "name": "順手牽羊",
+        "rank": 3,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": ""
+    },
+    "SS4017": {
+        "id": "SS4017",
+        "name": "順手牽羊",
+        "rank": 4,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": ""
+    },
     "ES5018": {
         "id": "ES5018",
         "name": "絕影",
@@ -95,6 +143,70 @@
         "type": "equipment",
         "audio": "shadowrunner"
     },
+    "ES6019": {
+        "id": "ES6019",
+        "name": "青虹劍",
+        "rank": 6,
+        "suit": "spade",
+        "type": "equipment",
+        "audio": ""
+    },
+    "BS7020": {
+        "id": "BS7020",
+        "name": "殺",
+        "rank": 7,
+        "suit": "spade",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BS8021": {
+        "id": "BS8021",
+        "name": "殺",
+        "rank": 8,
+        "suit": "spade",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BS9022": {
+        "id": "BS9022",
+        "name": "殺",
+        "rank": 9,
+        "suit": "spade",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BS0023": {
+        "id": "BS0023",
+        "name": "殺",
+        "rank": 10,
+        "suit": "spade",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "SSJ024": {
+        "id": "SSJ024",
+        "name": "順手牽羊",
+        "rank": 11,
+        "suit": "spade",
+        "type": "scroll",
+        "audio": ""
+    },
+    "ESQ025": {
+        "id": "ESQ025",
+        "name": "丈八蛇矛",
+        "rank": 12,
+        "suit": "spade",
+        "type": "equipment",
+        "audio": ""
+    },
+    "ESK026": {
+        "id": "ESK026",
+        "name": "黃爪飛電",
+        "rank": 13,
+        "suit": "spade",
+        "type": "equipment",
+        "audio": ""
+    },
     "SHA027": {
         "id": "SHA027",
         "name": "桃園結義",
@@ -102,6 +214,22 @@
         "suit": "heart",
         "type": "scroll",
         "audio": ""
+    },
+    "BH2028": {
+        "id": "BH2028",
+        "name": "閃",
+        "rank": 2,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "BH3029": {
+        "id": "BH3029",
+        "name": "桃",
+        "rank": 3,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "peach"
     },
     "BH4030": {
         "id": "BH4030",
@@ -119,6 +247,62 @@
         "type": "equipment",
         "audio": "qilinBow"
     },
+    "BH6032": {
+        "id": "BH6032",
+        "name": "桃",
+        "rank": 6,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "peach"
+    },
+    "BH7033": {
+        "id": "BH7033",
+        "name": "桃",
+        "rank": 7,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "peach"
+    },
+    "BH8034": {
+        "id": "BH8034",
+        "name": "桃",
+        "rank": 8,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "peach"
+    },
+    "BH9035": {
+        "id": "BH9035",
+        "name": "桃",
+        "rank": 9,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "peach"
+    },
+    "BH0036": {
+        "id": "BH0036",
+        "name": "殺",
+        "rank": 10,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BHJ037": {
+        "id": "BHJ037",
+        "name": "殺",
+        "rank": 11,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BHQ038": {
+        "id": "BHQ038",
+        "name": "桃",
+        "rank": 12,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "peach"
+    },
     "BHK039": {
         "id": "BHK039",
         "name": "閃",
@@ -134,6 +318,14 @@
         "suit": "heart",
         "type": "scroll",
         "audio": "arrowBarrage"
+    },
+    "BH2041": {
+        "id": "BH2041",
+        "name": "閃",
+        "rank": 2,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "dodge"
     },
     "SH3042": {
         "id": "SH3042",
@@ -191,6 +383,14 @@
         "type": "scroll",
         "audio": "somethingForNothing"
     },
+    "BH0049": {
+        "id": "BH0049",
+        "name": "殺",
+        "rank": 10,
+        "suit": "heart",
+        "type": "basic",
+        "audio": "kill"
+    },
     "SHJ050": {
         "id": "SHJ050",
         "name": "無中生有",
@@ -207,13 +407,101 @@
         "type": "scroll",
         "audio": "dismantle"
     },
+    "EHK052": {
+        "id": "EHK052",
+        "name": "爪黃飛電",
+        "rank": 13,
+        "suit": "heart",
+        "type": "equipment",
+        "audio": ""
+    },
     "SCA053": {
         "id": "SCA053",
         "name": "決鬥",
         "rank": 1,
-        "suit": "heart",
+        "suit": "club",
         "type": "scroll",
         "audio": ""
+    },
+    "BC2054": {
+        "id": "BC2054",
+        "name": "殺",
+        "rank": 2,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BC3055": {
+        "id": "BC3055",
+        "name": "殺",
+        "rank": 3,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BC4056": {
+        "id": "BC4056",
+        "name": "殺",
+        "rank": 4,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BC5057": {
+        "id": "BC5057",
+        "name": "殺",
+        "rank": 5,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BC6058": {
+        "id": "BC6058",
+        "name": "殺",
+        "rank": 6,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BC7059": {
+        "id": "BC7059",
+        "name": "殺",
+        "rank": 7,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BC8060": {
+        "id": "BC8060",
+        "name": "殺",
+        "rank": 8,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BC9061": {
+        "id": "BC9061",
+        "name": "殺",
+        "rank": 9,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BC0062": {
+        "id": "BC0062",
+        "name": "殺",
+        "rank": 10,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BCJ063": {
+        "id": "BCJ063",
+        "name": "殺",
+        "rank": 11,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
     },
     "SCQ064": {
         "id": "SCQ064",
@@ -263,6 +551,14 @@
         "type": "scroll",
         "audio": ""
     },
+    "EC5070": {
+        "id": "EC5070",
+        "name": "的盧",
+        "rank": 5,
+        "suit": "club",
+        "type": "equipment",
+        "audio": ""
+    },
     "SC6071": {
         "id": "SC6071",
         "name": "樂不思蜀",
@@ -278,6 +574,38 @@
         "suit": "club",
         "type": "scroll",
         "audio": "barbarianInvasion"
+    },
+    "BC8073": {
+        "id": "BC8073",
+        "name": "殺",
+        "rank": 8,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BC9074": {
+        "id": "BC9074",
+        "name": "殺",
+        "rank": 9,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BC0075": {
+        "id": "BC0075",
+        "name": "殺",
+        "rank": 10,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BCJ076": {
+        "id": "BCJ076",
+        "name": "殺",
+        "rank": 11,
+        "suit": "club",
+        "type": "basic",
+        "audio": "kill"
     },
     "SCQ077": {
         "id": "SCQ077",
@@ -303,6 +631,102 @@
         "type": "scroll",
         "audio": ""
     },
+    "BD2080": {
+        "id": "BD2080",
+        "name": "閃",
+        "rank": 2,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "SD3081": {
+        "id": "SD3081",
+        "name": "順手牽羊",
+        "rank": 3,
+        "suit": "diamond",
+        "type": "scroll",
+        "audio": ""
+    },
+    "SD4082": {
+        "id": "SD4082",
+        "name": "順手牽羊",
+        "rank": 4,
+        "suit": "diamond",
+        "type": "scroll",
+        "audio": ""
+    },
+    "ED5083": {
+        "id": "ED5083",
+        "name": "貫石斧",
+        "rank": 5,
+        "suit": "diamond",
+        "type": "equipment",
+        "audio": ""
+    },
+    "BD6084": {
+        "id": "BD6084",
+        "name": "殺",
+        "rank": 6,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BD7085": {
+        "id": "BD7085",
+        "name": "殺",
+        "rank": 7,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BD8086": {
+        "id": "BD8086",
+        "name": "殺",
+        "rank": 8,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BD9087": {
+        "id": "BD9087",
+        "name": "殺",
+        "rank": 9,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BD0088": {
+        "id": "BD0088",
+        "name": "殺",
+        "rank": 10,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "kill"
+    },
+    "BDJ089": {
+        "id": "BDJ089",
+        "name": "閃",
+        "rank": 11,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "BDQ090": {
+        "id": "BDQ090",
+        "name": "桃",
+        "rank": 12,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "peach"
+    },
+    "BDK091": {
+        "id": "BDK091",
+        "name": "殺",
+        "rank": 13,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "kill"
+    },
     "EDA092": {
         "id": "EDA092",
         "name": "諸葛連弩",
@@ -310,5 +734,101 @@
         "suit": "diamond",
         "type": "equipment",
         "audio": "chuKoNu"
+    },
+    "BD2093": {
+        "id": "BD2093",
+        "name": "閃",
+        "rank": 2,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "BD3094": {
+        "id": "BD3094",
+        "name": "閃",
+        "rank": 3,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "BD4095": {
+        "id": "BD4095",
+        "name": "閃",
+        "rank": 4,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "BD5096": {
+        "id": "BD5096",
+        "name": "閃",
+        "rank": 5,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "BD6097": {
+        "id": "BD6097",
+        "name": "閃",
+        "rank": 6,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "BD7098": {
+        "id": "BD7098",
+        "name": "閃",
+        "rank": 7,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "BD8099": {
+        "id": "BD8099",
+        "name": "閃",
+        "rank": 8,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "BD9100": {
+        "id": "BD9100",
+        "name": "閃",
+        "rank": 9,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "BD0101": {
+        "id": "BD0101",
+        "name": "閃",
+        "rank": 10,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "BDJ102": {
+        "id": "BDJ102",
+        "name": "閃",
+        "rank": 11,
+        "suit": "diamond",
+        "type": "basic",
+        "audio": "dodge"
+    },
+    "EDQ103": {
+        "id": "EDQ103",
+        "name": "方天畫戟",
+        "rank": 12,
+        "suit": "diamond",
+        "type": "equipment",
+        "audio": ""
+    },
+    "EDK104": {
+        "id": "EDK104",
+        "name": "紫騂",
+        "rank": 13,
+        "suit": "diamond",
+        "type": "equipment",
+        "audio": ""
     }
 }

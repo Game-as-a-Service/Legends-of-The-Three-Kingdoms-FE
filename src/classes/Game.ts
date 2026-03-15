@@ -164,13 +164,20 @@ export default class Game {
         if (!this.me.selectedCard || player.isOutofDistance) return
         if (this.me.selectedCard.name === '過河拆橋') {
             this.seats.forEach((player) => player.setOutOfDistance(false))
-            if (this.me.selectedCard!.name === '過河拆橋') {
-                // 開啟選擇面板
-                const event = {
-                    targetPlayer: player,
-                }
-                this.me.askReaction('useDismantleEffect', event)
+            // 開啟選擇面板
+            const event = {
+                targetPlayer: player,
             }
+            this.me.askReaction('useDismantleEffect', event)
+            return
+        }
+        if (this.me.selectedCard.name === '順手牽羊') {
+            this.seats.forEach((player) => player.setOutOfDistance(false))
+            // 開啟選擇面板
+            const event = {
+                targetPlayer: player,
+            }
+            this.me.askReaction('useSnatchEffect', event)
             return
         }
         if (
@@ -281,6 +288,37 @@ export default class Game {
             targetCardIndex,
         }
         this.api.useDismantleEffect(this.gameId, params2)
+    }
+    useSnatchEffect = async (
+        targetPlayerId: string,
+        cardId: ThreeKingdomsCardIds | undefined,
+        targetCardIndex?: number,
+    ) => {
+        //先出順手牽羊
+        const params = {
+            playerId: this.me.id,
+            targetPlayerId,
+            cardId: this.me.selectedCard!.id,
+            playType: 'active', //skip
+        }
+        await this.api.playCard(this.gameId, params)
+        const player = this.seats.find((player) => player.id === targetPlayerId)
+        if (player === undefined) return
+        atkLine({
+            endPoint: new Phaser.Math.Vector2(player.instance.x, player.instance.y),
+            scene: this.scene,
+        })
+        const card = this.me.selectedCard
+        this.me.selectedCard = null // 避免影響牌重整先設為null
+        card!.playCard()
+        // 指定要牽哪張牌
+        const params2 = {
+            currentPlayerId: this.me.id,
+            targetPlayerId,
+            cardId,
+            targetCardIndex,
+        }
+        this.api.useSnatchEffect(this.gameId, params2)
     }
     chooseCardFromBountifulHarvest = (cardId: ThreeKingdomsCardIds) => {
         const params = {

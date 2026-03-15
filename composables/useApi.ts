@@ -100,6 +100,29 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:useDismantleEffect`, params)
     }
+    /// 順手牽羊
+    /**
+     *
+     * @param gameId
+     * @param params {
+     * currentPlayerId: string
+     * targetPlayerId: string
+     * cardId?: ThreeKingdomsCardIds //要牽的卡(裝備)
+     * targetCardIndex?: number //要牽的卡在手牌的位置(手牌)
+     * }
+     * @returns
+     */
+    const useSnatchEffect = (
+        gameId: string,
+        params: {
+            currentPlayerId: string
+            targetPlayerId: string
+            cardId?: ThreeKingdomsCardIds
+            targetCardIndex?: number
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:useSnatchEffect`, params)
+    }
     /// 五穀豐登
     /**
      *
@@ -150,6 +173,7 @@ export function useApi() {
         chooseHorseCard,
         useBorrowedSwordEffect,
         useDismantleEffect,
+        useSnatchEffect,
         chooseCardFromBountifulHarvest,
         playWardCard,
     }

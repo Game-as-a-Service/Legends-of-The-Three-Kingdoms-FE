@@ -336,6 +336,7 @@ export default class MainPlayer extends Player {
         if (
             card.name === '殺' ||
             card.name === '過河拆橋' ||
+            card.name === '順手牽羊' ||
             card.name === '決鬥' ||
             card.name === '樂不思蜀' ||
             card.name === '桃' ||
@@ -519,6 +520,36 @@ export default class MainPlayer extends Player {
                         this.game?.useDismantleEffect(player.id, undefined, cardIndex)
                     } else {
                         this.game?.useDismantleEffect(player.id, cardId)
+                    }
+                    this.reactionType = ''
+                    this.closeSelectCardModal()
+                },
+                handleCancel: () => {
+                    console.log('取消')
+                    this.reactionType = ''
+                    this.closeSelectCardModal()
+                    this.selectedCard = null
+                },
+            })
+        }
+        if (reactionType === 'useSnatchEffect') {
+            const player: Player = event.targetPlayer
+            console.log('useSnatchEffect', player)
+            this.useSelectCardModal({
+                type: 'small',
+                message: '請選擇要牽的卡',
+                handCardCount: player.hand.size,
+                cardIds: player.equipments.filter((cardId) => cardId),
+                delayScrolls: player.delayScrolls,
+                confirmText: '選擇',
+                cancelText: '取消',
+                handleConfirm: (cardId) => {
+                    console.log('選擇', cardId)
+                    if (cardId.includes('handCard')) {
+                        const cardIndex = Number(cardId.split('-')[1])
+                        this.game?.useSnatchEffect(player.id, undefined, cardIndex)
+                    } else {
+                        this.game?.useSnatchEffect(player.id, cardId)
                     }
                     this.reactionType = ''
                     this.closeSelectCardModal()
