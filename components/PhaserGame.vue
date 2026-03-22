@@ -298,7 +298,7 @@ onMounted(() => {
                         res.event === 'getGeneralCardEventByOthers'
                     ) {
                         chooseGeneralCards.value = res.data
-                    } else if (res.event === 'initialEndViewModel') {
+                    } else if (res.event === 'InitialEndEvent') {
                         const findMeIndex = res.data.seats.findIndex(
                             (seat) => seat.id === playerId.value,
                         )
