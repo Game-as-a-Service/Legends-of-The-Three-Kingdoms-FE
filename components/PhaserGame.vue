@@ -191,8 +191,8 @@ onMounted(() => {
         socketClient = new Client({
             // brokerURL: 'ws://localhost:8080/legendsOfTheThreeKingdoms',
             brokerURL:
-                runtimeConfig.public.brokerUrl || 'wss://scolley31.com/legendsOfTheThreeKingdoms',
-            // brokerURL: 'wss://scolley31.com/legendsOfTheThreeKingdoms',
+                runtimeConfig.public.brokerUrl || 'wss://3k-api.parsons125.in/legendsOfTheThreeKingdoms',
+            // brokerURL: 'wss://3k-api.parsons125.in/legendsOfTheThreeKingdoms',
             reconnectDelay: 5000,
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,
@@ -590,63 +590,44 @@ const handleShowSelectCardModal = () => {
 }
 </script>
 <template>
-    <div class="bg-black text-2xl">
-        <div v-if="!demo">
-            <div v-if="playerId" class="p-2 text-white">您好：{{ playerId }}</div>
-            <div v-else>
-                <label
-                    for="countries"
-                    class="mb-2 block text-2xl font-medium text-gray-900 dark:text-white"
-                    >你是誰？</label
-                >
-                <div class="flex gap-2">
-                    <button
-                        v-for="id in playerIds"
-                        @click="playerConnect(id)"
-                        type="button"
-                        class="rounded-lg bg-green-700 px-5 py-2.5 text-2xl font-medium text-white hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
-                    >
-                        {{ id }}
-                    </button>
-                    <button
-                        @click="initDemo"
-                        type="button"
-                        class="rounded-lg bg-green-700 px-5 py-2.5 text-2xl font-medium text-white hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
-                    >
-                        ChenQQ(demo)
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="text-white">
-            <div v-if="gameProcess === 'initial'">
-                你的身份是：{{ roleText[me.roleId] }}，請選擇武將：
-                <button
-                    v-for="general in chooseGeneralCardsMap"
-                    @click="selectGeneral(general.id)"
-                    type="button"
-                    class="mb-2 me-2 rounded-lg bg-blue-700 px-5 py-2.5 text-2xl font-medium text-white hover:bg-blue-800"
-                >
-                    {{ general.name }}
+<div class="bg-black text-2xl">
+    <div v-if="!demo">
+        <div v-if="playerId" class="p-2 text-white">您好：{{ playerId }}</div>
+        <div v-else>
+            <label for="countries" class="mb-2 block text-2xl font-medium text-gray-900 dark:text-white">你是誰？</label>
+            <div class="flex gap-2">
+                <button v-for="id in playerIds" @click="playerConnect(id)" type="button"
+                    class="rounded-lg bg-green-700 px-5 py-2.5 text-2xl font-medium text-white hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                    {{ id }}
+                </button>
+                <button @click="initDemo" type="button"
+                    class="rounded-lg bg-green-700 px-5 py-2.5 text-2xl font-medium text-white hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
+                    ChenQQ(demo)
                 </button>
             </div>
         </div>
-        <div class="flex">
-            <div id="phaser-game" ref="phaser-game"></div>
-            <div class="text-white">
-                <div class="text-white" v-if="isConnected">已連線</div>
-                <div class="text-white" v-else>未連線</div>
-                <div class="p-2">
-                    <div class="flex">
-                        <button
-                            v-if="isConnected && !startGameFlag"
-                            @click="createGame"
-                            type="button"
-                            class="mb-2 me-2 rounded-lg bg-orange-700 px-5 py-2.5 text-2xl font-medium text-white hover:bg-orange-800 focus:outline-none focus:ring-4 focus:ring-orange-300 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-900"
-                        >
-                            開始遊戲
-                        </button>
-                        <!-- <button
+    </div>
+    <div class="text-white">
+        <div v-if="gameProcess === 'initial'">
+            你的身份是：{{ roleText[me.roleId] }}，請選擇武將：
+            <button v-for="general in chooseGeneralCardsMap" @click="selectGeneral(general.id)" type="button"
+                class="mb-2 me-2 rounded-lg bg-blue-700 px-5 py-2.5 text-2xl font-medium text-white hover:bg-blue-800">
+                {{ general.name }}
+            </button>
+        </div>
+    </div>
+    <div class="flex">
+        <div id="phaser-game" ref="phaser-game"></div>
+        <div class="text-white">
+            <div class="text-white" v-if="isConnected">已連線</div>
+            <div class="text-white" v-else>未連線</div>
+            <div class="p-2">
+                <div class="flex">
+                    <button v-if="isConnected && !startGameFlag" @click="createGame" type="button"
+                        class="mb-2 me-2 rounded-lg bg-orange-700 px-5 py-2.5 text-2xl font-medium text-white hover:bg-orange-800 focus:outline-none focus:ring-4 focus:ring-orange-300 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-900">
+                        開始遊戲
+                    </button>
+                    <!-- <button
                             v-if="isConnected && startGameFlag"
                             @click="skipPlayCard"
                             type="button"
@@ -654,136 +635,90 @@ const handleShowSelectCardModal = () => {
                         >
                             不出牌
                         </button> -->
-                        <button
-                            v-if="
-                                isConnected &&
-                                startGameFlag &&
-                                round.currentRoundPlayer === playerId &&
-                                round.activePlayer === playerId
-                            "
-                            @click="finishAction"
-                            type="button"
-                            class="mb-2 me-2 rounded-lg bg-orange-700 px-5 py-2.5 text-2xl font-medium text-white hover:bg-orange-800 focus:outline-none focus:ring-4 focus:ring-orange-300 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-900"
-                        >
-                            結束回合
-                        </button>
-                    </div>
-                </div>
-                <div v-for="message in messages">
-                    {{ message }}
+                    <button v-if="
+                        isConnected &&
+                        startGameFlag &&
+                        round.currentRoundPlayer === playerId &&
+                        round.activePlayer === playerId
+                    " @click="finishAction" type="button"
+                        class="mb-2 me-2 rounded-lg bg-orange-700 px-5 py-2.5 text-2xl font-medium text-white hover:bg-orange-800 focus:outline-none focus:ring-4 focus:ring-orange-300 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-900">
+                        結束回合
+                    </button>
                 </div>
             </div>
-        </div>
-
-        <div v-if="demo" class="flex flex-col p-2">
-            <div class="flex items-center">
-                <template v-for="player in players">
-                    <button
-                        v-if="player.id === eventSelectedPlayer"
-                        type="button"
-                        class="mb-2 me-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800"
-                    >
-                        {{ player.general.name }}
-                    </button>
-                    <button
-                        v-else
-                        @click="eventSelectedPlayer = player.id"
-                        type="button"
-                        class="mb-2 me-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-900"
-                    >
-                        {{ player.general.name }}
-                    </button>
-                </template>
-            </div>
-            <div class="flex">
-                <template v-for="cardName in uniqeCardNames">
-                    <button
-                        v-if="cardName === eventSelectedCard"
-                        type="button"
-                        class="mb-2 me-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800"
-                    >
-                        {{ cardName }}
-                    </button>
-                    <button
-                        v-else
-                        @click="eventSelectedCard = cardName"
-                        type="button"
-                        class="mb-2 me-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-900"
-                    >
-                        {{ cardName }}
-                    </button>
-                </template>
-            </div>
-            <div class="flex items-center">
-                <template v-for="player in players">
-                    <button
-                        v-if="player.id === eventTargetPlayer"
-                        type="button"
-                        class="mb-2 me-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800"
-                    >
-                        {{ player.general.name }}
-                    </button>
-                    <button
-                        v-else
-                        @click="eventTargetPlayer = player.id"
-                        type="button"
-                        class="mb-2 me-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-900"
-                    >
-                        {{ player.general.name }}
-                    </button>
-                </template>
-            </div>
-            <div class="flex">
-                <button
-                    @click="eventTrigger"
-                    type="button"
-                    class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
-                >
-                    出牌
-                </button>
-                <button
-                    @click="hpMinus(eventSelectedPlayer)"
-                    type="button"
-                    class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
-                >
-                    扣血
-                </button>
-                <button
-                    @click="getCards(eventSelectedPlayer)"
-                    type="button"
-                    class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
-                >
-                    抽牌
-                </button>
-                <button
-                    @click="discardCard(eventSelectedPlayer)"
-                    type="button"
-                    class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
-                >
-                    棄牌
-                </button>
-                <button
-                    @click="handleShowSelectCardModal"
-                    type="button"
-                    class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
-                >
-                    打開選馬彈窗
-                </button>
-                <button
-                    @click="startTurn"
-                    type="button"
-                    class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
-                >
-                    回合開始
-                </button>
-                <button
-                    @click="endTurn"
-                    type="button"
-                    class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
-                >
-                    回合結束
-                </button>
+            <div v-for="message in messages">
+                {{ message }}
             </div>
         </div>
     </div>
+
+    <div v-if="demo" class="flex flex-col p-2">
+        <div class="flex items-center">
+            <template v-for="player in players">
+                <button v-if="player.id === eventSelectedPlayer" type="button"
+                    class="mb-2 me-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800">
+                    {{ player.general.name }}
+                </button>
+                <button v-else @click="eventSelectedPlayer = player.id" type="button"
+                    class="mb-2 me-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-900">
+                    {{ player.general.name }}
+                </button>
+            </template>
+        </div>
+        <div class="flex">
+            <template v-for="cardName in uniqeCardNames">
+                <button v-if="cardName === eventSelectedCard" type="button"
+                    class="mb-2 me-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800">
+                    {{ cardName }}
+                </button>
+                <button v-else @click="eventSelectedCard = cardName" type="button"
+                    class="mb-2 me-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-900">
+                    {{ cardName }}
+                </button>
+            </template>
+        </div>
+        <div class="flex items-center">
+            <template v-for="player in players">
+                <button v-if="player.id === eventTargetPlayer" type="button"
+                    class="mb-2 me-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800">
+                    {{ player.general.name }}
+                </button>
+                <button v-else @click="eventTargetPlayer = player.id" type="button"
+                    class="mb-2 me-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-900">
+                    {{ player.general.name }}
+                </button>
+            </template>
+        </div>
+        <div class="flex">
+            <button @click="eventTrigger" type="button"
+                class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
+                出牌
+            </button>
+            <button @click="hpMinus(eventSelectedPlayer)" type="button"
+                class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
+                扣血
+            </button>
+            <button @click="getCards(eventSelectedPlayer)" type="button"
+                class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
+                抽牌
+            </button>
+            <button @click="discardCard(eventSelectedPlayer)" type="button"
+                class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
+                棄牌
+            </button>
+            <button @click="handleShowSelectCardModal" type="button"
+                class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
+                打開選馬彈窗
+            </button>
+            <button @click="startTurn" type="button"
+                class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
+                回合開始
+            </button>
+            <button @click="endTurn" type="button"
+                class="mb-2 me-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
+                回合結束
+            </button>
+        </div>
+    </div>
+</div>
 </template>

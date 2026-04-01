@@ -3,8 +3,8 @@
 export default defineNuxtConfig({
     runtimeConfig: {
         public: {
-            apiBaseUrl: 'https://scolley31.com/',
-            brokerUrl: 'wss://scolley31.com/legendsOfTheThreeKingdoms',
+            apiBaseUrl: 'https://3k-api.parsons125.in/',
+            brokerUrl: 'wss://3k-api.parsons125.in/legendsOfTheThreeKingdoms',
             // apiBaseUrl: 'http://54.238.232.62:8080/',
             // brokerUrl: 'ws://54.238.232.62:8080/legendsOfTheThreeKingdoms',
         },
@@ -12,8 +12,8 @@ export default defineNuxtConfig({
     production: {
         runtimeConfig: {
             public: {
-                apiBaseUrl: 'https://scolley31.com/',
-                brokerUrl: 'wss://scolley31.com/legendsOfTheThreeKingdoms',
+                apiBaseUrl: 'https://3k-api.parsons125.in/',
+                brokerUrl: 'wss://3k-api.parsons125.in/legendsOfTheThreeKingdoms',
             },
         },
     },
