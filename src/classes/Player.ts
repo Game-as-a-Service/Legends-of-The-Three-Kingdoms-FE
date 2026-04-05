@@ -280,22 +280,12 @@ export default class Player {
         }
     }
     setPlayerSelected(isSelected: boolean, type?: 'from' | 'to') {
-        // 讓物件邊緣發光
         const rectangle: Phaser.GameObjects.Rectangle = this.instance.getAt(0)
         if (isSelected) {
-            // 如果是 from 就是綠色，to 就是紅色
             const color = type === 'from' ? 0x00ff00 : 0xff0000
-            const fx = rectangle.postFX.addGlow(color, 20, 0.5)
-            this.scene.tweens.add({
-                targets: fx,
-                outerStrength: 4,
-                duration: 1000,
-                ease: 'Sine.easeInOut',
-                yoyo: true,
-                loop: -1,
-            })
+            rectangle.setStrokeStyle(4, color)
         } else {
-            rectangle.postFX.clear()
+            rectangle.setStrokeStyle()
         }
     }
     updateEquipments(index: number) {

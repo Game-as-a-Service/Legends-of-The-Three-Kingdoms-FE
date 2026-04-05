@@ -381,7 +381,12 @@ export default class MainPlayer extends Player {
             // 計算每個人的距離
             // 錦囊卡不用看距離
             const cardInfo = threeKingdomsCards[card.id]
-            if (card.name === '南蠻入侵' || card.name === '萬箭齊發') {
+            if (
+                card.name === '南蠻入侵' ||
+                card.name === '萬箭齊發' ||
+                card.name === '決鬥' ||
+                card.name === '樂不思蜀'
+            ) {
                 this.mainInstanceMap.checkModal?.setAlpha(1)
             }
             if (cardInfo.type === 'scroll') {
@@ -888,6 +893,31 @@ export default class MainPlayer extends Player {
             this.gamePlayCardHandler(card)
             this.mainInstanceMap.checkModal?.setAlpha(0)
         }
+        if (this.selectedCard?.name === '決鬥' || this.selectedCard?.name === '樂不思蜀') {
+            if (!this.game?.selectTargetPlayers.length) {
+                // 第一次確認：隱藏 checkModal，讓玩家選擇目標
+                this.mainInstanceMap.checkModal?.setAlpha(0)
+                return
+            }
+            // 第二次確認：出牌
+            const targetPlayer = this.game?.selectTargetPlayers[0]
+            if (targetPlayer) {
+                atkLine({
+                    endPoint: new Phaser.Math.Vector2(
+                        targetPlayer.instance.x,
+                        targetPlayer.instance.y,
+                    ),
+                    scene: this.scene,
+                })
+            }
+            const card = this.selectedCard
+            this.selectedCard = null
+            card.playCard()
+            this.gamePlayCardHandler(card)
+            this.mainInstanceMap.checkModal?.setAlpha(0)
+            this.resetOutofDistance()
+            return
+        }
         if (this.event === 'AskKillEvent') {
             if (this.selectedCard?.name !== '殺') {
                 return
@@ -944,6 +974,10 @@ export default class MainPlayer extends Player {
             card.instance.setAlpha(1)
         })
         this.mainInstanceMap.checkModal?.setAlpha(0)
+        if (this.game) {
+            this.game.selectTargetPlayers.forEach((p) => p.setPlayerSelected(false))
+            this.game.selectTargetPlayers = []
+        }
         if (this.selectedCard) {
             this.selectedCard.instance.setAlpha(1)
             this.scene.tweens.add({

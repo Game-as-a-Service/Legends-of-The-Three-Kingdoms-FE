@@ -152,6 +152,19 @@ export default class Game {
             this.seats.forEach((player) => player.setOutOfDistance(true))
             return
         }
+        if (card.name === '決鬥' || card.name === '樂不思蜀') {
+            const params = {
+                playerId: this.me.id,
+                targetPlayerId: this.selectTargetPlayers[0].id,
+                cardId: card.id,
+                playType: 'active',
+            }
+            this.api.playCard(this.gameId, params)
+            this.selectTargetPlayers[0].setPlayerSelected(false)
+            this.seats.forEach((player) => player.setOutOfDistance(false))
+            this.selectTargetPlayers = []
+            return
+        }
         const params = {
             playerId: this.me.id,
             targetPlayerId: this.me.id,
@@ -180,16 +193,12 @@ export default class Game {
             this.me.askReaction('useSnatchEffect', event)
             return
         }
-        if (
-            this.me.selectedCard.name === '殺' ||
-            this.me.selectedCard.name === '決鬥' ||
-            this.me.selectedCard.name === '樂不思蜀'
-        ) {
+        if (this.me.selectedCard.name === '殺') {
             const params = {
                 playerId: this.me.id,
                 targetPlayerId: player.id,
                 cardId: this.me.selectedCard.id,
-                playType: 'active', //skip
+                playType: 'active',
             }
             this.api.playCard(this.gameId, params)
             atkLine({
@@ -201,6 +210,19 @@ export default class Game {
             console.log(player, this.me)
             this.seats.forEach((player) => player.setOutOfDistance(false))
             this.me.selectedCard = null
+        }
+        if (
+            this.me.selectedCard?.name === '決鬥' ||
+            this.me.selectedCard?.name === '樂不思蜀'
+        ) {
+            // 清除前一個選擇的玩家邊匡
+            if (this.selectTargetPlayers.length > 0) {
+                this.selectTargetPlayers[0].setPlayerSelected(false)
+            }
+            player.setPlayerSelected(true, 'from')
+            this.selectTargetPlayers = [player]
+            this.me.mainInstanceMap.checkModal?.setAlpha(1)
+            return
         }
         if (this.me.selectedCard?.name === '借刀殺人') {
             // 借刀殺人要依序選擇目標
