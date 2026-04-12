@@ -167,6 +167,27 @@ export function useApi() {
     const setDeck = (gameId: string, params: { cardIds: string[] }) => {
         return api.put(`/api/debug/games/${gameId}/deck`, params)
     }
+    /// 雌雄雙股劍效果
+    /**
+     *
+     * @param gameId
+     * @param params {
+     * playerId: string // 做選擇的玩家 ID（被殺的目標 B）
+     * choice: string // TARGET_DISCARDS（目標棄一張手牌）或 ATTACKER_DRAWS（讓攻擊者摸牌）
+     * cardId: string // 要棄的手牌 cardId（choice=TARGET_DISCARDS 時必填；ATTACKER_DRAWS 時傳空字串）
+     * }
+     * @returns
+     */
+    const useYinYangSwordsEffect = (
+        gameId: string,
+        params: {
+            playerId: string
+            choice: 'TARGET_DISCARDS' | 'ATTACKER_DRAWS'
+            cardId: string
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:useYinYangSwordsEffect`, params)
+    }
     return {
         api,
         createGame,
@@ -182,6 +203,7 @@ export function useApi() {
         useSnatchEffect,
         chooseCardFromBountifulHarvest,
         playWardCard,
+        useYinYangSwordsEffect,
         getDeck,
         setDeck,
     }

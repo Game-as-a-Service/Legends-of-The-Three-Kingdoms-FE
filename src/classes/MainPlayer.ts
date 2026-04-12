@@ -676,6 +676,45 @@ export default class MainPlayer extends Player {
                     },
                 })
                 break
+            case 'AskYinYangSwordsEffectEvent': {
+                const allPlayers = [...this.seats, this]
+                const attacker = allPlayers.find(
+                    (p) => p.id === event.data.attackerPlayerId,
+                )
+                const attackerName = attacker?.general?.name || event.data.attackerPlayerId
+                this.useConfirmModal({
+                    message: `雌雄雙股劍效果：請選擇`,
+                    confirmText: '棄一張手牌',
+                    cancelText: '讓攻擊者摸牌',
+                    handleConfirm: () => {
+                        // TARGET_DISCARDS：選擇要棄哪張手牌
+                        this.mainInstanceMap.confirmModal?.setAlpha(0)
+                        this.useSelectCardModal({
+                            type: 'small',
+                            message: '選擇要棄的手牌',
+                            cardIds: this.hand.cardIds as ThreeKingdomsCardIds[],
+                            confirmText: '確認',
+                            cancelText: '取消',
+                            handleConfirm: (cardId) => {
+                                console.log('棄牌', cardId)
+                                this.game?.useYinYangSwordsEffect('TARGET_DISCARDS', cardId)
+                                this.closeSelectCardModal()
+                            },
+                            handleCancel: () => {
+                                console.log('取消棄牌')
+                                this.closeSelectCardModal()
+                            },
+                        })
+                    },
+                    handleCancel: () => {
+                        // ATTACKER_DRAWS：讓攻擊者摸牌
+                        console.log('讓攻擊者摸牌')
+                        this.game?.useYinYangSwordsEffect('ATTACKER_DRAWS', '')
+                        this.mainInstanceMap.confirmModal?.setAlpha(0)
+                    },
+                })
+                break
+            }
         }
     }
     updatePlayerData(data: any): void {

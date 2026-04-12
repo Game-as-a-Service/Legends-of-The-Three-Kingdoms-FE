@@ -211,10 +211,7 @@ export default class Game {
             this.seats.forEach((player) => player.setOutOfDistance(false))
             this.me.selectedCard = null
         }
-        if (
-            this.me.selectedCard?.name === '決鬥' ||
-            this.me.selectedCard?.name === '樂不思蜀'
-        ) {
+        if (this.me.selectedCard?.name === '決鬥' || this.me.selectedCard?.name === '樂不思蜀') {
             // 清除前一個選擇的玩家邊匡
             if (this.selectTargetPlayers.length > 0) {
                 this.selectTargetPlayers[0].setPlayerSelected(false)
@@ -279,6 +276,14 @@ export default class Game {
             cardId,
         }
         this.api.chooseHorseCard(this.gameId, params)
+    }
+    useYinYangSwordsEffect = (choice: 'TARGET_DISCARDS' | 'ATTACKER_DRAWS', cardId: string) => {
+        const params = {
+            playerId: this.me.id,
+            choice,
+            cardId,
+        }
+        this.api.useYinYangSwordsEffect(this.gameId, params)
     }
     useDismantleEffect = async (
         targetPlayerId: string,
@@ -440,6 +445,20 @@ export default class Game {
                 // }
                 // 詢問是否使用裝備牌的效果
                 if (data.chooseMountCardPlayerId === this.me.id) {
+                    this.me.processEvent(event)
+                }
+                break
+            case 'AskYinYangSwordsEffectEvent':
+                // const data = {
+                //     event: 'AskYinYangSwordsEffectEvent',
+                //     data: {
+                //         targetPlayerId: 'targetPlayerId',
+                //         attackerPlayerId: 'attackerPlayerId',
+                //     },
+                //     message: '請選擇是否棄一張手牌或讓攻擊者摸牌',
+                // }
+                // 詢問雌雄雙股劍效果
+                if (data.targetPlayerId === this.me.id) {
                     this.me.processEvent(event)
                 }
                 break
