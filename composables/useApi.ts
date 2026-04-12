@@ -161,6 +161,12 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:playWardCard`, params)
     }
+    const getDeck = (gameId: string) => {
+        return api.get(`/api/debug/games/${gameId}/deck`)
+    }
+    const setDeck = (gameId: string, params: { cardIds: string[] }) => {
+        return api.put(`/api/debug/games/${gameId}/deck`, params)
+    }
     return {
         api,
         createGame,
@@ -176,5 +182,7 @@ export function useApi() {
         useSnatchEffect,
         chooseCardFromBountifulHarvest,
         playWardCard,
+        getDeck,
+        setDeck,
     }
 }
