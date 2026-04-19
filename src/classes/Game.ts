@@ -292,6 +292,14 @@ export default class Game {
         }
         this.api.useYinYangSwordsEffect(this.gameId, params)
     }
+    useGreenDragonCrescentBladeEffect = (choice: 'KILL' | 'SKIP', killCardId: string) => {
+        const params = {
+            playerId: this.me.id,
+            choice,
+            killCardId,
+        }
+        this.api.useGreenDragonCrescentBladeEffect(this.gameId, params)
+    }
     useDismantleEffect = async (
         targetPlayerId: string,
         cardId: ThreeKingdomsCardIds | undefined,
@@ -480,6 +488,20 @@ export default class Game {
                 // }
                 // 詢問雌雄雙股劍效果
                 if (data.targetPlayerId === this.me.id) {
+                    this.me.processEvent(event)
+                }
+                break
+            case 'AskGreenDragonCrescentBladeEffectEvent':
+                // const data = {
+                //     event: 'AskGreenDragonCrescentBladeEffectEvent',
+                //     data: {
+                //         attackerPlayerId: 'Scolley',
+                //         targetPlayerId: 'Tux',
+                //     },
+                //     message: '青龍偃月刀效果：是否要再出一張殺',
+                // }
+                // 詢問攻擊者是否發動青龍偃月刀效果
+                if (data.attackerPlayerId === this.me.id) {
                     this.me.processEvent(event)
                 }
                 break

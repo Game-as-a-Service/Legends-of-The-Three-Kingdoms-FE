@@ -696,9 +696,7 @@ export default class MainPlayer extends Player {
                 break
             case 'AskYinYangSwordsEffectEvent': {
                 const allPlayers = [...this.seats, this]
-                const attacker = allPlayers.find(
-                    (p) => p.id === event.data.attackerPlayerId,
-                )
+                const attacker = allPlayers.find((p) => p.id === event.data.attackerPlayerId)
                 const attackerName = attacker?.general?.name || event.data.attackerPlayerId
                 this.useConfirmModal({
                     message: `雌雄雙股劍效果：請選擇`,
@@ -728,6 +726,45 @@ export default class MainPlayer extends Player {
                         // ATTACKER_DRAWS：讓攻擊者摸牌
                         console.log('讓攻擊者摸牌')
                         this.game?.useYinYangSwordsEffect('ATTACKER_DRAWS', '')
+                        this.mainInstanceMap.confirmModal?.setAlpha(0)
+                    },
+                })
+                break
+            }
+            case 'AskGreenDragonCrescentBladeEffectEvent': {
+                console.log('AskGreenDragonCrescentBladeEffectEvent')
+                this.useConfirmModal({
+                    message: '是否再出一張殺？',
+                    confirmText: '出殺',
+                    cancelText: '跳過',
+                    handleConfirm: () => {
+                        // KILL：選擇要出哪張殺
+                        this.mainInstanceMap.confirmModal?.setAlpha(0)
+                        const killCards = this.handCards.filter((card) => card.name === '殺')
+                        const killCardIds = killCards.map(
+                            (card) => card.id,
+                        ) as ThreeKingdomsCardIds[]
+                        this.useSelectCardModal({
+                            type: 'small',
+                            message: '選擇要出的殺',
+                            cardIds: killCardIds,
+                            confirmText: '確認',
+                            cancelText: '取消',
+                            handleConfirm: (cardId) => {
+                                console.log('出殺', cardId)
+                                this.game?.useGreenDragonCrescentBladeEffect('KILL', cardId)
+                                this.closeSelectCardModal()
+                            },
+                            handleCancel: () => {
+                                console.log('取消出殺')
+                                this.closeSelectCardModal()
+                            },
+                        })
+                    },
+                    handleCancel: () => {
+                        // SKIP：跳過
+                        console.log('跳過青龍偃月刀效果')
+                        this.game?.useGreenDragonCrescentBladeEffect('SKIP', '')
                         this.mainInstanceMap.confirmModal?.setAlpha(0)
                     },
                 })

@@ -15,47 +15,22 @@
 
 ### ✅ 已完成
 
-| 事件名稱                        | 說明                                   | 處理位置                | 對應 API                       |
-| ------------------------------- | -------------------------------------- | ----------------------- | ------------------------------ |
-| `AskPlayWardEvent`              | 詢問是否出無懈可擊                     | Game.ts + MainPlayer.ts | playWardCard                   |
-| `AskKillEvent`                  | 需要出殺（南蠻入侵/決鬥/借刀殺人）     | Game.ts + MainPlayer.ts | playCard                       |
-| `AskDodgeEvent`                 | 需要出閃（萬箭齊發/被殺）              | Game.ts + MainPlayer.ts | playCard                       |
-| `AskPeachEvent`                 | 瀕死需要出桃                           | Game.ts + MainPlayer.ts | playCard                       |
-| `BountifulHarvestEvent`         | 五穀豐登輪到你選牌                     | Game.ts + MainPlayer.ts | chooseCardFromBountifulHarvest |
-| `AskPlayEquipmentEffectEvent`   | 詢問是否使用裝備效果（如八卦陣）       | Game.ts + MainPlayer.ts | useEquipmentEffect             |
-| `AskChooseMountCardEvent`       | 麒麟弓效果：選擇棄對方哪匹馬           | Game.ts + MainPlayer.ts | chooseHorseCard                |
-| `AskActivateYinYangSwordsEvent` | 雌雄雙股劍發動詢問（攻擊者）           | Game.ts + MainPlayer.ts | activateYinYangSwords          |
-| `AskYinYangSwordsEffectEvent`   | 雌雄雙股劍：目標選擇棄牌或讓攻擊者摸牌 | Game.ts + MainPlayer.ts | useYinYangSwordsEffect         |
+| 事件名稱                                 | 說明                                   | 處理位置                | 對應 API                          |
+| ---------------------------------------- | -------------------------------------- | ----------------------- | --------------------------------- |
+| `AskPlayWardEvent`                       | 詢問是否出無懈可擊                     | Game.ts + MainPlayer.ts | playWardCard                      |
+| `AskKillEvent`                           | 需要出殺（南蠻入侵/決鬥/借刀殺人）     | Game.ts + MainPlayer.ts | playCard                          |
+| `AskDodgeEvent`                          | 需要出閃（萬箭齊發/被殺）              | Game.ts + MainPlayer.ts | playCard                          |
+| `AskPeachEvent`                          | 瀕死需要出桃                           | Game.ts + MainPlayer.ts | playCard                          |
+| `BountifulHarvestEvent`                  | 五穀豐登輪到你選牌                     | Game.ts + MainPlayer.ts | chooseCardFromBountifulHarvest    |
+| `AskPlayEquipmentEffectEvent`            | 詢問是否使用裝備效果（如八卦陣）       | Game.ts + MainPlayer.ts | useEquipmentEffect                |
+| `AskChooseMountCardEvent`                | 麒麟弓效果：選擇棄對方哪匹馬           | Game.ts + MainPlayer.ts | chooseHorseCard                   |
+| `AskActivateYinYangSwordsEvent`          | 雌雄雙股劍發動詢問（攻擊者）           | Game.ts + MainPlayer.ts | activateYinYangSwords             |
+| `AskYinYangSwordsEffectEvent`            | 雌雄雙股劍：目標選擇棄牌或讓攻擊者摸牌 | Game.ts + MainPlayer.ts | useYinYangSwordsEffect            |
+| `AskGreenDragonCrescentBladeEffectEvent` | 青龍偃月刀效果詢問                     | Game.ts + MainPlayer.ts | useGreenDragonCrescentBladeEffect |
 
 ### ❌ 尚未處理
 
-#### 1. AskGreenDragonCrescentBladeEffectEvent
-
-**說明**：青龍偃月刀效果詢問  
-**觸發場景**：A 裝備青龍偃月刀出殺，B 出閃抵銷後  
-**需要做的事**：
-
--   [ ] 在 `composables/useApi.ts` 新增 `useGreenDragonCrescentBladeEffect` API
--   [ ] 在 `src/classes/Game.ts` 的 `eventHandler` 新增 case 處理
--   [ ] 在 `src/classes/Game.ts` 新增調用方法
--   [ ] 在 `src/classes/MainPlayer.ts` 的 `processEvent` 新增 UI 處理
-    -   彈出確認框：「是否再出一張殺？」
-    -   選擇殺或跳過
-
-**API 格式**：
-
-```typescript
-POST /api/games/{gameId}/player:useGreenDragonCrescentBladeEffect
-{
-  playerId: string,
-  choice: 'KILL' | 'SKIP',
-  killCardId: string  // choice=KILL 時必填
-}
-```
-
----
-
-#### 2. AskStonePiercingAxeEffectEvent
+#### 1. AskStonePiercingAxeEffectEvent
 
 **說明**：貫石斧效果詢問  
 **觸發場景**：A 裝備貫石斧出殺，B 出閃抵銷後  
@@ -81,7 +56,7 @@ POST /api/games/{gameId}/player:useStonePiercingAxeEffect
 
 ---
 
-#### 3. WaitForWardEvent
+#### 2. WaitForWardEvent
 
 **說明**：等待其他人出無懈可擊  
 **觸發場景**：有錦囊牌被出，但自己沒有無懈可擊  
@@ -375,25 +350,24 @@ POST /api/games/{gameId}/player:useViperSpearKill
 
 #### P1 - 武器效果（重要）
 
-3. `AskGreenDragonCrescentBladeEffectEvent` + API
-4. `AskStonePiercingAxeEffectEvent` + API
-5. `GreenDragonCrescentBladeTriggerEvent`
-6. `StonePiercingAxeTriggerEvent`
-7. `BlackPommelEffectEvent`
+3. `AskStonePiercingAxeEffectEvent` + API
+4. `GreenDragonCrescentBladeTriggerEvent`
+5. `StonePiercingAxeTriggerEvent`
+6. `BlackPommelEffectEvent`
 
 #### P2 - 視覺效果（次要）
 
-8. `PlayWardCardEvent`
-9. `WardEvent`
-10. `YinYangSwordsEffectEvent`
-11. 各種錦囊效果事件（BarbarianInvasionEvent, ArrowBarrageEvent, DuelEvent 等）
+7. `PlayWardCardEvent`
+8. `WardEvent`
+9. `YinYangSwordsEffectEvent`
+10. 各種錦囊效果事件（BarbarianInvasionEvent, ArrowBarrageEvent, DuelEvent 等）
 
 #### P3 - 特殊功能（可選）
 
-12. `useViperSpearKill` API
-13. `ViperSpearKillTriggerEvent`
-14. `HeavenlyDoubleHalberdKillTriggerEvent`
-15. 判定相關事件（JudgementEvent, ContentmentEvent, LightningEvent 等）
+11. `useViperSpearKill` API
+12. `ViperSpearKillTriggerEvent`
+13. `HeavenlyDoubleHalberdKillTriggerEvent`
+14. 判定相關事件（JudgementEvent, ContentmentEvent, LightningEvent 等）
 
 ---
 

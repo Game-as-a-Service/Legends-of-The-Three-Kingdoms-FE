@@ -207,6 +207,27 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:useYinYangSwordsEffect`, params)
     }
+    /// 青龍偃月刀效果
+    /**
+     *
+     * @param gameId
+     * @param params {
+     * playerId: string // 裝備青龍偃月刀的玩家 ID
+     * choice: string // KILL（再出一張殺）或 SKIP（不出殺）
+     * killCardId: string // 要出的殺的 cardId（choice=KILL 時必填；SKIP 時傳空字串）
+     * }
+     * @returns
+     */
+    const useGreenDragonCrescentBladeEffect = (
+        gameId: string,
+        params: {
+            playerId: string
+            choice: 'KILL' | 'SKIP'
+            killCardId: string
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:useGreenDragonCrescentBladeEffect`, params)
+    }
     return {
         api,
         createGame,
@@ -224,6 +245,7 @@ export function useApi() {
         playWardCard,
         activateYinYangSwords,
         useYinYangSwordsEffect,
+        useGreenDragonCrescentBladeEffect,
         getDeck,
         setDeck,
     }
