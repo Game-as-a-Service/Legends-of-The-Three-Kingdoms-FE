@@ -167,6 +167,25 @@ export function useApi() {
     const setDeck = (gameId: string, params: { cardIds: string[] }) => {
         return api.put(`/api/debug/games/${gameId}/deck`, params)
     }
+    /// 雌雄雙股劍發動詢問（攻擊者）
+    /**
+     *
+     * @param gameId
+     * @param params {
+     * playerId: string // 攻擊者玩家 ID（裝備雌雄雙股劍的 A）
+     * choice: string // ACTIVATE（發動效果）或 SKIP（不發動，直接進入出閃流程）
+     * }
+     * @returns
+     */
+    const activateYinYangSwords = (
+        gameId: string,
+        params: {
+            playerId: string
+            choice: 'ACTIVATE' | 'SKIP'
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:activateYinYangSwords`, params)
+    }
     /// 雌雄雙股劍效果
     /**
      *
@@ -203,6 +222,7 @@ export function useApi() {
         useSnatchEffect,
         chooseCardFromBountifulHarvest,
         playWardCard,
+        activateYinYangSwords,
         useYinYangSwordsEffect,
         getDeck,
         setDeck,

@@ -277,6 +277,13 @@ export default class Game {
         }
         this.api.chooseHorseCard(this.gameId, params)
     }
+    activateYinYangSwords = (choice: 'ACTIVATE' | 'SKIP') => {
+        const params = {
+            playerId: this.me.id,
+            choice,
+        }
+        this.api.activateYinYangSwords(this.gameId, params)
+    }
     useYinYangSwordsEffect = (choice: 'TARGET_DISCARDS' | 'ATTACKER_DRAWS', cardId: string) => {
         const params = {
             playerId: this.me.id,
@@ -445,6 +452,20 @@ export default class Game {
                 // }
                 // 詢問是否使用裝備牌的效果
                 if (data.chooseMountCardPlayerId === this.me.id) {
+                    this.me.processEvent(event)
+                }
+                break
+            case 'AskActivateYinYangSwordsEvent':
+                // const data = {
+                //     event: 'AskActivateYinYangSwordsEvent',
+                //     data: {
+                //         attackerPlayerId: 'attackerPlayerId',
+                //         targetPlayerId: 'targetPlayerId',
+                //     },
+                //     message: '是否發動雌雄雙股劍效果？',
+                // }
+                // 詢問攻擊者是否發動雌雄雙股劍效果
+                if (data.attackerPlayerId === this.me.id) {
                     this.me.processEvent(event)
                 }
                 break

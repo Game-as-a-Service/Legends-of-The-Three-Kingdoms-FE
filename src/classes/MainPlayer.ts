@@ -676,6 +676,24 @@ export default class MainPlayer extends Player {
                     },
                 })
                 break
+            case 'AskActivateYinYangSwordsEvent':
+                console.log('AskActivateYinYangSwordsEvent')
+                this.useConfirmModal({
+                    message: '是否發動雌雄雙股劍效果？',
+                    confirmText: '發動',
+                    cancelText: '跳過',
+                    handleConfirm: () => {
+                        console.log('發動雌雄雙股劍效果')
+                        this.game?.activateYinYangSwords('ACTIVATE')
+                        this.mainInstanceMap.confirmModal?.setAlpha(0)
+                    },
+                    handleCancel: () => {
+                        console.log('跳過雌雄雙股劍效果')
+                        this.game?.activateYinYangSwords('SKIP')
+                        this.mainInstanceMap.confirmModal?.setAlpha(0)
+                    },
+                })
+                break
             case 'AskYinYangSwordsEffectEvent': {
                 const allPlayers = [...this.seats, this]
                 const attacker = allPlayers.find(
