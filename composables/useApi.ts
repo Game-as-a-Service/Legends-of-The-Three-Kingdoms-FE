@@ -228,6 +228,27 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:useGreenDragonCrescentBladeEffect`, params)
     }
+    /// 貫石斧效果
+    /**
+     *
+     * @param gameId
+     * @param params {
+     * playerId: string // 裝備貫石斧的玩家 ID
+     * choice: string // DISCARD_TWO（棄兩張牌強制命中）或 SKIP（不發動）
+     * discardCardIds: string[] // 要棄的兩張 cardId（SKIP 時傳空陣列）
+     * }
+     * @returns
+     */
+    const useStonePiercingAxeEffect = (
+        gameId: string,
+        params: {
+            playerId: string
+            choice: 'DISCARD_TWO' | 'SKIP'
+            discardCardIds: string[]
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:useStonePiercingAxeEffect`, params)
+    }
     return {
         api,
         createGame,
@@ -246,6 +267,7 @@ export function useApi() {
         activateYinYangSwords,
         useYinYangSwordsEffect,
         useGreenDragonCrescentBladeEffect,
+        useStonePiercingAxeEffect,
         getDeck,
         setDeck,
     }

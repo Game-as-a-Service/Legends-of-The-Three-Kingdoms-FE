@@ -300,6 +300,14 @@ export default class Game {
         }
         this.api.useGreenDragonCrescentBladeEffect(this.gameId, params)
     }
+    useStonePiercingAxeEffect = (choice: 'DISCARD_TWO' | 'SKIP', discardCardIds: string[]) => {
+        const params = {
+            playerId: this.me.id,
+            choice,
+            discardCardIds,
+        }
+        this.api.useStonePiercingAxeEffect(this.gameId, params)
+    }
     useDismantleEffect = async (
         targetPlayerId: string,
         cardId: ThreeKingdomsCardIds | undefined,
@@ -505,6 +513,11 @@ export default class Game {
                     this.me.processEvent(event)
                 }
                 break
+            case 'AskStonePiercingAxeEffectEvent':
+                if (data.attackerPlayerId === this.me.id) {
+                    this.me.processEvent(event)
+                }
+                break
             case 'AskPlayWardEvent':
                 // {
                 //     "event": "AskPlayWardEvent",
@@ -556,6 +569,29 @@ export default class Game {
                     this.me.askDiscardCards(data.discardCount)
                 }
                 break
+            case 'StonePiercingAxeTriggerEvent': {
+                const allPlayers = [...this.seats, this.me]
+                const attacker = allPlayers.find((player) => player.id === data.attackerPlayerId)
+                const target = allPlayers.find((player) => player.id === data.targetPlayerId)
+                if (this.hintInstance) {
+                    const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+                    hintText?.setText(
+                        `${attacker?.general?.name || data.attackerPlayerId} 發動貫石斧，對 ${
+                            target?.general?.name || data.targetPlayerId
+                        } 強制命中`,
+                    )
+                    this.hintInstance.setAlpha(1)
+                    this.scene.tweens.killTweensOf(this.hintInstance)
+                    this.scene.tweens.add({
+                        targets: this.hintInstance,
+                        alpha: 0,
+                        duration: 1200,
+                        delay: 1000,
+                        ease: 'Power2',
+                    })
+                }
+                break
+            }
             case 'PlayerDamagedEvent':
                 // 血量直接從data更新
                 // const damage = data.from - data.to

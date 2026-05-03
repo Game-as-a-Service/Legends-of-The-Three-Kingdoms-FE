@@ -91,9 +91,6 @@ export default class MainPlayer extends Player {
         const baseX = this.x
         const baseY = this.y
         const scene = this.scene
-        // // 創建一個白色的矩形
-        // const rectangle = scene.add.rectangle(0, 0, 200, 200, 0xffffff)
-        // // 創建文字
         // const idText = scene.add.text(0, -80, this.id, {
         //     fontSize: '24px',
         //     color: '#000000',
@@ -770,6 +767,44 @@ export default class MainPlayer extends Player {
                 })
                 break
             }
+            case 'AskStonePiercingAxeEffectEvent': {
+                // 貫石斧發動時不可把武器欄本身當作棄牌目標，因此排除 equipments[0]。
+                const discardableCardIds = [
+                    ...(this.hand.cardIds as ThreeKingdomsCardIds[]),
+                    ...(this.equipments.filter(
+                        (cardId, index) => index !== 0 && cardId,
+                    ) as ThreeKingdomsCardIds[]),
+                ]
+                this.useConfirmModal({
+                    message: '是否棄兩張牌強制命中？',
+                    confirmText: '棄兩張',
+                    cancelText: '跳過',
+                    handleConfirm: () => {
+                        this.mainInstanceMap.confirmModal?.setAlpha(0)
+                        this.useSelectCardModal({
+                            type: 'small',
+                            message: '選擇兩張要棄的牌',
+                            cardIds: discardableCardIds,
+                            confirmText: '確認',
+                            cancelText: '取消',
+                            maxSelectionCount: 2,
+                            handleConfirm: (selectedCardIds) => {
+                                if (!Array.isArray(selectedCardIds)) return
+                                this.game?.useStonePiercingAxeEffect('DISCARD_TWO', selectedCardIds)
+                                this.closeSelectCardModal()
+                            },
+                            handleCancel: () => {
+                                this.closeSelectCardModal()
+                            },
+                        })
+                    },
+                    handleCancel: () => {
+                        this.game?.useStonePiercingAxeEffect('SKIP', [])
+                        this.mainInstanceMap.confirmModal?.setAlpha(0)
+                    },
+                })
+                break
+            }
         }
     }
     updatePlayerData(data: any): void {
@@ -1158,6 +1193,8 @@ export default class MainPlayer extends Player {
         popupContainer.setAlpha(0)
         popupContainer.setData('selectedCard', null)
         popupContainer.setData('cards', [])
+        popupContainer.setData('selectedCards', [])
+        popupContainer.setData('selectedCardIds', [])
         this.mainInstanceMap.selectCardModal = popupContainer
         this.mainInstanceMap.selectCardModal?.setData('cardInstance', [])
         return
@@ -1170,7 +1207,8 @@ export default class MainPlayer extends Player {
         delayScrolls = [],
         confirmText = '是',
         cancelText = '否',
-        handleConfirm = (cardId) => {},
+        maxSelectionCount = 1,
+        handleConfirm = (cardId: any) => {},
         handleCancel = () => {},
     }: {
         type?: 'big' | 'small'
@@ -1180,7 +1218,8 @@ export default class MainPlayer extends Player {
         delayScrolls?: ThreeKingdomsCardIds[]
         confirmText?: string
         cancelText?: string
-        handleConfirm?: (cardId: ThreeKingdomsCardIds) => void
+        maxSelectionCount?: number
+        handleConfirm?: (cardId: any) => void
         handleCancel?: () => void
     }) => {
         // 如果有handCardCount 產生同樣數量的手牌卡片 卡片小小的可以點就行
@@ -1258,6 +1297,54 @@ export default class MainPlayer extends Player {
                 const container = this.scene.add.container(0, 0, [r, t])
                 container.setSize(100, 40)
                 r.setInteractive().on('pointerdown', () => {
+                    const selectedCards = [
+                        ...(this.mainInstanceMap.selectCardModal?.getData('selectedCards') || []),
+                    ]
+                    const selectedCardIds = [
+                        ...(this.mainInstanceMap.selectCardModal?.getData('selectedCardIds') || []),
+                    ] as ThreeKingdomsCardIds[]
+                    const selectedIndex = selectedCardIds.indexOf(cardIds[i])
+                    if (maxSelectionCount > 1) {
+                        if (selectedIndex >= 0) {
+                            this.scene.tweens.add({
+                                targets: selectedCards[selectedIndex],
+                                x: selectedCards[selectedIndex].x,
+                                y: selectedCards[selectedIndex].y + 20,
+                                duration: 500,
+                                ease: 'Power2',
+                            })
+                            selectedCards.splice(selectedIndex, 1)
+                            selectedCardIds.splice(selectedIndex, 1)
+                        } else {
+                            if (selectedCardIds.length >= maxSelectionCount) return
+                            this.scene.tweens.add({
+                                targets: container,
+                                x: container.x,
+                                y: container.y - 20,
+                                duration: 500,
+                                ease: 'Power2',
+                            })
+                            selectedCards.push(container)
+                            selectedCardIds.push(cardIds[i])
+                        }
+                        this.mainInstanceMap.selectCardModal?.setData(
+                            'selectedCards',
+                            selectedCards,
+                        )
+                        this.mainInstanceMap.selectCardModal?.setData(
+                            'selectedCardIds',
+                            selectedCardIds,
+                        )
+                        this.mainInstanceMap.selectCardModal?.setData(
+                            'selectedCard',
+                            selectedCards[0] || null,
+                        )
+                        this.mainInstanceMap.selectCardModal?.setData(
+                            'selectedCardId',
+                            selectedCardIds[0] || null,
+                        )
+                        return
+                    }
                     const preCard = this.mainInstanceMap.selectCardModal?.getData('selectedCard')
                     const preCardId =
                         this.mainInstanceMap.selectCardModal?.getData('selectedCardId')
@@ -1304,6 +1391,8 @@ export default class MainPlayer extends Player {
                     }
                     this.mainInstanceMap.selectCardModal?.setData('selectedCard', container)
                     this.mainInstanceMap.selectCardModal?.setData('selectedCardId', cardIds[i])
+                    this.mainInstanceMap.selectCardModal?.setData('selectedCards', [container])
+                    this.mainInstanceMap.selectCardModal?.setData('selectedCardIds', [cardIds[i]])
                 })
                 this.mainInstanceMap.selectCardModal?.add(container)
                 this.mainInstanceMap.selectCardModal?.getData('cardInstance').push(container)
@@ -1432,12 +1521,22 @@ export default class MainPlayer extends Player {
                 const card = this.mainInstanceMap.selectCardModal?.getData('selectedCard')
                 const selectedCardId =
                     this.mainInstanceMap.selectCardModal?.getData('selectedCardId')
-                if (!card) {
-                    console.log('請選擇一張卡牌')
-                    return
+                if (maxSelectionCount > 1) {
+                    const selectedCardIds =
+                        this.mainInstanceMap.selectCardModal?.getData('selectedCardIds') || []
+                    if (selectedCardIds.length !== maxSelectionCount) {
+                        console.log(`請選擇 ${maxSelectionCount} 張卡牌`)
+                        return
+                    }
+                    handleConfirm(selectedCardIds)
+                } else {
+                    if (!card) {
+                        console.log('請選擇一張卡牌')
+                        return
+                    }
+                    console.log(handleConfirm, 'handleConfirm')
+                    handleConfirm(selectedCardId)
                 }
-                console.log(handleConfirm, 'handleConfirm')
-                handleConfirm(selectedCardId)
                 this.mainInstanceMap.selectCardModal?.setAlpha(0)
                 this.mainInstanceMap.selectCardModal?.getData('cards').forEach((c: Card) => {
                     this.mainInstanceMap.selectCardModal?.remove(c.instance)
@@ -1453,6 +1552,8 @@ export default class MainPlayer extends Player {
                 this.mainInstanceMap.selectCardModal?.setData('cardInstance', [])
                 this.mainInstanceMap.selectCardModal?.setData('selectedCard', null)
                 this.mainInstanceMap.selectCardModal?.setData('selectedCardId', null)
+                this.mainInstanceMap.selectCardModal?.setData('selectedCards', [])
+                this.mainInstanceMap.selectCardModal?.setData('selectedCardIds', [])
             })
         noButton.setInteractive().off('pointerdown').on('pointerdown', handleCancel)
         this.mainInstanceMap.selectCardModal?.setAlpha(1)
@@ -1473,6 +1574,8 @@ export default class MainPlayer extends Player {
         this.mainInstanceMap.selectCardModal?.setData('cardInstance', [])
         this.mainInstanceMap.selectCardModal?.setData('selectedCard', null)
         this.mainInstanceMap.selectCardModal?.setData('selectedCardId', null)
+        this.mainInstanceMap.selectCardModal?.setData('selectedCards', [])
+        this.mainInstanceMap.selectCardModal?.setData('selectedCardIds', [])
     }
     handleSelectCard = (card: Card) => {
         if (this.selectedCard == card) {

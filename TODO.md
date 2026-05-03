@@ -30,33 +30,7 @@
 
 ### ❌ 尚未處理
 
-#### 1. AskStonePiercingAxeEffectEvent
-
-**說明**：貫石斧效果詢問  
-**觸發場景**：A 裝備貫石斧出殺，B 出閃抵銷後  
-**需要做的事**：
-
--   [ ] 在 `composables/useApi.ts` 新增 `useStonePiercingAxeEffect` API
--   [ ] 在 `src/classes/Game.ts` 的 `eventHandler` 新增 case 處理
--   [ ] 在 `src/classes/Game.ts` 新增調用方法
--   [ ] 在 `src/classes/MainPlayer.ts` 的 `processEvent` 新增 UI 處理
-    -   彈出確認框：「是否棄兩張牌強制命中？」
-    -   若選擇「是」，彈出選牌框選擇 2 張牌
-
-**API 格式**：
-
-```typescript
-POST /api/games/{gameId}/player:useStonePiercingAxeEffect
-{
-  playerId: string,
-  choice: 'DISCARD_TWO' | 'SKIP',
-  discardCardIds: string[]  // choice=DISCARD_TWO 時必須是 2 張
-}
-```
-
----
-
-#### 2. WaitForWardEvent
+#### 1. WaitForWardEvent
 
 **說明**：等待其他人出無懈可擊  
 **觸發場景**：有錦囊牌被出，但自己沒有無懈可擊  
@@ -282,17 +256,7 @@ POST /api/games/{gameId}/player:useStonePiercingAxeEffect
 
 ---
 
-#### 23. StonePiercingAxeTriggerEvent
-
-**說明**：貫石斧發動  
-**需要做的事**：
-
--   [ ] 在 `src/classes/Game.ts` 新增 case 處理
--   [ ] 顯示棄兩張牌強制命中的效果
-
----
-
-#### 24. ViperSpearKillTriggerEvent
+#### 23. ViperSpearKillTriggerEvent
 
 **說明**：丈八蛇矛發動  
 **需要做的事**：
@@ -350,10 +314,8 @@ POST /api/games/{gameId}/player:useViperSpearKill
 
 #### P1 - 武器效果（重要）
 
-3. `AskStonePiercingAxeEffectEvent` + API
-4. `GreenDragonCrescentBladeTriggerEvent`
-5. `StonePiercingAxeTriggerEvent`
-6. `BlackPommelEffectEvent`
+3. `GreenDragonCrescentBladeTriggerEvent`
+4. `BlackPommelEffectEvent`
 
 #### P2 - 視覺效果（次要）
 
