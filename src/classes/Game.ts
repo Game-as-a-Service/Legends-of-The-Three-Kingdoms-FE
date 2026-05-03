@@ -174,6 +174,12 @@ export default class Game {
         this.api.playCard(this.gameId, params)
     }
     handleClickPlayer = (player: Player) => {
+        if (this.me.viperSpearMode) {
+            if (!player.isOutofDistance) {
+                this.me.handleViperSpearTarget(player)
+            }
+            return
+        }
         if (!this.me.selectedCard || player.isOutofDistance) return
         if (this.me.selectedCard.name === '過河拆橋') {
             this.seats.forEach((player) => player.setOutOfDistance(false))
@@ -307,6 +313,14 @@ export default class Game {
             discardCardIds,
         }
         this.api.useStonePiercingAxeEffect(this.gameId, params)
+    }
+    useViperSpearKill = (targetPlayerId: string, discardCardIds: string[]) => {
+        const params = {
+            playerId: this.me.id,
+            targetPlayerId,
+            discardCardIds,
+        }
+        return this.api.useViperSpearKill(this.gameId, params)
     }
     useDismantleEffect = async (
         targetPlayerId: string,
@@ -592,6 +606,29 @@ export default class Game {
                 }
                 break
             }
+            case 'ViperSpearKillTriggerEvent': {
+                const allPlayers = [...this.seats, this.me]
+                const attacker = allPlayers.find((player) => player.id === data.attackerPlayerId)
+                const target = allPlayers.find((player) => player.id === data.targetPlayerId)
+                if (this.hintInstance) {
+                    const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+                    hintText?.setText(
+                        `${attacker?.general?.name || data.attackerPlayerId} 發動丈八蛇矛，視為對 ${
+                            target?.general?.name || data.targetPlayerId
+                        } 出殺`,
+                    )
+                    this.hintInstance.setAlpha(1)
+                    this.scene.tweens.killTweensOf(this.hintInstance)
+                    this.scene.tweens.add({
+                        targets: this.hintInstance,
+                        alpha: 0,
+                        duration: 1200,
+                        delay: 1000,
+                        ease: 'Power2',
+                    })
+                }
+                break
+            }
             case 'PlayerDamagedEvent':
                 // 血量直接從data更新
                 // const damage = data.from - data.to
@@ -766,9 +803,11 @@ export default class Game {
         const seats = [...this.seats, this.me]
         const index1 = seats.findIndex((p) => p.id === player.id)
         const index2 = seats.findIndex((p) => p.id === targetPlayer.id)
-        let distance = Math.abs(index1 - index2)
-        if (targetPlayer.equipments[3]) distance += 1
-        if (player.equipments[2]) {
+        if (index1 === -1 || index2 === -1) return false
+        const seatDistance = Math.abs(index1 - index2)
+        let distance = Math.min(seatDistance, seats.length - seatDistance)
+        if (targetPlayer.equipments[2]) distance += 1
+        if (player.equipments[3]) {
             distance -= 1
         }
         if (player.equipments[0]) {

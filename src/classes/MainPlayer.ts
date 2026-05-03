@@ -17,6 +17,7 @@ const weaponFeatures: { [key: string]: WeaponFeature } = weaponFeaturesJson
 export default class MainPlayer extends Player {
     handCards: Card[] = []
     selectedCard: Card | null = null
+    selectedWeapon: ThreeKingdomsCardIds | null = null
     seats: Player[] = []
     gamePlayCardHandler: any = () => {}
     discardMode: boolean = false
@@ -25,6 +26,10 @@ export default class MainPlayer extends Player {
     discardCount: number = 0
     discardCards: Card[] = []
     discardCardsAction: ([]) => void = ([]) => {}
+    viperSpearMode: boolean = false
+    viperSpearTarget: Player | null = null
+    weaponActionBorder?: Phaser.GameObjects.Graphics
+    weaponHitArea?: Phaser.GameObjects.Rectangle
     mainInstanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
     event: string = ''
     constructor({
@@ -157,6 +162,10 @@ export default class MainPlayer extends Player {
         checkbtn.on('pointerdown', () => {
             if (this.discardMode) {
                 if (this.discardCards.length < this.discardCount) return
+                if (this.viperSpearMode) {
+                    this.submitViperSpearKill()
+                    return
+                }
                 this.discardMode = false
                 this.discardCardsAction(this.discardCards.map((card) => card.id))
                 this.handCards.forEach((card) => {
@@ -217,6 +226,7 @@ export default class MainPlayer extends Player {
         this.createConfirmModal(scene)
         this.createCheckModal(scene)
         this.createSelectCardModal(scene)
+        this.bindWeaponInteraction()
     }
     test() {
         console.log('test')
@@ -324,6 +334,9 @@ export default class MainPlayer extends Player {
                 })
                 this.discardCards.push(card)
             }
+            return
+        }
+        if (this.viperSpearMode) {
             return
         }
         if (
@@ -494,6 +507,139 @@ export default class MainPlayer extends Player {
         // this.handCards = this.handCards.filter((handCard) => handCard !== card)
         // card.destroy()
         // this.arrangeCards()
+    }
+    bindWeaponInteraction = () => {
+        if (this.weaponHitArea) {
+            this.weaponHitArea.destroy()
+            this.weaponHitArea = undefined
+        }
+        if (this.weaponActionBorder) {
+            this.weaponActionBorder.destroy()
+            this.weaponActionBorder = undefined
+        }
+        const weaponInstance = this.instanceMap.weapon
+        const weaponCardId = this.equipments[0]
+        if (!weaponInstance || !weaponCardId) return
+        const weaponCard = threeKingdomsCards[weaponCardId]
+        if (weaponCard.name !== '丈八蛇矛') return
+
+        const actionBorder = this.scene.add.graphics()
+        actionBorder.lineStyle(2, 0xf0c419, 1)
+        actionBorder.strokeRoundedRect(16, -4, 168, 32, 8)
+        actionBorder.setAlpha(this.viperSpearMode ? 1 : 0.45)
+
+        const hitArea = this.scene.add.rectangle(100, 12, 160, 24, 0xffffff, 0.001)
+        hitArea.setInteractive({ useHandCursor: true })
+        hitArea.on('pointerover', () => {
+            if (this.canTriggerViperSpear() || this.viperSpearMode) {
+                actionBorder.setAlpha(1)
+            }
+        })
+        hitArea.on('pointerout', () => {
+            if (!this.viperSpearMode) {
+                actionBorder.setAlpha(0.45)
+            }
+        })
+        hitArea.on('pointerdown', () => {
+            this.handleWeaponClick()
+        })
+
+        weaponInstance.add([actionBorder, hitArea])
+        this.weaponActionBorder = actionBorder
+        this.weaponHitArea = hitArea
+    }
+    canTriggerViperSpear = () => {
+        const weaponCardId = this.equipments[0]
+        if (!weaponCardId) return false
+        const weaponCard = threeKingdomsCards[weaponCardId]
+        if (weaponCard.name !== '丈八蛇矛') return false
+        if (this.game?.getActivePlayer() !== this.id) return false
+        if (this.event || this.discardMode || this.reactionMode || this.selectedCard) return false
+        return this.handCards.filter((card) => !card.played).length >= 2
+    }
+    handleWeaponClick = () => {
+        if (!this.canTriggerViperSpear()) return
+        this.selectedWeapon = this.equipments[0]
+        this.viperSpearMode = true
+        this.weaponActionBorder?.setAlpha(1)
+        if (this.hintInstance) {
+            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+            hintText?.setText('丈八蛇矛：請選擇攻擊目標')
+            this.hintInstance.setAlpha(1)
+        }
+        this.mainInstanceMap.checkModal?.setAlpha(1)
+        this.seats.forEach((player) => {
+            player.setOutOfDistance(!this.game?.canAttack(this, player))
+        })
+    }
+    handleViperSpearTarget = (player: Player) => {
+        if (!this.viperSpearMode || player.isOutofDistance) return
+        if (this.viperSpearTarget?.id === player.id) {
+            player.setPlayerSelected(false)
+            this.viperSpearTarget = null
+            return
+        }
+        if (this.viperSpearTarget) {
+            this.viperSpearTarget.setPlayerSelected(false)
+        }
+        player.setPlayerSelected(true, 'to')
+        this.viperSpearTarget = player
+    }
+    startViperSpearDiscard = () => {
+        if (!this.viperSpearTarget) return
+        this.mainInstanceMap.checkModal?.setAlpha(0)
+        this.askDiscardCards(2)
+        if (this.hintInstance) {
+            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+            hintText?.setText(`丈八蛇矛：請棄兩張牌，對${this.viperSpearTarget.general.name}出殺`)
+            this.hintInstance.setAlpha(1)
+        }
+    }
+    submitViperSpearKill = () => {
+        if (!this.viperSpearTarget || this.discardCards.length !== 2) return
+        this.game?.useViperSpearKill(
+            this.viperSpearTarget.id,
+            this.discardCards.map((card) => card.id),
+        )
+        this.handCards.forEach((card) => {
+            if (card.selected) {
+                card.discardCard()
+            }
+        })
+        atkLine({
+            endPoint: new Phaser.Math.Vector2(
+                this.viperSpearTarget.instance.x,
+                this.viperSpearTarget.instance.y,
+            ),
+            scene: this.scene,
+        })
+        this.arrangeCards()
+        this.clearViperSpearState()
+    }
+    clearViperSpearState = () => {
+        this.viperSpearTarget?.setPlayerSelected(false)
+        this.viperSpearTarget = null
+        this.viperSpearMode = false
+        this.selectedWeapon = null
+        this.discardMode = false
+        this.handCards.forEach((card) => {
+            if (!card.selected) return
+            card.selected = false
+            this.scene.tweens.add({
+                targets: card.instance,
+                x: card.instance.x,
+                y: card.instance.y + 20,
+                duration: 300,
+                ease: 'Power2',
+            })
+        })
+        this.discardCards = []
+        this.discardCount = 0
+        this.resetOutofDistance()
+        this.weaponActionBorder?.setAlpha(this.canTriggerViperSpear() ? 0.45 : 0)
+        if (this.checkBtnInstance) this.checkBtnInstance.setAlpha(0)
+        this.mainInstanceMap.checkModal?.setAlpha(0)
+        this.hintInstance?.setAlpha(0)
     }
     askReaction = (reactionType: string, event: any = {}) => {
         console.log('askReaction', reactionType, event)
@@ -809,6 +955,7 @@ export default class MainPlayer extends Player {
     }
     updatePlayerData(data: any): void {
         super.updatePlayerData(data)
+        this.bindWeaponInteraction()
         if (data.hand.cardIds.join() !== this.hand.cardIds.join()) {
             // 保留相同的卡片 只處理不同的卡片
             console.log(
@@ -965,6 +1112,10 @@ export default class MainPlayer extends Player {
     }
     handleCheckClick = () => {
         console.log('確認 按鈕被按下', this.selectedCard, this.event)
+        if (this.viperSpearMode && !this.discardMode) {
+            this.startViperSpearDiscard()
+            return
+        }
         if (this.selectedCard?.name === '借刀殺人') {
             if (this.game?.selectTargetPlayers.length !== 2) {
                 console.log('請選擇兩名玩家')
@@ -1082,6 +1233,10 @@ export default class MainPlayer extends Player {
     }
     handleCancelClick = () => {
         console.log('否 按鈕被按下')
+        if (this.viperSpearMode) {
+            this.clearViperSpearState()
+            return
+        }
         if (
             this.event === 'AskDodgeEvent' ||
             this.event === 'AskPeachEvent' ||

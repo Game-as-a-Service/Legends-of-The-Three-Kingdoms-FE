@@ -332,7 +332,12 @@ export default class Player {
         const border = this.scene.add.graphics()
         border.lineStyle(1, 0x000000, 1)
         border.strokeRect(20, 0, 160, 24)
-        equipmentContainer1.add([weaponRankText, weaponSuitText, weaponText, border])
+        const actionBorder = this.scene.add.graphics()
+        if (weapon.name === '丈八蛇矛') {
+            actionBorder.lineStyle(2, 0xd4a017, 1)
+            actionBorder.strokeRoundedRect(18, -2, 164, 28, 6)
+        }
+        equipmentContainer1.add([weaponRankText, weaponSuitText, weaponText, border, actionBorder])
         return equipmentContainer1
     }
     initHpInstance(nowHp: number = 5, maxHp: number = 5) {

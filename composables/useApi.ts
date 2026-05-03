@@ -249,6 +249,16 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:useStonePiercingAxeEffect`, params)
     }
+    const useViperSpearKill = (
+        gameId: string,
+        params: {
+            playerId: string
+            targetPlayerId: string
+            discardCardIds: string[]
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:useViperSpearKill`, params)
+    }
     return {
         api,
         createGame,
@@ -268,6 +278,7 @@ export function useApi() {
         useYinYangSwordsEffect,
         useGreenDragonCrescentBladeEffect,
         useStonePiercingAxeEffect,
+        useViperSpearKill,
         getDeck,
         setDeck,
     }
