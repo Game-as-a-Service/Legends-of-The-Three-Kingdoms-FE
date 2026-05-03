@@ -4,5 +4,20 @@
     },
     "諸葛連弩": {
         "attackDistance": 1
+    },
+    "丈八蛇矛": {
+        "attackDistance": 3
+    },
+    "青龍偃月刀": {
+        "attackDistance": 3
+    },
+    "方天畫戟": {
+        "attackDistance": 4
+    },
+    "貫石斧": {
+        "attackDistance": 3
+    },
+    "雌雄雙股劍": {
+        "attackDistance": 2
     }
 }
