@@ -30,6 +30,7 @@ export default class Player {
     isOutofDistance: boolean = false
     instanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
     game: Game | null = null
+    private glowFx: Phaser.FX.Glow | null = null
     // properties and methods go here
     constructor({
         id,
@@ -115,9 +116,6 @@ export default class Player {
         const horsePlus = this.equipments[2] ? threeKingdomsCards[this.equipments[2]].name : ''
         const horseMinus = this.equipments[3] ? threeKingdomsCards[this.equipments[3]].name : ''
         const equipmentContainer1 = scene.add.container(0, 0)
-        const equipmentContainer2 = scene.add.container(0, 0)
-        const equipmentContainer3 = scene.add.container(0, 0)
-        const equipmentContainer4 = scene.add.container(0, 0)
 
         if (weapon) {
             const equipmentContainer1 = this.initEquipmentInstance(weapon)
@@ -215,9 +213,10 @@ export default class Player {
     startTurn() {
         if (this.instance === null) return
         if (this.scene === null) return
+        this.endTurn()
         const rectangle: Phaser.GameObjects.Rectangle = this.instance.getAt(0)
         const fx = rectangle.postFX.addGlow(0x00ff00, 20, 0.5)
-        // rectangle.postFX.remove(fx)
+        this.glowFx = fx
         this.scene.tweens.add({
             targets: fx,
             outerStrength: 4,
@@ -230,6 +229,10 @@ export default class Player {
     endTurn() {
         if (this.instance === null) return
         if (this.scene === null) return
+        if (this.glowFx) {
+            this.scene.tweens.killTweensOf(this.glowFx)
+            this.glowFx = null
+        }
         const rectangle: Phaser.GameObjects.Rectangle = this.instance.getAt(0)
         rectangle.postFX.clear()
     }

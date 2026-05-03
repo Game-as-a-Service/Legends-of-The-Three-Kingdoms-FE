@@ -588,6 +588,15 @@ const handleShowSelectCardModal = () => {
         },
     })
 }
+onBeforeUnmount(() => {
+    if (socketClient) {
+        socketClient.deactivate()
+    }
+    if (game.value) {
+        game.value.destroy(true)
+        game.value = null
+    }
+})
 </script>
 <template>
 <div class="bg-black text-2xl">

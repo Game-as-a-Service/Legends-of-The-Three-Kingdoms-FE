@@ -33,7 +33,7 @@ export const atkLine = ({
                     drawLine(graphics, endPoint, startPoint, t)
                 },
                 onComplete: function () {
-                    graphics.clear()
+                    graphics.destroy()
                 },
             })
         },
