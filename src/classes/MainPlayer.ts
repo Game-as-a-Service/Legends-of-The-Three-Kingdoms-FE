@@ -32,6 +32,7 @@ export default class MainPlayer extends Player {
     weaponHitArea?: Phaser.GameObjects.Rectangle
     mainInstanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
     event: string = ''
+    eventData: any = null
     constructor({
         id,
         generral,
@@ -274,6 +275,32 @@ export default class MainPlayer extends Player {
         //     'reactionType: ',
         //     this.reactionType,
         // )
+        if (this.discardMode) {
+            if (card.selected) {
+                card.selected = false
+                // card.instance.y = 515
+                this.scene.tweens.add({
+                    targets: card.instance,
+                    x: card.instance.x,
+                    y: card.instance.y + 20,
+                    duration: 500, // 持續時間（毫秒）
+                    ease: 'Power2',
+                })
+                this.discardCards = this.discardCards.filter((discardCard) => discardCard !== card)
+            } else {
+                if (this.discardCards.length >= this.discardCount) return
+                card.selected = true
+                this.scene.tweens.add({
+                    targets: card.instance,
+                    x: card.instance.x,
+                    y: card.instance.y - 20,
+                    duration: 500, // 持續時間（毫秒）
+                    ease: 'Power2',
+                })
+                this.discardCards.push(card)
+            }
+            return
+        }
         // 非自己回合不能出牌
         if (this.game!.getActivePlayer() !== this.id && this.event !== 'AskPlayWardEvent') {
             return
@@ -308,32 +335,6 @@ export default class MainPlayer extends Player {
                 return
             }
             this.handleSelectCard(card)
-            return
-        }
-        if (this.discardMode) {
-            if (card.selected) {
-                card.selected = false
-                // card.instance.y = 515
-                this.scene.tweens.add({
-                    targets: card.instance,
-                    x: card.instance.x,
-                    y: card.instance.y + 20,
-                    duration: 500, // 持續時間（毫秒）
-                    ease: 'Power2',
-                })
-                this.discardCards = this.discardCards.filter((discardCard) => discardCard !== card)
-            } else {
-                if (this.discardCards.length >= this.discardCount) return
-                card.selected = true
-                this.scene.tweens.add({
-                    targets: card.instance,
-                    x: card.instance.x,
-                    y: card.instance.y - 20,
-                    duration: 500, // 持續時間（毫秒）
-                    ease: 'Power2',
-                })
-                this.discardCards.push(card)
-            }
             return
         }
         if (this.viperSpearMode) {
@@ -553,8 +554,10 @@ export default class MainPlayer extends Player {
         if (!weaponCardId) return false
         const weaponCard = threeKingdomsCards[weaponCardId]
         if (weaponCard.name !== '丈八蛇矛') return false
-        if (this.game?.getActivePlayer() !== this.id) return false
-        if (this.event || this.discardMode || this.reactionMode || this.selectedCard) return false
+        const canUseDuringTurn = this.game?.getActivePlayer() === this.id && !this.event
+        const canUseForAskKill = this.event === 'AskKillEvent'
+        if (!canUseDuringTurn && !canUseForAskKill) return false
+        if (this.discardMode || this.reactionMode || this.selectedCard) return false
         return this.handCards.filter((card) => !card.played).length >= 2
     }
     handleWeaponClick = () => {
@@ -562,6 +565,16 @@ export default class MainPlayer extends Player {
         this.selectedWeapon = this.equipments[0]
         this.viperSpearMode = true
         this.weaponActionBorder?.setAlpha(1)
+        if (this.event === 'AskKillEvent') {
+            this.handCards.forEach((card) => card.instance.setAlpha(1))
+            if (this.hintInstance) {
+                const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+                hintText?.setText('丈八蛇矛：按確定後棄兩張牌，當作出殺')
+                this.hintInstance.setAlpha(1)
+            }
+            this.mainInstanceMap.checkModal?.setAlpha(1)
+            return
+        }
         if (this.hintInstance) {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('丈八蛇矛：請選擇攻擊目標')
@@ -586,37 +599,56 @@ export default class MainPlayer extends Player {
         this.viperSpearTarget = player
     }
     startViperSpearDiscard = () => {
-        if (!this.viperSpearTarget) return
+        if (this.event !== 'AskKillEvent' && !this.viperSpearTarget) return
         this.mainInstanceMap.checkModal?.setAlpha(0)
         this.askDiscardCards(2)
         if (this.hintInstance) {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-            hintText?.setText(`丈八蛇矛：請棄兩張牌，對${this.viperSpearTarget.general.name}出殺`)
+            if (this.event === 'AskKillEvent') {
+                hintText?.setText('丈八蛇矛：請棄兩張牌，當作出殺')
+            } else {
+                hintText?.setText(`丈八蛇矛：請棄兩張牌，對${this.viperSpearTarget!.general.name}出殺`)
+            }
             this.hintInstance.setAlpha(1)
         }
     }
+    resolveViperSpearTargetId = () => {
+        if (this.viperSpearTarget) return this.viperSpearTarget.id
+        return this.eventData?.targetPlayerId || this.game?.getActivePlayer() || ''
+    }
     submitViperSpearKill = () => {
-        if (!this.viperSpearTarget || this.discardCards.length !== 2) return
-        this.game?.useViperSpearKill(
-            this.viperSpearTarget.id,
-            this.discardCards.map((card) => card.id),
-        )
+        if (this.discardCards.length !== 2) return
+        const targetPlayerId = this.resolveViperSpearTargetId()
+        if (!targetPlayerId) return
+        this.game?.useViperSpearKill(targetPlayerId, this.discardCards.map((card) => card.id))
         this.handCards.forEach((card) => {
             if (card.selected) {
                 card.discardCard()
             }
         })
-        atkLine({
-            endPoint: new Phaser.Math.Vector2(
-                this.viperSpearTarget.instance.x,
-                this.viperSpearTarget.instance.y,
-            ),
-            scene: this.scene,
-        })
+        if (this.viperSpearTarget) {
+            atkLine({
+                endPoint: new Phaser.Math.Vector2(
+                    this.viperSpearTarget.instance.x,
+                    this.viperSpearTarget.instance.y,
+                ),
+                scene: this.scene,
+            })
+        }
         this.arrangeCards()
         this.clearViperSpearState()
+        this.handCards.forEach((card) => {
+            card.instance.setAlpha(1)
+        })
+        if (this.event === 'AskKillEvent') {
+            this.event = ''
+            this.eventData = null
+            this.reactionType = ''
+            this.reactionMode = false
+            this.weaponActionBorder?.setAlpha(this.canTriggerViperSpear() ? 0.45 : 0)
+        }
     }
-    clearViperSpearState = () => {
+    clearViperSpearState = (restoreAskKillPrompt: boolean = false) => {
         this.viperSpearTarget?.setPlayerSelected(false)
         this.viperSpearTarget = null
         this.viperSpearMode = false
@@ -638,6 +670,13 @@ export default class MainPlayer extends Player {
         this.resetOutofDistance()
         this.weaponActionBorder?.setAlpha(this.canTriggerViperSpear() ? 0.45 : 0)
         if (this.checkBtnInstance) this.checkBtnInstance.setAlpha(0)
+        if (restoreAskKillPrompt && this.event === 'AskKillEvent') {
+            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+            hintText?.setText('請出一張殺')
+            this.hintInstance?.setAlpha(1)
+            this.mainInstanceMap.checkModal?.setAlpha(1)
+            return
+        }
         this.mainInstanceMap.checkModal?.setAlpha(0)
         this.hintInstance?.setAlpha(0)
     }
@@ -710,6 +749,7 @@ export default class MainPlayer extends Player {
     processEvent = (event: any) => {
         console.log('processEvent', event)
         this.event = event.event
+        this.eventData = event.data
         switch (this.event) {
             case 'AskKillEvent': {
                 const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
@@ -722,6 +762,7 @@ export default class MainPlayer extends Player {
                         card.instance.setAlpha(0.3)
                     }
                 })
+                this.weaponActionBorder?.setAlpha(this.canTriggerViperSpear() ? 0.45 : 0)
                 this.mainInstanceMap.checkModal?.setAlpha(1)
                 break
             }
@@ -1234,7 +1275,7 @@ export default class MainPlayer extends Player {
     handleCancelClick = () => {
         console.log('否 按鈕被按下')
         if (this.viperSpearMode) {
-            this.clearViperSpearState()
+            this.clearViperSpearState(this.event === 'AskKillEvent')
             return
         }
         if (
@@ -1286,6 +1327,7 @@ export default class MainPlayer extends Player {
             .text(50, 30, '確定', { fontSize: '32px', color: '#0f0' })
             .setInteractive()
             .on('pointerdown', () => {
+                if ((this.mainInstanceMap.checkModal?.alpha ?? 0) <= 0) return
                 this.handleCheckClick()
             })
         yesButton.setOrigin(0.5)
@@ -1294,6 +1336,7 @@ export default class MainPlayer extends Player {
             .text(150, 30, '取消', { fontSize: '32px', color: '#f00' })
             .setInteractive()
             .on('pointerdown', () => {
+                if ((this.mainInstanceMap.checkModal?.alpha ?? 0) <= 0) return
                 console.log('否 按鈕被按下')
                 this.handleCancelClick()
             })
