@@ -607,7 +607,9 @@ export default class MainPlayer extends Player {
             if (this.event === 'AskKillEvent') {
                 hintText?.setText('丈八蛇矛：請棄兩張牌，當作出殺')
             } else {
-                hintText?.setText(`丈八蛇矛：請棄兩張牌，對${this.viperSpearTarget!.general.name}出殺`)
+                hintText?.setText(
+                    `丈八蛇矛：請棄兩張牌，對${this.viperSpearTarget!.general.name}出殺`,
+                )
             }
             this.hintInstance.setAlpha(1)
         }
@@ -620,7 +622,10 @@ export default class MainPlayer extends Player {
         if (this.discardCards.length !== 2) return
         const targetPlayerId = this.resolveViperSpearTargetId()
         if (!targetPlayerId) return
-        this.game?.useViperSpearKill(targetPlayerId, this.discardCards.map((card) => card.id))
+        this.game?.useViperSpearKill(
+            targetPlayerId,
+            this.discardCards.map((card) => card.id),
+        )
         this.handCards.forEach((card) => {
             if (card.selected) {
                 card.discardCard()
