@@ -174,13 +174,65 @@ export default class Game {
         this.api.playCard(this.gameId, params)
     }
     handleClickPlayer = (player: Player) => {
+        const handleHeavenlyDoubleHalberdTargetSelection = () => {
+            const selectedIndex = this.selectTargetPlayers.findIndex((p) => p.id === player.id)
+            if (selectedIndex >= 0) {
+                player.setPlayerSelected(false)
+                this.selectTargetPlayers.splice(selectedIndex, 1)
+                this.me.updateKillTargetSelectionHint(this.selectTargetPlayers.length, 3, true)
+                return true
+            }
+            if (this.selectTargetPlayers.length >= 3) {
+                return true
+            }
+            player.setPlayerSelected(true, 'from')
+            this.selectTargetPlayers.push(player)
+            this.me.updateKillTargetSelectionHint(this.selectTargetPlayers.length, 3, true)
+            return true
+        }
         if (this.me.viperSpearMode) {
             if (!player.isOutofDistance) {
                 this.me.handleViperSpearTarget(player)
             }
             return
         }
+        if (this.me.heavenlyDoubleHalberdMode) {
+            if (
+                !this.me.selectedCard ||
+                this.me.selectedCard.name !== '殺' ||
+                player.isOutofDistance
+            ) {
+                return
+            }
+            handleHeavenlyDoubleHalberdTargetSelection()
+            return
+        }
         if (!this.me.selectedCard || player.isOutofDistance) return
+        if (
+            this.me.selectedCard.name === '殺' &&
+            this.me.canTriggerHeavenlyDoubleHalberd(this.me.selectedCard)
+        ) {
+            // 保險：只要符合方天畫戟條件，永遠先進入多目標選擇模式，不能直接走一般殺流程。
+            this.me.enableHeavenlyDoubleHalberdMode()
+            handleHeavenlyDoubleHalberdTargetSelection()
+            return
+        }
+        if (this.me.selectedCard.name === '殺') {
+            const selectedIndex = this.selectTargetPlayers.findIndex((p) => p.id === player.id)
+            if (selectedIndex >= 0) {
+                player.setPlayerSelected(false)
+                this.selectTargetPlayers.splice(selectedIndex, 1)
+            } else {
+                this.selectTargetPlayers.forEach((targetPlayer) =>
+                    targetPlayer.setPlayerSelected(false),
+                )
+                player.setPlayerSelected(true, 'from')
+                this.selectTargetPlayers = [player]
+            }
+            this.me.updateKillTargetSelectionHint(this.selectTargetPlayers.length, 1, false)
+            this.me.mainInstanceMap.checkModal?.setAlpha(1)
+            return
+        }
         if (this.me.selectedCard.name === '過河拆橋') {
             this.seats.forEach((player) => player.setOutOfDistance(false))
             // 開啟選擇面板
@@ -198,24 +250,6 @@ export default class Game {
             }
             this.me.askReaction('useSnatchEffect', event)
             return
-        }
-        if (this.me.selectedCard.name === '殺') {
-            const params = {
-                playerId: this.me.id,
-                targetPlayerId: player.id,
-                cardId: this.me.selectedCard.id,
-                playType: 'active',
-            }
-            this.api.playCard(this.gameId, params)
-            atkLine({
-                endPoint: new Phaser.Math.Vector2(player.instance.x, player.instance.y),
-                scene: this.scene,
-            })
-            const card = this.me.selectedCard
-            card.playCard()
-            console.log(player, this.me)
-            this.seats.forEach((player) => player.setOutOfDistance(false))
-            this.me.selectedCard = null
         }
         if (this.me.selectedCard?.name === '決鬥' || this.me.selectedCard?.name === '樂不思蜀') {
             // 清除前一個選擇的玩家邊匡
@@ -321,6 +355,23 @@ export default class Game {
             discardCardIds,
         }
         return this.api.useViperSpearKill(this.gameId, params)
+    }
+    playActiveKill = (cardId: ThreeKingdomsCardIds, targetPlayerId: string) => {
+        const params = {
+            playerId: this.me.id,
+            targetPlayerId,
+            cardId,
+            playType: 'active' as PlayType,
+        }
+        return this.api.playCard(this.gameId, params)
+    }
+    useHeavenlyDoubleHalberdKill = (cardId: ThreeKingdomsCardIds, targetPlayerIds: string[]) => {
+        const params = {
+            playerId: this.me.id,
+            cardId,
+            targetPlayerIds,
+        }
+        return this.api.useHeavenlyDoubleHalberdKill(this.gameId, params)
     }
     useDismantleEffect = async (
         targetPlayerId: string,
@@ -627,6 +678,43 @@ export default class Game {
                         ease: 'Power2',
                     })
                 }
+                break
+            }
+            case 'HeavenlyDoubleHalberdKillTriggerEvent': {
+                const allPlayers = [...this.seats, this.me]
+                const attacker = allPlayers.find((player) => player.id === data.attackerPlayerId)
+                const targetPlayerIds: string[] = data.targetPlayerIds || []
+                const targetNames = targetPlayerIds
+                    .map((id) => allPlayers.find((player) => player.id === id)?.general?.name || id)
+                    .join('、')
+                if (this.hintInstance) {
+                    const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+                    hintText?.setText(
+                        `${
+                            attacker?.general?.name || data.attackerPlayerId
+                        } 發動方天畫戟，對 ${targetNames} 出殺`,
+                    )
+                    this.hintInstance.setAlpha(1)
+                    this.scene.tweens.killTweensOf(this.hintInstance)
+                    this.scene.tweens.add({
+                        targets: this.hintInstance,
+                        alpha: 0,
+                        duration: 1200,
+                        delay: 1000,
+                        ease: 'Power2',
+                    })
+                }
+                if (!attacker) break
+                const startPoint = new Phaser.Math.Vector2(attacker.instance.x, attacker.instance.y)
+                targetPlayerIds.forEach((targetPlayerId) => {
+                    const target = allPlayers.find((player) => player.id === targetPlayerId)
+                    if (!target) return
+                    atkLine({
+                        startPoint,
+                        endPoint: new Phaser.Math.Vector2(target.instance.x, target.instance.y),
+                        scene: this.scene,
+                    })
+                })
                 break
             }
             case 'PlayerDamagedEvent':

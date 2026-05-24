@@ -28,6 +28,7 @@ export default class MainPlayer extends Player {
     discardCardsAction: ([]) => void = ([]) => {}
     viperSpearMode: boolean = false
     viperSpearTarget: Player | null = null
+    heavenlyDoubleHalberdMode: boolean = false
     weaponActionBorder?: Phaser.GameObjects.Graphics
     weaponHitArea?: Phaser.GameObjects.Rectangle
     mainInstanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
@@ -363,6 +364,7 @@ export default class MainPlayer extends Player {
                         this.selectedCard = null
                     },
                 })
+                this.clearHeavenlyDoubleHalberdMode()
                 this.resetOutofDistance()
                 return
             }
@@ -375,6 +377,7 @@ export default class MainPlayer extends Player {
                     duration: 500, // 持續時間（毫秒）
                     ease: 'Power2',
                 })
+                this.clearHeavenlyDoubleHalberdMode()
                 this.resetOutofDistance()
             }
             // 卡片上移
@@ -429,6 +432,11 @@ export default class MainPlayer extends Player {
                 }
                 if (distance > 1) player.setOutOfDistance(true)
             })
+            if (this.canTriggerHeavenlyDoubleHalberd(card)) {
+                this.enableHeavenlyDoubleHalberdMode()
+            } else {
+                this.heavenlyDoubleHalberdMode = false
+            }
             return
         }
         if (card.name === '南蠻入侵' || card.name === '萬箭齊發') {
@@ -682,6 +690,51 @@ export default class MainPlayer extends Player {
             this.mainInstanceMap.checkModal?.setAlpha(1)
             return
         }
+        this.mainInstanceMap.checkModal?.setAlpha(0)
+        this.hintInstance?.setAlpha(0)
+    }
+    canTriggerHeavenlyDoubleHalberd = (card: Card) => {
+        const weaponCardId = this.equipments[0]
+        if (!weaponCardId) return false
+        const weaponCard = threeKingdomsCards[weaponCardId]
+        if (weaponCard.name !== '方天畫戟') return false
+        if (card.name !== '殺') return false
+        if (this.game?.getActivePlayer() !== this.id) return false
+        if (this.event || this.discardMode || this.reactionMode || this.viperSpearMode) return false
+        return this.handCards.filter((handCard) => !handCard.played).length === 1
+    }
+    enableHeavenlyDoubleHalberdMode = () => {
+        this.heavenlyDoubleHalberdMode = true
+        if (this.game) {
+            this.game.selectTargetPlayers.forEach((player) => player.setPlayerSelected(false))
+            this.game.selectTargetPlayers = []
+        }
+        this.updateKillTargetSelectionHint(0, 3, true)
+        this.mainInstanceMap.checkModal?.setAlpha(1)
+    }
+    updateKillTargetSelectionHint = (
+        selectedCount: number,
+        maxCount: 1 | 3,
+        isHeavenlyDoubleHalberd: boolean,
+    ) => {
+        if (!this.hintInstance) return
+        const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+        if (isHeavenlyDoubleHalberd) {
+            hintText?.setText(
+                `已觸發方天畫戟效果，可選擇三個玩家為目標（已選 ${selectedCount}/${maxCount}）`,
+            )
+        } else {
+            hintText?.setText(`請選擇要出殺的目標（已選 ${selectedCount}/${maxCount}）`)
+        }
+        this.hintInstance.setAlpha(1)
+    }
+    clearHeavenlyDoubleHalberdMode = (hidePrompt: boolean = true) => {
+        this.heavenlyDoubleHalberdMode = false
+        if (this.game) {
+            this.game.selectTargetPlayers.forEach((player) => player.setPlayerSelected(false))
+            this.game.selectTargetPlayers = []
+        }
+        if (!hidePrompt) return
         this.mainInstanceMap.checkModal?.setAlpha(0)
         this.hintInstance?.setAlpha(0)
     }
@@ -1162,6 +1215,54 @@ export default class MainPlayer extends Player {
             this.startViperSpearDiscard()
             return
         }
+        if (this.heavenlyDoubleHalberdMode && this.selectedCard?.name === '殺') {
+            const targets = this.game?.selectTargetPlayers || []
+            if (targets.length === 0) {
+                console.log('方天畫戟至少需要選擇一名目標')
+                return
+            }
+            const card = this.selectedCard
+            this.game?.useHeavenlyDoubleHalberdKill(
+                card.id,
+                targets.map((target) => target.id),
+            )
+            targets.forEach((target) => {
+                atkLine({
+                    endPoint: new Phaser.Math.Vector2(target.instance.x, target.instance.y),
+                    scene: this.scene,
+                })
+            })
+            this.selectedCard = null
+            card.playCard()
+            this.clearHeavenlyDoubleHalberdMode(false)
+            this.resetOutofDistance()
+            this.mainInstanceMap.checkModal?.setAlpha(0)
+            this.hintInstance?.setAlpha(0)
+            return
+        }
+        if (!this.event && this.selectedCard?.name === '殺') {
+            const targetPlayer = this.game?.selectTargetPlayers[0]
+            if (!targetPlayer) {
+                this.updateKillTargetSelectionHint(0, 1, false)
+                return
+            }
+            const card = this.selectedCard
+            this.game?.playActiveKill(card.id, targetPlayer.id)
+            atkLine({
+                endPoint: new Phaser.Math.Vector2(targetPlayer.instance.x, targetPlayer.instance.y),
+                scene: this.scene,
+            })
+            this.selectedCard = null
+            card.playCard()
+            targetPlayer.setPlayerSelected(false)
+            if (this.game) {
+                this.game.selectTargetPlayers = []
+            }
+            this.resetOutofDistance()
+            this.mainInstanceMap.checkModal?.setAlpha(0)
+            this.hintInstance?.setAlpha(0)
+            return
+        }
         if (this.selectedCard?.name === '借刀殺人') {
             if (this.game?.selectTargetPlayers.length !== 2) {
                 console.log('請選擇兩名玩家')
@@ -1282,6 +1383,9 @@ export default class MainPlayer extends Player {
         if (this.viperSpearMode) {
             this.clearViperSpearState(this.event === 'AskKillEvent')
             return
+        }
+        if (this.heavenlyDoubleHalberdMode) {
+            this.clearHeavenlyDoubleHalberdMode(false)
         }
         if (
             this.event === 'AskDodgeEvent' ||

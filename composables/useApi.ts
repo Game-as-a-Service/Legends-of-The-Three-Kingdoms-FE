@@ -259,6 +259,16 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:useViperSpearKill`, params)
     }
+    const useHeavenlyDoubleHalberdKill = (
+        gameId: string,
+        params: {
+            playerId: string
+            cardId: ThreeKingdomsCardIds
+            targetPlayerIds: string[]
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:useHeavenlyDoubleHalberdKill`, params)
+    }
     return {
         api,
         createGame,
@@ -279,6 +289,7 @@ export function useApi() {
         useGreenDragonCrescentBladeEffect,
         useStonePiercingAxeEffect,
         useViperSpearKill,
+        useHeavenlyDoubleHalberdKill,
         getDeck,
         setDeck,
     }
