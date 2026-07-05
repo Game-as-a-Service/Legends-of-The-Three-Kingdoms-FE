@@ -1050,6 +1050,27 @@ export default class MainPlayer extends Player {
                 })
                 break
             }
+            case 'AskJianXiongEffectEvent': {
+                const sourceCardCount = (event.data?.sourceCardIds || []).length
+                const message =
+                    sourceCardCount > 0
+                        ? `是否發動奸雄，獲得造成傷害的${sourceCardCount}張牌？`
+                        : '是否發動奸雄，獲得造成傷害的牌？'
+                this.useConfirmModal({
+                    message,
+                    confirmText: '發動',
+                    cancelText: '跳過',
+                    handleConfirm: () => {
+                        this.game?.useJianXiongEffect('ACCEPT')
+                        this.mainInstanceMap.confirmModal?.setAlpha(0)
+                    },
+                    handleCancel: () => {
+                        this.game?.useJianXiongEffect('SKIP')
+                        this.mainInstanceMap.confirmModal?.setAlpha(0)
+                    },
+                })
+                break
+            }
         }
     }
     updatePlayerData(data: any): void {

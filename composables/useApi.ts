@@ -269,6 +269,15 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:useHeavenlyDoubleHalberdKill`, params)
     }
+    const useJianXiongEffect = (
+        gameId: string,
+        params: {
+            playerId: string
+            choice: 'ACCEPT' | 'SKIP'
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:useJianXiongEffect`, params)
+    }
     return {
         api,
         createGame,
@@ -290,6 +299,7 @@ export function useApi() {
         useStonePiercingAxeEffect,
         useViperSpearKill,
         useHeavenlyDoubleHalberdKill,
+        useJianXiongEffect,
         getDeck,
         setDeck,
     }

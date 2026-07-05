@@ -373,6 +373,13 @@ export default class Game {
         }
         return this.api.useHeavenlyDoubleHalberdKill(this.gameId, params)
     }
+    useJianXiongEffect = (choice: 'ACCEPT' | 'SKIP') => {
+        const params = {
+            playerId: this.me.id,
+            choice,
+        }
+        return this.api.useJianXiongEffect(this.gameId, params)
+    }
     useDismantleEffect = async (
         targetPlayerId: string,
         cardId: ThreeKingdomsCardIds | undefined,
@@ -580,6 +587,11 @@ export default class Game {
                 break
             case 'AskStonePiercingAxeEffectEvent':
                 if (data.attackerPlayerId === this.me.id) {
+                    this.me.processEvent(event)
+                }
+                break
+            case 'AskJianXiongEffectEvent':
+                if (data.playerId === this.me.id) {
                     this.me.processEvent(event)
                 }
                 break
