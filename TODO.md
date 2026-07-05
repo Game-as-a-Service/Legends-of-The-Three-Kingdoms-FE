@@ -241,8 +241,8 @@
 **說明**：青釭劍發動  
 **需要做的事**：
 
--   [ ] 在 `src/classes/Game.ts` 新增 case 處理
--   [ ] 顯示「殺無視防具」的提示
+-   [x] 在 `src/classes/Game.ts` 新增 case 處理
+-   [x] 顯示「殺無視防具」的提示
 
 ---
 
@@ -261,9 +261,9 @@
 **說明**：丈八蛇矛發動  
 **需要做的事**：
 
--   [ ] 在 `src/classes/Game.ts` 新增 case 處理
--   [ ] 顯示棄兩張牌當殺使用的效果
--   [ ] 需要額外實作 `useViperSpearKill` API 讓玩家主動使用
+-   [x] 在 `src/classes/Game.ts` 新增 case 處理
+-   [x] 顯示棄兩張牌當殺使用的效果
+-   [x] 需要額外實作 `useViperSpearKill` API 讓玩家主動使用
 
 ---
 
@@ -272,8 +272,8 @@
 **說明**：方天畫戟發動（多目標殺）  
 **需要做的事**：
 
--   [ ] 在 `src/classes/Game.ts` 新增 case 處理
--   [ ] 顯示多目標殺的攻擊線
+-   [x] 在 `src/classes/Game.ts` 新增 case 處理
+-   [x] 顯示多目標殺的攻擊線
 
 ---
 
@@ -297,9 +297,9 @@ POST /api/games/{gameId}/player:useViperSpearKill
 
 **需要做的事**：
 
--   [ ] 在 `composables/useApi.ts` 新增 API
--   [ ] 在 `src/classes/Game.ts` 新增調用方法
--   [ ] 在 UI 中新增使用丈八蛇矛的按鈕/觸發方式
+-   [x] 在 `composables/useApi.ts` 新增 API
+-   [x] 在 `src/classes/Game.ts` 新增調用方法
+-   [x] 在 UI 中新增使用丈八蛇矛的按鈕/觸發方式
 
 ---
 

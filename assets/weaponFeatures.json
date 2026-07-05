@@ -2,6 +2,9 @@
     "麒麟弓": {
         "attackDistance": 5
     },
+    "青虹劍": {
+        "attackDistance": 2
+    },
     "諸葛連弩": {
         "attackDistance": 1
     },

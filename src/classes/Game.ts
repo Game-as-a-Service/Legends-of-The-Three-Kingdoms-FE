@@ -657,6 +657,29 @@ export default class Game {
                 }
                 break
             }
+            case 'BlackPommelEffectEvent': {
+                const allPlayers = [...this.seats, this.me]
+                const attacker = allPlayers.find((player) => player.id === data.attackerPlayerId)
+                const target = allPlayers.find((player) => player.id === data.targetPlayerId)
+                if (this.hintInstance) {
+                    const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+                    hintText?.setText(
+                        `${attacker?.general?.name || data.attackerPlayerId} 發動青虹劍，對 ${
+                            target?.general?.name || data.targetPlayerId
+                        } 的此殺無視防具`,
+                    )
+                    this.hintInstance.setAlpha(1)
+                    this.scene.tweens.killTweensOf(this.hintInstance)
+                    this.scene.tweens.add({
+                        targets: this.hintInstance,
+                        alpha: 0,
+                        duration: 1200,
+                        delay: 1000,
+                        ease: 'Power2',
+                    })
+                }
+                break
+            }
             case 'ViperSpearKillTriggerEvent': {
                 const allPlayers = [...this.seats, this.me]
                 const attacker = allPlayers.find((player) => player.id === data.attackerPlayerId)
