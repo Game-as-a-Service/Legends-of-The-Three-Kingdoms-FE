@@ -302,8 +302,13 @@ export default class MainPlayer extends Player {
             }
             return
         }
-        // 非自己回合不能出牌
-        if (this.game!.getActivePlayer() !== this.id && this.event !== 'AskPlayWardEvent') {
+        // 非自己回合僅允許反應事件出牌（殺/閃/桃/無懈）
+        const isReactiveEvent =
+            this.event === 'AskKillEvent' ||
+            this.event === 'AskDodgeEvent' ||
+            this.event === 'AskPeachEvent' ||
+            this.event === 'AskPlayWardEvent'
+        if (this.game!.getActivePlayer() !== this.id && !isReactiveEvent) {
             return
         }
         // 自己的主動狀態不能出無懈可擊
@@ -315,6 +320,9 @@ export default class MainPlayer extends Player {
             if (card.name !== '殺') {
                 return
             }
+            this.handleSelectCard(card)
+            this.mainInstanceMap.checkModal?.setAlpha(1)
+            return
         }
         if (this.event === 'AskDodgeEvent') {
             if (card.name !== '閃') {
