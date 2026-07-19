@@ -278,6 +278,16 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:useJianXiongEffect`, params)
     }
+    const useHuJiaEffect = (
+        gameId: string,
+        params: {
+            playerId: string
+            choice: 'ACCEPT' | 'DECLINE'
+            cardId?: string | null
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:useHuJiaEffect`, params)
+    }
     return {
         api,
         createGame,
@@ -300,6 +310,7 @@ export function useApi() {
         useViperSpearKill,
         useHeavenlyDoubleHalberdKill,
         useJianXiongEffect,
+        useHuJiaEffect,
         getDeck,
         setDeck,
     }

@@ -1079,6 +1079,77 @@ export default class MainPlayer extends Player {
                 })
                 break
             }
+            case 'AskHuJiaEffectEvent': {
+                const finishHuJiaResponse = () => {
+                    this.event = ''
+                    this.eventData = null
+                    this.reactionType = ''
+                    this.reactionMode = false
+                    this.mainInstanceMap.checkModal?.setAlpha(0)
+                    this.mainInstanceMap.confirmModal?.setAlpha(0)
+                    this.hintInstance?.setAlpha(0)
+                    this.handCards.forEach((card) => {
+                        card.instance.setAlpha(1)
+                    })
+                }
+                const dodgeCardIdsInHand = ((event.data?.dodgeCardIdsInHand || []) as string[])
+                    .filter(Boolean)
+                    .map((cardId) => cardId as ThreeKingdomsCardIds)
+                const fallbackDodgeCardIds = (this.hand.cardIds as ThreeKingdomsCardIds[]).filter(
+                    (cardId) => threeKingdomsCards[cardId]?.name === '閃',
+                )
+                const selectableDodgeCardIds =
+                    dodgeCardIdsInHand.length > 0 ? dodgeCardIdsInHand : fallbackDodgeCardIds
+
+                if (selectableDodgeCardIds.length === 0) {
+                    this.useConfirmModal({
+                        message: '護駕：你手上沒有閃，僅能拒絕。',
+                        confirmText: '確定',
+                        cancelText: '拒絕',
+                        handleConfirm: () => {
+                            this.game?.useHuJiaEffect('DECLINE', null)
+                            finishHuJiaResponse()
+                        },
+                        handleCancel: () => {
+                            this.game?.useHuJiaEffect('DECLINE', null)
+                            finishHuJiaResponse()
+                        },
+                    })
+                    break
+                }
+
+                this.useConfirmModal({
+                    message: '是否發動護駕，代替主公打出一張閃？',
+                    confirmText: '出閃',
+                    cancelText: '拒絕',
+                    handleConfirm: () => {
+                        this.mainInstanceMap.confirmModal?.setAlpha(0)
+                        this.useSelectCardModal({
+                            type: 'small',
+                            message: '選擇要代打的閃',
+                            cardIds: selectableDodgeCardIds,
+                            confirmText: '確認出閃',
+                            cancelText: '拒絕護駕',
+                            handleConfirm: (cardId) => {
+                                if (!cardId || Array.isArray(cardId)) return
+                                this.game?.useHuJiaEffect('ACCEPT', cardId)
+                                this.closeSelectCardModal()
+                                finishHuJiaResponse()
+                            },
+                            handleCancel: () => {
+                                this.game?.useHuJiaEffect('DECLINE', null)
+                                this.closeSelectCardModal()
+                                finishHuJiaResponse()
+                            },
+                        })
+                    },
+                    handleCancel: () => {
+                        this.game?.useHuJiaEffect('DECLINE', null)
+                        finishHuJiaResponse()
+                    },
+                })
+                break
+            }
         }
     }
     updatePlayerData(data: any): void {

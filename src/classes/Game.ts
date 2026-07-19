@@ -380,6 +380,14 @@ export default class Game {
         }
         return this.api.useJianXiongEffect(this.gameId, params)
     }
+    useHuJiaEffect = (choice: 'ACCEPT' | 'DECLINE', cardId?: string | null) => {
+        const params = {
+            playerId: this.me.id,
+            choice,
+            cardId,
+        }
+        return this.api.useHuJiaEffect(this.gameId, params)
+    }
     useDismantleEffect = async (
         targetPlayerId: string,
         cardId: ThreeKingdomsCardIds | undefined,
@@ -591,6 +599,11 @@ export default class Game {
                 }
                 break
             case 'AskJianXiongEffectEvent':
+                if (data.playerId === this.me.id) {
+                    this.me.processEvent(event)
+                }
+                break
+            case 'AskHuJiaEffectEvent':
                 if (data.playerId === this.me.id) {
                     this.me.processEvent(event)
                 }
