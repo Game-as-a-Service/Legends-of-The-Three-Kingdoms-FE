@@ -411,6 +411,14 @@ export default class MainPlayer extends Player {
             ) {
                 this.mainInstanceMap.checkModal?.setAlpha(1)
             }
+            if (card.name === '順手牽羊') {
+                this.seats.forEach((player) => {
+                    const isSelectable =
+                        player.id !== this.id && (this.game?.canSnatch(this, player) ?? false)
+                    player.setOutOfDistance(!isSelectable)
+                })
+                return
+            }
             if (cardInfo.type === 'scroll') {
                 return
             }
@@ -420,7 +428,7 @@ export default class MainPlayer extends Player {
                 this.mainInstanceMap.checkModal?.setAlpha(1)
                 return
             }
-            const distances = this.seats.forEach((player, index) => {
+            this.seats.forEach((player, index) => {
                 // index 就是距離
                 // 考慮裝備
                 let distance = Math.min(index + 1, this.seats.length - index)

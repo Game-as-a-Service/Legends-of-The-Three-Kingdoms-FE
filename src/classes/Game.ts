@@ -243,7 +243,6 @@ export default class Game {
             return
         }
         if (this.me.selectedCard.name === '順手牽羊') {
-            this.seats.forEach((player) => player.setOutOfDistance(false))
             // 開啟選擇面板
             const event = {
                 targetPlayer: player,
@@ -954,6 +953,17 @@ export default class Game {
                 distance -= weaponFeature.attackDistance - 1
             }
         }
+        return distance <= 1
+    }
+    canSnatch = (player: Player, targetPlayer: Player) => {
+        const seats = [...this.seats, this.me]
+        const playerIndex = seats.findIndex((seat) => seat.id === player.id)
+        const targetIndex = seats.findIndex((seat) => seat.id === targetPlayer.id)
+        if (playerIndex === -1 || targetIndex === -1) return false
+        const seatDistance = Math.abs(playerIndex - targetIndex)
+        let distance = Math.min(seatDistance, seats.length - seatDistance)
+        if (targetPlayer.equipments[2]) distance += 1
+        if (player.equipments[3]) distance -= 1
         return distance <= 1
     }
 }
