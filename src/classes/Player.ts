@@ -29,7 +29,9 @@ export default class Player {
     hintInstance!: Phaser.GameObjects.Container
     isOutofDistance: boolean = false
     instanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
+    handText!: Phaser.GameObjects.Text
     game: Game | null = null
+    readonly cardLeftX: number = -96
     private glowFx: Phaser.FX.Glow | null = null
     // properties and methods go here
     constructor({
@@ -94,6 +96,11 @@ export default class Player {
             fontSize: '20px',
             color: '#000',
         })
+        const campText = scene.add.text(this.cardLeftX, -50, this.general.camp, {
+            fontSize: '20px',
+            color: '#000',
+        })
+        campText.setOrigin(0, 0.5)
         const roleText = scene.add.text(0, -30, roleMap[this.roleId] || '?', {
             fontSize: '20px',
             color: '#000',
@@ -111,6 +118,7 @@ export default class Player {
             fontSize: '20px',
             color: '#000',
         })
+        this.handText = handText
         const weapon = this.equipments[0] ? threeKingdomsCards[this.equipments[0]] : null
         const armor = this.equipments[1] ? threeKingdomsCards[this.equipments[1]].name : ''
         const horsePlus = this.equipments[2] ? threeKingdomsCards[this.equipments[2]].name : ''
@@ -157,6 +165,7 @@ export default class Player {
             rectangle,
             idText,
             roleText,
+            campText,
             generralText,
             // hpText,
             handText,
@@ -240,10 +249,9 @@ export default class Player {
         // 手牌數確認
         if (data.hand.size !== this.hand.size) {
             this.hand.size = data.hand.size
-            const handText: Phaser.GameObjects.Text = this.instance.getAt(4)
-            handText.setText(`手牌: ${this.hand.size}`)
+            this.handText.setText(`手牌: ${this.hand.size}`)
             this.scene.tweens.add({
-                targets: handText,
+                targets: this.handText,
                 scale: 1.5,
                 duration: 150, // 持續時間（毫秒）
                 ease: 'Power2',
@@ -395,7 +403,7 @@ export default class Player {
         // 將容器垂直居中
         // healthContainer.setY(0 - (maxHealth * (textHeight + spacing)) / 2)
         healthContainer.setY(100 - maxHealth * (textHeight + spacing) - 4)
-        healthContainer.setX(0 - 100 + 4)
+        healthContainer.setX(this.cardLeftX)
         return healthContainer
     }
     initDelayScrollsInstance() {
