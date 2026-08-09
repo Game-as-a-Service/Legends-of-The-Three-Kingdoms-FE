@@ -288,6 +288,16 @@ export function useApi() {
     ) => {
         return api.post(`/api/games/${gameId}/player:useHuJiaEffect`, params)
     }
+    const useSkillEffect = (
+        gameId: string,
+        params: {
+            playerId: string
+            skillName: string
+            choice: 'ACCEPT' | 'SKIP'
+        },
+    ) => {
+        return api.post(`/api/games/${gameId}/player:useSkillEffect`, params)
+    }
     return {
         api,
         createGame,
@@ -311,6 +321,7 @@ export function useApi() {
         useHeavenlyDoubleHalberdKill,
         useJianXiongEffect,
         useHuJiaEffect,
+        useSkillEffect,
         getDeck,
         setDeck,
     }

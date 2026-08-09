@@ -387,6 +387,14 @@ export default class Game {
         }
         return this.api.useHuJiaEffect(this.gameId, params)
     }
+    useSkillEffect = (skillName: string, choice: 'ACCEPT' | 'SKIP') => {
+        const params = {
+            playerId: this.me.id,
+            skillName,
+            choice,
+        }
+        return this.api.useSkillEffect(this.gameId, params)
+    }
     useDismantleEffect = async (
         targetPlayerId: string,
         cardId: ThreeKingdomsCardIds | undefined,
@@ -599,6 +607,11 @@ export default class Game {
                 break
             case 'AskJianXiongEffectEvent':
                 if (data.playerId === this.me.id) {
+                    this.me.processEvent(event)
+                }
+                break
+            case 'AskSkillEffectEvent':
+                if (data.playerId === this.me.id && data.skillName === '護駕') {
                     this.me.processEvent(event)
                 }
                 break

@@ -34,6 +34,9 @@ export default class MainPlayer extends Player {
     mainInstanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
     event: string = ''
     eventData: any = null
+    confirmModalBaseFontSize: number = 32
+    confirmModalMinFontSize: number = 20
+    confirmModalMaxLines: number = 4
     constructor({
         id,
         generral,
@@ -1087,6 +1090,28 @@ export default class MainPlayer extends Player {
                 })
                 break
             }
+            case 'AskSkillEffectEvent': {
+                if (event.data?.skillName !== '護駕') break
+                const finishHuJiaActivation = () => {
+                    this.event = ''
+                    this.eventData = null
+                    this.mainInstanceMap.confirmModal?.setAlpha(0)
+                }
+                this.useConfirmModal({
+                    message: '是否發動護駕，請其他魏勢力武將代為出閃？',
+                    confirmText: '發動護駕',
+                    cancelText: '自己出閃',
+                    handleConfirm: () => {
+                        this.game?.useSkillEffect('護駕', 'ACCEPT')
+                        finishHuJiaActivation()
+                    },
+                    handleCancel: () => {
+                        this.game?.useSkillEffect('護駕', 'SKIP')
+                        finishHuJiaActivation()
+                    },
+                })
+                break
+            }
             case 'AskHuJiaEffectEvent': {
                 const finishHuJiaResponse = () => {
                     this.event = ''
@@ -1247,6 +1272,76 @@ export default class MainPlayer extends Player {
             player.setOutOfDistance(false)
         })
     }
+    getTextVisualUnit = (char: string) => {
+        if (!char) return 0
+        if (char === ' ') return 0.4
+        // 英數與半形符號較窄，使用較小權重避免過度換行。
+        if (/^[\x00-\x7F]$/.test(char)) return 0.55
+        return 1
+    }
+    wrapTextByVisualUnit = (text: string, maxUnitsPerLine: number) => {
+        const sourceLines = text.split('\n')
+        const wrappedLines: string[] = []
+
+        sourceLines.forEach((sourceLine) => {
+            if (sourceLine.length === 0) {
+                wrappedLines.push('')
+                return
+            }
+
+            let currentLine = ''
+            let currentUnits = 0
+            for (const char of sourceLine) {
+                const charUnits = this.getTextVisualUnit(char)
+                if (currentLine && currentUnits + charUnits > maxUnitsPerLine) {
+                    wrappedLines.push(currentLine)
+                    currentLine = char
+                    currentUnits = charUnits
+                    continue
+                }
+                currentLine += char
+                currentUnits += charUnits
+            }
+            if (currentLine) {
+                wrappedLines.push(currentLine)
+            }
+        })
+
+        return wrappedLines.join('\n')
+    }
+    applyConfirmModalMessageLayout = (messageText: Phaser.GameObjects.Text, message: string) => {
+        const normalizedMessage = (message || '').trim()
+        const modalTextWidth = 520
+        const maxLines = this.confirmModalMaxLines
+        let chosenFontSize = this.confirmModalMinFontSize
+        let chosenMessage = normalizedMessage
+
+        for (
+            let fontSize = this.confirmModalBaseFontSize;
+            fontSize >= this.confirmModalMinFontSize;
+            fontSize -= 2
+        ) {
+            const maxUnitsPerLine = Math.max(8, Math.floor(modalTextWidth / (fontSize * 0.95)))
+            const wrappedMessage = this.wrapTextByVisualUnit(normalizedMessage, maxUnitsPerLine)
+            const lineCount = wrappedMessage.split('\n').length
+            if (lineCount <= maxLines) {
+                chosenFontSize = fontSize
+                chosenMessage = wrappedMessage
+                break
+            }
+            chosenFontSize = fontSize
+            chosenMessage = wrappedMessage
+        }
+
+        messageText.setStyle({
+            fontSize: `${chosenFontSize}px`,
+            color: '#fff',
+            align: 'center',
+        })
+        messageText.setText(chosenMessage)
+        messageText.setOrigin(0.5)
+        messageText.setPosition(300, 100)
+    }
     useConfirmModal = ({
         message = '提示訊息',
         confirmText = '是',
@@ -1261,7 +1356,7 @@ export default class MainPlayer extends Player {
         handleCancel?: () => void
     }) => {
         const modelText: Phaser.GameObjects.Text = this.mainInstanceMap.confirmModal?.getAt(1)
-        modelText.setText(message)
+        this.applyConfirmModalMessageLayout(modelText, message)
         const yesButton: Phaser.GameObjects.Text = this.mainInstanceMap.confirmModal?.getAt(2)
         yesButton.setText(confirmText)
         const noButton: Phaser.GameObjects.Text = this.mainInstanceMap.confirmModal?.getAt(3)
@@ -1286,6 +1381,7 @@ export default class MainPlayer extends Player {
             color: '#fff',
         })
         messageText.setOrigin(0.5)
+        this.applyConfirmModalMessageLayout(messageText, '你要使用八卦陣嗎？')
         // 添加 "是" 按鈕
         const yesButton = scene.add
             .text(200, 250, '是', { fontSize: '32px', color: '#0f0' })
