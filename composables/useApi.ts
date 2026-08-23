@@ -294,6 +294,7 @@ export function useApi() {
             playerId: string
             skillName: string
             choice: 'ACCEPT' | 'SKIP'
+            cardIds?: ThreeKingdomsCardIds[]
         },
     ) => {
         return api.post(`/api/games/${gameId}/player:useSkillEffect`, params)

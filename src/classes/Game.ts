@@ -387,11 +387,16 @@ export default class Game {
         }
         return this.api.useHuJiaEffect(this.gameId, params)
     }
-    useSkillEffect = (skillName: string, choice: 'ACCEPT' | 'SKIP') => {
+    useSkillEffect = (
+        skillName: string,
+        choice: 'ACCEPT' | 'SKIP',
+        cardIds?: ThreeKingdomsCardIds[],
+    ) => {
         const params = {
             playerId: this.me.id,
             skillName,
             choice,
+            cardIds,
         }
         return this.api.useSkillEffect(this.gameId, params)
     }
@@ -611,7 +616,7 @@ export default class Game {
                 }
                 break
             case 'AskSkillEffectEvent':
-                if (data.playerId === this.me.id && data.skillName === '護駕') {
+                if (data.playerId === this.me.id) {
                     this.me.processEvent(event)
                 }
                 break
