@@ -167,6 +167,12 @@ export function useApi() {
     const setDeck = (gameId: string, params: { cardIds: string[] }) => {
         return api.put(`/api/debug/games/${gameId}/deck`, params)
     }
+    const getGeneralCardDeck = (gameId: string) => {
+        return api.get(`/api/debug/games/${gameId}/generalCardDeck`)
+    }
+    const setGeneralCardDeck = (gameId: string, params: { generalIds: string[] }) => {
+        return api.put(`/api/debug/games/${gameId}/generalCardDeck`, params)
+    }
     /// 雌雄雙股劍發動詢問（攻擊者）
     /**
      *
@@ -294,7 +300,7 @@ export function useApi() {
             playerId: string
             skillName: string
             choice: 'ACCEPT' | 'SKIP'
-            cardIds?: ThreeKingdomsCardIds[]
+            cardIds?: string[]
         },
     ) => {
         return api.post(`/api/games/${gameId}/player:useSkillEffect`, params)
@@ -325,5 +331,7 @@ export function useApi() {
         useSkillEffect,
         getDeck,
         setDeck,
+        getGeneralCardDeck,
+        setGeneralCardDeck,
     }
 }
