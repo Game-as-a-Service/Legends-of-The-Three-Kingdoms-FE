@@ -387,11 +387,7 @@ export default class Game {
         }
         return this.api.useHuJiaEffect(this.gameId, params)
     }
-    useSkillEffect = (
-        skillName: string,
-        choice: 'ACCEPT' | 'SKIP',
-        cardIds?: ThreeKingdomsCardIds[],
-    ) => {
+    useSkillEffect = (skillName: string, choice: 'ACCEPT' | 'SKIP', cardIds?: string[]) => {
         const params = {
             playerId: this.me.id,
             skillName,

@@ -10,6 +10,7 @@ import type {
     WeaponFeature,
 } from '~/src/types'
 import Game from './Game'
+import { handleAskSkillEffectEvent } from '../events/askSkillEffectEvent'
 
 const threeKingdomsCards: { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard } =
     threeKingdomsCardsJson as { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard }
@@ -1091,91 +1092,7 @@ export default class MainPlayer extends Player {
                 break
             }
             case 'AskSkillEffectEvent': {
-                switch (event.data?.skillName) {
-                    case '鬼才': {
-                        const originalCardId = event.data?.dataCardIds?.[0] as
-                            | ThreeKingdomsCardIds
-                            | undefined
-                        const originalCardName = originalCardId
-                            ? this.formatCardLabel(originalCardId)
-                            : originalCardId || '目前的判定牌'
-                        const allPlayers = [...this.seats, this]
-                        const judgedPlayer = allPlayers.find(
-                            (player) => player.id === event.data?.dataPlayerId,
-                        )
-                        const judgedPlayerName =
-                            judgedPlayer?.general?.name || event.data?.dataPlayerId || '該角色'
-                        const finishGuiCaiResponse = () => {
-                            this.event = ''
-                            this.eventData = null
-                            this.mainInstanceMap.confirmModal?.setAlpha(0)
-                            this.closeSelectCardModal()
-                        }
-                        const skipGuiCai = () => {
-                            this.game?.useSkillEffect('鬼才', 'SKIP', [])
-                            finishGuiCaiResponse()
-                        }
-                        const handCardIds = this.hand.cardIds as ThreeKingdomsCardIds[]
-
-                        if (handCardIds.length === 0) {
-                            this.useConfirmModal({
-                                message: `${judgedPlayerName}的判定牌為${originalCardName}，你沒有手牌可發動鬼才。`,
-                                confirmText: '略過',
-                                cancelText: '略過',
-                                handleConfirm: skipGuiCai,
-                                handleCancel: skipGuiCai,
-                            })
-                            break
-                        }
-
-                        this.useConfirmModal({
-                            message: `${judgedPlayerName}的判定牌為${originalCardName}，是否發動鬼才？`,
-                            confirmText: '發動鬼才',
-                            cancelText: '跳過',
-                            handleConfirm: () => {
-                                this.mainInstanceMap.confirmModal?.setAlpha(0)
-                                this.useSelectCardModal({
-                                    type: 'small',
-                                    message: '選擇一張手牌替換判定牌',
-                                    cardIds: handCardIds,
-                                    confirmText: '替換',
-                                    cancelText: '跳過',
-                                    handleConfirm: (cardId) => {
-                                        this.game?.useSkillEffect('鬼才', 'ACCEPT', [cardId])
-                                        finishGuiCaiResponse()
-                                    },
-                                    handleCancel: skipGuiCai,
-                                })
-                            },
-                            handleCancel: skipGuiCai,
-                        })
-                        break
-                    }
-                    case '護駕': {
-                        const finishHuJiaActivation = () => {
-                            this.event = ''
-                            this.eventData = null
-                            this.mainInstanceMap.confirmModal?.setAlpha(0)
-                        }
-                        this.useConfirmModal({
-                            message: '是否發動護駕，請其他魏勢力武將代為出閃？',
-                            confirmText: '發動護駕',
-                            cancelText: '自己出閃',
-                            handleConfirm: () => {
-                                this.game?.useSkillEffect('護駕', 'ACCEPT')
-                                finishHuJiaActivation()
-                            },
-                            handleCancel: () => {
-                                this.game?.useSkillEffect('護駕', 'SKIP')
-                                finishHuJiaActivation()
-                            },
-                        })
-                        break
-                    }
-                    default:
-                        console.warn('Unsupported skill effect:', event.data?.skillName)
-                        break
-                }
+                handleAskSkillEffectEvent(this, event)
                 break
             }
             case 'AskHuJiaEffectEvent': {
@@ -1340,7 +1257,9 @@ export default class MainPlayer extends Player {
     }
     formatCardLabel = (cardId: ThreeKingdomsCardIds) => {
         const card = threeKingdomsCards[cardId]
-        return `${card.name}(${suits[card.suit]?.symbol || card.suit}${ranks[card.rank] || card.rank})`
+        return `${card.name}(${suits[card.suit]?.symbol || card.suit}${
+            ranks[card.rank] || card.rank
+        })`
     }
     getCardLabelFontSize = (label: string) => {
         const visualUnits = Array.from(label).reduce(
