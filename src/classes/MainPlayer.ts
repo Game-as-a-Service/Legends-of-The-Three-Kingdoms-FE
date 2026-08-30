@@ -329,7 +329,7 @@ export default class MainPlayer extends Player {
             return
         }
         if (this.event === 'AskDodgeEvent') {
-            if (card.name !== '閃') {
+            if (!this.canUseCardAsDodge(card)) {
                 return
             }
             this.handleSelectCard(card)
@@ -576,6 +576,18 @@ export default class MainPlayer extends Player {
         weaponInstance.add([actionBorder, hitArea])
         this.weaponActionBorder = actionBorder
         this.weaponHitArea = hitArea
+    }
+    isQingGuoDodgeAvailable = () => {
+        return this.general?.name === '甄姬' || this.generalId === 'WEI007'
+    }
+    isBlackCard = (card: Card) => {
+        const cardInfo = threeKingdomsCards[card.id]
+        return cardInfo?.suit === 'spade' || cardInfo?.suit === 'club'
+    }
+    canUseCardAsDodge = (card: Card) => {
+        if (card.name === '閃') return true
+        if (!this.isQingGuoDodgeAvailable()) return false
+        return this.isBlackCard(card)
     }
     canTriggerViperSpear = () => {
         const weaponCardId = this.equipments[0]
@@ -846,15 +858,16 @@ export default class MainPlayer extends Player {
             }
             case 'AskDodgeEvent': {
                 const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-                hintText?.setText('請出一張閃')
+                const dodgePrompt = this.isQingGuoDodgeAvailable()
+                    ? '請出一張閃或黑色牌（傾國）'
+                    : '請出一張閃'
+                hintText?.setText(dodgePrompt)
                 this.hintInstance?.setAlpha(1)
-                // 只能出閃 其他不能出
                 this.handCards.forEach((card) => {
-                    if (card.name !== '閃') {
+                    if (!this.canUseCardAsDodge(card)) {
                         card.instance.setAlpha(0.3)
                     }
                 })
-                // 打開確認 取消按鈕
                 this.mainInstanceMap.checkModal?.setAlpha(1)
                 break
             }
@@ -1479,7 +1492,7 @@ export default class MainPlayer extends Player {
             if (this.selectedCard === null) {
                 return
             }
-            if (this.event === 'AskDodgeEvent' && this.selectedCard.name !== '閃') {
+            if (this.event === 'AskDodgeEvent' && !this.canUseCardAsDodge(this.selectedCard)) {
                 return
             }
             if (this.event === 'AskPeachEvent' && this.selectedCard.name !== '桃') {
