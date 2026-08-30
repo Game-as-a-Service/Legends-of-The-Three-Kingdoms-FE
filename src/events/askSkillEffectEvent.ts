@@ -148,10 +148,32 @@ const handleHuJia: SkillEffectHandler = (mainPlayer) => {
     })
 }
 
+const handleLuoShen: SkillEffectHandler = (mainPlayer) => {
+    const finishResponse = () => {
+        mainPlayer.event = ''
+        mainPlayer.eventData = null
+        mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+    }
+    mainPlayer.useConfirmModal({
+        message: '是否發動洛神？（黑色牌將被收入手牌，紅色牌則停止判定）',
+        confirmText: '發動洛神',
+        cancelText: '不發動',
+        handleConfirm: () => {
+            mainPlayer.game?.useSkillEffect('洛神', 'ACCEPT')
+            finishResponse()
+        },
+        handleCancel: () => {
+            mainPlayer.game?.useSkillEffect('洛神', 'SKIP')
+            finishResponse()
+        },
+    })
+}
+
 const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     反饋: handleFanKui,
     鬼才: handleGuiCai,
     護駕: handleHuJia,
+    洛神: handleLuoShen,
 }
 
 export const handleAskSkillEffectEvent = (mainPlayer: MainPlayer, event: AskSkillEffectEvent) => {
