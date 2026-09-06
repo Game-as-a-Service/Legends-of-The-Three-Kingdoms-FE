@@ -432,10 +432,19 @@ export default class MainPlayer extends Player {
                 this.mainInstanceMap.checkModal?.setAlpha(1)
                 return
             }
-            this.seats.forEach((player, index) => {
-                // index 就是距離
-                // 考慮裝備
-                let distance = Math.min(index + 1, this.seats.length - index)
+            const alivePlayers = this.seats.filter((player) => player.hp > 0)
+            this.seats.forEach((player) => {
+                if (player.hp <= 0) {
+                    player.setOutOfDistance(true)
+                    return
+                }
+                const index = alivePlayers.findIndex((alivePlayer) => alivePlayer.id === player.id)
+                if (index === -1) {
+                    player.setOutOfDistance(true)
+                    return
+                }
+                // index 就是距離，死亡玩家不會佔用距離
+                let distance = Math.min(index + 1, alivePlayers.length - index)
                 if (player.equipments[2]) {
                     distance += 1
                 }
@@ -450,7 +459,7 @@ export default class MainPlayer extends Player {
                         distance -= weaponFeature.attackDistance - 1
                     }
                 }
-                if (distance > 1) player.setOutOfDistance(true)
+                player.setOutOfDistance(distance > 1)
             })
             if (this.canTriggerHeavenlyDoubleHalberd(card)) {
                 this.enableHeavenlyDoubleHalberdMode()

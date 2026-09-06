@@ -947,14 +947,22 @@ export default class Game {
     getActivePlayer = () => {
         return this.gameData.round?.activePlayer || this.gameData.round?.currentRoundPlayer
     }
+    getAliveSeats = () => {
+        return [...this.seats, this.me].filter((player) => player && player.hp > 0)
+    }
+    getSeatDistance = (player: Player, targetPlayer: Player) => {
+        if (player.hp <= 0 || targetPlayer.hp <= 0) return Number.POSITIVE_INFINITY
+        const seats = this.getAliveSeats()
+        const playerIndex = seats.findIndex((seat) => seat.id === player.id)
+        const targetIndex = seats.findIndex((seat) => seat.id === targetPlayer.id)
+        if (playerIndex === -1 || targetIndex === -1) return Number.POSITIVE_INFINITY
+        const seatDistance = Math.abs(playerIndex - targetIndex)
+        return Math.min(seatDistance, seats.length - seatDistance)
+    }
     canAttack = (player: Player, targetPlayer: Player) => {
-        // 計算兩者的距離
-        const seats = [...this.seats, this.me]
-        const index1 = seats.findIndex((p) => p.id === player.id)
-        const index2 = seats.findIndex((p) => p.id === targetPlayer.id)
-        if (index1 === -1 || index2 === -1) return false
-        const seatDistance = Math.abs(index1 - index2)
-        let distance = Math.min(seatDistance, seats.length - seatDistance)
+        // 計算兩者的距離，死亡玩家不佔用距離
+        let distance = this.getSeatDistance(player, targetPlayer)
+        if (!Number.isFinite(distance)) return false
         if (targetPlayer.equipments[2]) distance += 1
         if (player.equipments[3]) {
             distance -= 1
@@ -970,12 +978,8 @@ export default class Game {
         return distance <= 1
     }
     canSnatch = (player: Player, targetPlayer: Player) => {
-        const seats = [...this.seats, this.me]
-        const playerIndex = seats.findIndex((seat) => seat.id === player.id)
-        const targetIndex = seats.findIndex((seat) => seat.id === targetPlayer.id)
-        if (playerIndex === -1 || targetIndex === -1) return false
-        const seatDistance = Math.abs(playerIndex - targetIndex)
-        let distance = Math.min(seatDistance, seats.length - seatDistance)
+        let distance = this.getSeatDistance(player, targetPlayer)
+        if (!Number.isFinite(distance)) return false
         if (targetPlayer.equipments[2]) distance += 1
         if (player.equipments[3]) distance -= 1
         return distance <= 1
