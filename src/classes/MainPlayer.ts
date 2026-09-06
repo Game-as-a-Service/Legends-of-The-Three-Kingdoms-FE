@@ -784,65 +784,79 @@ export default class MainPlayer extends Player {
         this.reactionType = reactionType
         this.reactionMode = true
 
-        if (reactionType === 'useDismantleEffect') {
-            const player: Player = event.targetPlayer
-            console.log('useDismantleEffect', player)
+        const finalizeReaction = () => {
+            this.reactionType = ''
+            this.reactionMode = false
+            this.closeSelectCardModal()
+        }
+
+        const handleTargetCardSelection = (
+            player: Player,
+            effectName: 'useDismantleEffect' | 'useSnatchEffect',
+            action: (
+                targetPlayerId: string,
+                cardId?: ThreeKingdomsCardIds,
+                targetCardIndex?: number,
+            ) => void,
+        ) => {
+            const actionLabel = effectName === 'useDismantleEffect' ? '拆' : '牽'
             this.useSelectCardModal({
                 type: 'small',
-                message: '請選擇要拆的卡',
+                message: `請選擇要${actionLabel}的卡`,
                 handCardCount: player.hand.size,
                 cardIds: player.equipments.filter((cardId) => cardId),
                 delayScrolls: player.delayScrolls,
                 confirmText: '選擇',
                 cancelText: '取消',
                 handleConfirm: (cardId) => {
-                    console.log('選擇', cardId)
-                    if (cardId.includes('handCard')) {
-                        const cardIndex = Number(cardId.split('-')[1])
-                        this.game?.useDismantleEffect(player.id, undefined, cardIndex)
-                    } else {
-                        this.game?.useDismantleEffect(player.id, cardId)
+                    if (cardId == null || cardId === '') {
+                        console.warn(`${effectName} 沒有選擇目標牌，已中止`)
+                        return
                     }
-                    this.reactionType = ''
-                    this.closeSelectCardModal()
+
+                    const selectedCardId = String(cardId)
+                    if (selectedCardId.startsWith('handCard-')) {
+                        const targetCardIndex = Number(selectedCardId.split('-')[1])
+                        if (Number.isNaN(targetCardIndex)) {
+                            console.warn(`${effectName} 選擇的手牌 index 無效`, selectedCardId)
+                            return
+                        }
+                        action(player.id, undefined, targetCardIndex)
+                    } else {
+                        action(player.id, selectedCardId as ThreeKingdomsCardIds)
+                    }
+                    finalizeReaction()
                 },
                 handleCancel: () => {
-                    console.log('取消')
-                    this.reactionType = ''
-                    this.closeSelectCardModal()
+                    console.log(`取消${actionLabel}`)
+                    finalizeReaction()
                     this.selectedCard = null
                 },
             })
         }
+
+        if (reactionType === 'useDismantleEffect') {
+            const player: Player = event.targetPlayer
+            console.log('useDismantleEffect', player)
+            handleTargetCardSelection(
+                player,
+                'useDismantleEffect',
+                (targetPlayerId, cardId, targetCardIndex) => {
+                    this.game?.useDismantleEffect(targetPlayerId, cardId, targetCardIndex)
+                },
+            )
+            return
+        }
         if (reactionType === 'useSnatchEffect') {
             const player: Player = event.targetPlayer
             console.log('useSnatchEffect', player)
-            this.useSelectCardModal({
-                type: 'small',
-                message: '請選擇要牽的卡',
-                handCardCount: player.hand.size,
-                cardIds: player.equipments.filter((cardId) => cardId),
-                delayScrolls: player.delayScrolls,
-                confirmText: '選擇',
-                cancelText: '取消',
-                handleConfirm: (cardId) => {
-                    console.log('選擇', cardId)
-                    if (cardId.includes('handCard')) {
-                        const cardIndex = Number(cardId.split('-')[1])
-                        this.game?.useSnatchEffect(player.id, undefined, cardIndex)
-                    } else {
-                        this.game?.useSnatchEffect(player.id, cardId)
-                    }
-                    this.reactionType = ''
-                    this.closeSelectCardModal()
+            handleTargetCardSelection(
+                player,
+                'useSnatchEffect',
+                (targetPlayerId, cardId, targetCardIndex) => {
+                    this.game?.useSnatchEffect(targetPlayerId, cardId, targetCardIndex)
                 },
-                handleCancel: () => {
-                    console.log('取消')
-                    this.reactionType = ''
-                    this.closeSelectCardModal()
-                    this.selectedCard = null
-                },
-            })
+            )
         }
     }
     processEvent = (event: any) => {

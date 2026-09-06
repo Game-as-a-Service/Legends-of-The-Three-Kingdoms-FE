@@ -49,6 +49,7 @@ const eventSelectedCard = ref('閃')
 const players = ref([])
 
 const playerIds = ['Scolley', 'Happypola', 'YangJun', 'Tux']
+const selectedPlayers = ref([])
 const playerId = ref(null)
 const gameId = ref('my-id')
 const chooseGeneralCards = ref([])
@@ -66,6 +67,12 @@ const playerIdToGeneralName = (playerId) => {
 }
 const demo = ref(false)
 const startGameFlag = ref(false)
+const allPlayersSelected = computed(() => {
+    return playerIds.every((id) => selectedPlayers.value.includes(id))
+})
+const remainingPlayers = computed(() => {
+    return playerIds.filter((id) => !selectedPlayers.value.includes(id))
+})
 const round = ref({})
 const cardNames = Object.values(threeKingdomsCards).map((card) => card.name)
 const uniqeCardNames = [...new Set(cardNames)]
@@ -525,10 +532,15 @@ const socketConnect = () => {
     socketClient.activate()
 }
 const playerConnect = (id) => {
+    if (!playerIds.includes(id)) return
+    selectedPlayers.value = [...new Set([...selectedPlayers.value, id])]
     playerId.value = id
-    socketClient.activate()
+    if (socketClient) {
+        socketClient.activate()
+    }
 }
 const createGame = async () => {
+    if (!allPlayersSelected.value) return
     const params = { gameId: gameId.value, players: playerIds }
     // const res = await api.post('/api/games', params)
     const res = await api.createGame(params)
@@ -602,7 +614,30 @@ onBeforeUnmount(() => {
 <template>
     <div class="bg-black text-2xl">
         <div v-if="!demo">
-            <div v-if="playerId" class="p-2 text-white">您好：{{ playerId }}</div>
+            <div v-if="playerId" class="p-2 text-white">
+                <div>您好：{{ playerId }}</div>
+                <div class="mt-3 rounded-xl border border-gray-700 bg-gray-900 p-3">
+                    <div class="text-lg text-gray-300">
+                        已選玩家（{{ selectedPlayers.length }}/{{ playerIds.length }}）
+                    </div>
+                    <div v-if="selectedPlayers.length" class="mt-2 flex flex-wrap gap-2">
+                        <span
+                            v-for="id in selectedPlayers"
+                            :key="id"
+                            class="rounded-full bg-green-700 px-3 py-1 text-base text-white"
+                        >
+                            {{ id }}
+                        </span>
+                    </div>
+                    <div v-else class="mt-2 text-base text-gray-400">尚未選擇任何玩家</div>
+                    <div v-if="!allPlayersSelected" class="mt-3 text-base text-yellow-300">
+                        待選：{{ remainingPlayers.join('、') }}
+                    </div>
+                    <div v-else class="mt-3 text-base text-green-300">
+                        所有玩家已選完，可以開始遊戲
+                    </div>
+                </div>
+            </div>
             <div v-else>
                 <label
                     for="countries"
@@ -625,6 +660,27 @@ onBeforeUnmount(() => {
                     >
                         ChenQQ(demo)
                     </button>
+                </div>
+                <div class="mt-4 rounded-xl border border-gray-700 bg-gray-900 p-3 text-white">
+                    <div class="text-lg text-gray-300">
+                        已選玩家（{{ selectedPlayers.length }}/{{ playerIds.length }}）
+                    </div>
+                    <div v-if="selectedPlayers.length" class="mt-2 flex flex-wrap gap-2">
+                        <span
+                            v-for="id in selectedPlayers"
+                            :key="id"
+                            class="rounded-full bg-green-700 px-3 py-1 text-base text-white"
+                        >
+                            {{ id }}
+                        </span>
+                    </div>
+                    <div v-else class="mt-2 text-base text-gray-400">尚未選擇任何玩家</div>
+                    <div v-if="!allPlayersSelected" class="mt-3 text-base text-yellow-300">
+                        待選：{{ remainingPlayers.join('、') }}
+                    </div>
+                    <div v-else class="mt-3 text-base text-green-300">
+                        所有玩家已選完，可以開始遊戲
+                    </div>
                 </div>
             </div>
         </div>
@@ -652,9 +708,15 @@ onBeforeUnmount(() => {
                             v-if="isConnected && !startGameFlag"
                             @click="createGame"
                             type="button"
-                            class="mb-2 me-2 rounded-lg bg-orange-700 px-5 py-2.5 text-2xl font-medium text-white hover:bg-orange-800 focus:outline-none focus:ring-4 focus:ring-orange-300 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-900"
+                            :disabled="!allPlayersSelected"
+                            :class="[
+                                'mb-2 me-2 rounded-lg px-5 py-2.5 text-2xl font-medium focus:outline-none focus:ring-4',
+                                allPlayersSelected
+                                    ? 'bg-orange-700 text-white hover:bg-orange-800 focus:ring-orange-300 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-900'
+                                    : 'cursor-not-allowed bg-gray-600 text-gray-300',
+                            ]"
                         >
-                            開始遊戲
+                            {{ allPlayersSelected ? '開始遊戲' : '請先選完所有玩家' }}
                         </button>
                         <!-- <button
                             v-if="isConnected && startGameFlag"
