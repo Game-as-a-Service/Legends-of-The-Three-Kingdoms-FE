@@ -169,11 +169,82 @@ const handleLuoShen: SkillEffectHandler = (mainPlayer) => {
     })
 }
 
+const handleGangLie: SkillEffectHandler = (mainPlayer, event) => {
+    const finishResponse = () => {
+        mainPlayer.event = ''
+        mainPlayer.eventData = null
+        mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+        mainPlayer.closeSelectCardModal()
+    }
+    const submitResponse = (
+        choice: 'ACCEPT' | 'SKIP' | 'DISCARD' | 'DAMAGE',
+        cardIds: string[] = [],
+    ) => {
+        mainPlayer.game?.useSkillEffect('剛烈', choice, cardIds)
+        finishResponse()
+    }
+
+    const isSecondStage =
+        Array.isArray(event.data?.dataCardIds) && event.data.dataCardIds.length > 0
+    if (isSecondStage) {
+        const handCardIds = (mainPlayer.hand.cardIds as string[]).filter(Boolean)
+        const chooseDamageOnly = handCardIds.length < 2
+
+        if (chooseDamageOnly) {
+            mainPlayer.useConfirmModal({
+                message: '判定結果非紅心，請選擇受 1 點傷害。',
+                confirmText: '受 1 點傷害',
+                cancelText: '取消',
+                handleConfirm: () => submitResponse('DAMAGE', []),
+                handleCancel: () => submitResponse('DAMAGE', []),
+            })
+            return
+        }
+
+        mainPlayer.useConfirmModal({
+            message: '判定結果非紅心，請選擇：棄兩張手牌，或受到你造成的 1 點傷害。',
+            confirmText: '棄兩張手牌',
+            cancelText: '受 1 點傷害',
+            handleConfirm: () => {
+                mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+                mainPlayer.useSelectCardModal({
+                    type: 'small',
+                    message: '選擇兩張手牌棄置',
+                    cardIds: handCardIds as any,
+                    confirmText: '棄置',
+                    cancelText: '取消',
+                    maxSelectionCount: 2,
+                    handleConfirm: (selectedCardIds) => {
+                        const cardIdList = Array.isArray(selectedCardIds)
+                            ? selectedCardIds.filter(Boolean)
+                            : []
+                        submitResponse('DISCARD', cardIdList)
+                    },
+                    handleCancel: () => {
+                        submitResponse('DAMAGE', [])
+                    },
+                })
+            },
+            handleCancel: () => submitResponse('DAMAGE', []),
+        })
+        return
+    }
+
+    mainPlayer.useConfirmModal({
+        message: '是否發動剛烈？抽牌判定，若非紅心則由攻擊方選擇棄兩張手牌或受 1 點傷害。',
+        confirmText: '發動剛烈',
+        cancelText: '不發動',
+        handleConfirm: () => submitResponse('ACCEPT'),
+        handleCancel: () => submitResponse('SKIP'),
+    })
+}
+
 const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     反饋: handleFanKui,
     鬼才: handleGuiCai,
     護駕: handleHuJia,
     洛神: handleLuoShen,
+    剛烈: handleGangLie,
 }
 
 export const handleAskSkillEffectEvent = (mainPlayer: MainPlayer, event: AskSkillEffectEvent) => {
