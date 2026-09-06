@@ -1387,6 +1387,19 @@ export default class MainPlayer extends Player {
         // popupContainer.setSize(600, 400)
         // popupContainer.setDepth(1000)
     }
+    showKillBlockedReason = (reason: string) => {
+        this.useConfirmModal({
+            message: reason,
+            confirmText: '知道了',
+            cancelText: '關閉',
+            handleConfirm: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+            },
+            handleCancel: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+            },
+        })
+    }
     createConfirmModal(scene: Phaser.Scene) {
         // 確認視窗
         const background = scene.add.graphics()
@@ -1441,6 +1454,7 @@ export default class MainPlayer extends Player {
             const targets = this.game?.selectTargetPlayers || []
             if (targets.length === 0) {
                 console.log('方天畫戟至少需要選擇一名目標')
+                this.showKillBlockedReason('不能出殺：方天畫戟至少需要選擇一位目標。')
                 return
             }
             const card = this.selectedCard
@@ -1465,6 +1479,7 @@ export default class MainPlayer extends Player {
         if (!this.event && this.selectedCard?.name === '殺') {
             const targetPlayer = this.game?.selectTargetPlayers[0]
             if (!targetPlayer) {
+                this.showKillBlockedReason('不能出殺：請先選擇一位攻擊目標。')
                 this.updateKillTargetSelectionHint(0, 1, false)
                 return
             }
@@ -1488,6 +1503,9 @@ export default class MainPlayer extends Player {
         if (this.selectedCard?.name === '借刀殺人') {
             if (this.game?.selectTargetPlayers.length !== 2) {
                 console.log('請選擇兩名玩家')
+                this.showKillBlockedReason(
+                    '不能出殺：借刀殺人必須依序選擇「借刀者」與「受攻擊者」。',
+                )
                 return
             } else {
                 this.gamePlayCardHandler(this.selectedCard)
@@ -1545,6 +1563,7 @@ export default class MainPlayer extends Player {
         if (this.selectedCard?.name === '決鬥' || this.selectedCard?.name === '樂不思蜀') {
             if (!this.game?.selectTargetPlayers.length) {
                 // 第一次確認：隱藏 checkModal，讓玩家選擇目標
+                this.showKillBlockedReason('不能出殺：請先選擇對戰目標。')
                 this.mainInstanceMap.checkModal?.setAlpha(0)
                 return
             }
@@ -1569,6 +1588,9 @@ export default class MainPlayer extends Player {
         }
         if (this.event === 'AskKillEvent') {
             if (this.selectedCard?.name !== '殺') {
+                this.showKillBlockedReason(
+                    '不能出殺：目前選中的並不是「殺」，請選擇一張殺牌再確認。',
+                )
                 return
             }
             this.gamePlayCardHandler(this.selectedCard, this.event)
