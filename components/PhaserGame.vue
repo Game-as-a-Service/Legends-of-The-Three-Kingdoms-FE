@@ -49,6 +49,7 @@ const eventSelectedCard = ref('閃')
 const players = ref([])
 
 const playerIds = ['Scolley', 'Happypola', 'YangJun', 'Tux']
+const connectedPlayers = ref([])
 const selectedPlayers = ref([])
 const playerId = ref(null)
 const gameId = ref('my-id')
@@ -59,6 +60,36 @@ const isConnected = ref(false)
 const seats = ref([])
 const messages = ref([])
 const gameProcess = ref('')
+const syncSelectedPlayersFromGameData = (gameData) => {
+    if (!gameData) return
+
+    const candidateLists = [
+        gameData.seats,
+        gameData.players,
+        gameData.selectedPlayers,
+        seats.value,
+        players.value,
+    ]
+
+    const selected = new Set()
+    candidateLists.forEach((list) => {
+        if (!Array.isArray(list)) return
+
+        list.forEach((item) => {
+            if (!item) return
+
+            const playerIdValue = item.id || item.playerId || item.name
+            const hasChosenGeneral =
+                item.generalId || item.general?.id || item.selectedGeneralId || item.chosenGeneralId
+
+            if (playerIdValue && hasChosenGeneral && playerIds.includes(playerIdValue)) {
+                selected.add(playerIdValue)
+            }
+        })
+    })
+
+    selectedPlayers.value = playerIds.filter((id) => selected.has(id))
+}
 const me = computed(() => {
     return seats.value.find((seat) => seat.id === playerId.value)
 })
@@ -72,6 +103,9 @@ const allPlayersSelected = computed(() => {
 })
 const remainingPlayers = computed(() => {
     return playerIds.filter((id) => !selectedPlayers.value.includes(id))
+})
+const connectedPlayersLabel = computed(() => {
+    return playerIds.filter((id) => connectedPlayers.value.includes(id))
 })
 const round = ref({})
 const cardNames = Object.values(threeKingdomsCards).map((card) => card.name)
@@ -223,6 +257,10 @@ onMounted(() => {
                         round.value = res.data.round
                     }
 
+                    if (res.data) {
+                        syncSelectedPlayersFromGameData(res.data)
+                    }
+
                     if (res.events) {
                         if (res.data) {
                             myGame.value.updateGameData(res.data)
@@ -299,6 +337,7 @@ onMounted(() => {
                     }
                     if (res.event === 'createGameEvent') {
                         seats.value = res.data.seats
+                        syncSelectedPlayersFromGameData(res.data)
                         gameProcess.value = 'initial'
                         startGameFlag.value = true
                     } else if (
@@ -332,6 +371,7 @@ onMounted(() => {
                         // })
                         // players.value = generalNames
                         players.value = res.data.seats
+                        syncSelectedPlayersFromGameData(res.data)
                         // console.log(players.value, 'seats')
                         const me = seats.value.find((seat) => seat.id === playerId.value)
                         // console.log(me, 'me')
@@ -533,6 +573,7 @@ const socketConnect = () => {
 }
 const playerConnect = (id) => {
     if (!playerIds.includes(id)) return
+    connectedPlayers.value = [...new Set([...connectedPlayers.value, id])]
     selectedPlayers.value = [...new Set([...selectedPlayers.value, id])]
     playerId.value = id
     if (socketClient) {
@@ -540,11 +581,9 @@ const playerConnect = (id) => {
     }
 }
 const createGame = async () => {
-    if (!allPlayersSelected.value) return
+    if (!playerId.value) return
     const params = { gameId: gameId.value, players: playerIds }
-    // const res = await api.post('/api/games', params)
-    const res = await api.createGame(params)
-    // console.log(res)
+    await api.createGame(params)
     startGameFlag.value = true
 }
 const monarchChooseGeneral = async (generalId) => {
@@ -618,6 +657,19 @@ onBeforeUnmount(() => {
                 <div>您好：{{ playerId }}</div>
                 <div class="mt-3 rounded-xl border border-gray-700 bg-gray-900 p-3">
                     <div class="text-lg text-gray-300">
+                        已連上玩家（{{ connectedPlayersLabel.length }}/{{ playerIds.length }}）
+                    </div>
+                    <div v-if="connectedPlayersLabel.length" class="mt-2 flex flex-wrap gap-2">
+                        <span
+                            v-for="id in connectedPlayersLabel"
+                            :key="id"
+                            class="rounded-full bg-blue-700 px-3 py-1 text-base text-white"
+                        >
+                            {{ id }}
+                        </span>
+                    </div>
+                    <div v-else class="mt-2 text-base text-gray-400">尚未有人連上</div>
+                    <div class="mt-4 text-lg text-gray-300">
                         已選玩家（{{ selectedPlayers.length }}/{{ playerIds.length }}）
                     </div>
                     <div v-if="selectedPlayers.length" class="mt-2 flex flex-wrap gap-2">
@@ -663,6 +715,19 @@ onBeforeUnmount(() => {
                 </div>
                 <div class="mt-4 rounded-xl border border-gray-700 bg-gray-900 p-3 text-white">
                     <div class="text-lg text-gray-300">
+                        已連上玩家（{{ connectedPlayersLabel.length }}/{{ playerIds.length }}）
+                    </div>
+                    <div v-if="connectedPlayersLabel.length" class="mt-2 flex flex-wrap gap-2">
+                        <span
+                            v-for="id in connectedPlayersLabel"
+                            :key="id"
+                            class="rounded-full bg-blue-700 px-3 py-1 text-base text-white"
+                        >
+                            {{ id }}
+                        </span>
+                    </div>
+                    <div v-else class="mt-2 text-base text-gray-400">尚未有人連上</div>
+                    <div class="mt-4 text-lg text-gray-300">
                         已選玩家（{{ selectedPlayers.length }}/{{ playerIds.length }}）
                     </div>
                     <div v-if="selectedPlayers.length" class="mt-2 flex flex-wrap gap-2">
@@ -708,15 +773,13 @@ onBeforeUnmount(() => {
                             v-if="isConnected && !startGameFlag"
                             @click="createGame"
                             type="button"
-                            :disabled="!allPlayersSelected"
+                            :disabled="false"
                             :class="[
                                 'mb-2 me-2 rounded-lg px-5 py-2.5 text-2xl font-medium focus:outline-none focus:ring-4',
-                                allPlayersSelected
-                                    ? 'bg-orange-700 text-white hover:bg-orange-800 focus:ring-orange-300 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-900'
-                                    : 'cursor-not-allowed bg-gray-600 text-gray-300',
+                                'bg-orange-700 text-white hover:bg-orange-800 focus:ring-orange-300 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-orange-900',
                             ]"
                         >
-                            {{ allPlayersSelected ? '開始遊戲' : '請先選完所有玩家' }}
+                            開始遊戲
                         </button>
                         <!-- <button
                             v-if="isConnected && startGameFlag"
