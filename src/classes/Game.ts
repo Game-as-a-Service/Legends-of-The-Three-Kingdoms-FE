@@ -125,7 +125,7 @@ export default class Game {
             const params = {
                 cardId: card.id || '',
                 playerId: this.me.id,
-                targetPlayerId: this.gameData.round?.dyingPlayer,
+                targetPlayerId: this.gameData.round?.dyingPlayer || '',
                 playType: playType,
             }
             this.api.playCard(this.gameId, params)
@@ -361,6 +361,18 @@ export default class Game {
             targetPlayerId,
             cardId,
             playType: 'active' as PlayType,
+        }
+        return this.api.playCard(this.gameId, params)
+    }
+    respondToBorrowedSword = (cardId: ThreeKingdomsCardIds, targetPlayerId: string) => {
+        return this.playActiveKill(cardId, targetPlayerId)
+    }
+    declineBorrowedSword = (sourcePlayerId: string) => {
+        const params = {
+            playerId: this.me.id,
+            targetPlayerId: sourcePlayerId,
+            cardId: '',
+            playType: 'skip' as PlayType,
         }
         return this.api.playCard(this.gameId, params)
     }
@@ -806,6 +818,11 @@ export default class Game {
                 break
             case 'AskKillEvent':
                 if (data.playerId === this.me.id) {
+                    this.me.processEvent(event)
+                }
+                break
+            case 'BorrowedSwordEvent':
+                if (data.borrowedPlayerId === this.me.id) {
                     this.me.processEvent(event)
                 }
                 break

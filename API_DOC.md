@@ -62,7 +62,7 @@ POST /api/games/{gameId}/player:monarchChooseGeneral
 | playerId  | String | 主公玩家 ID                     |
 | generalId | String | 選擇的武將 ID（如 SHU001 劉備） |
 
-**流程**：主公選將 → 其他玩家收到可選將領列表
+**流程**：主公選將 → 其他玩家收到可選將領列表；另廣播全員選將進度（見下方 GeneralSelectionStatusEvent）
 
 ---
 
@@ -77,7 +77,54 @@ POST /api/games/{gameId}/player:otherChooseGeneral
 | playerId  | String | 玩家 ID       |
 | generalId | String | 選擇的武將 ID |
 
-**流程**：全部選完 → 發牌（每人 4 張）→ 主公回合開始
+**流程**：每位玩家選完都廣播全員選將進度；全部選完 → 發牌（每人 4 張）→ 主公回合開始（`InitialEndEvent` + `RoundStartEvent` 即開局訊號，無另外的「開始遊戲」API）
+
+### 選將進度廣播 GeneralSelectionStatusEvent（issue #237）
+
+每次有人選完武將（含主公）廣播給**全部玩家**：
+
+```json
+{
+    "gameId": "my-id",
+    "playerIds": ["Scolley", "Happypola", "YangJun", "Tux"],
+    "event": "GeneralSelectionStatusEvent",
+    "data": {
+        "selectedPlayerIds": ["Scolley", "Tux"],
+        "pendingPlayerIds": ["Happypola", "YangJun"],
+        "selectedCount": 2,
+        "totalCount": 4,
+        "allSelected": false
+    },
+    "message": "Tux 已選擇武將（2/4）"
+}
+```
+
+-   **不帶武將 id** — 身分局非主公暗選，武將由開局的 `InitialEndEvent` 揭曉（主公另有 `MonarchGeneralChosenEvent` 公開亮將）
+-   最後一位選完會先收到 `allSelected: true` 的進度，接著才是 `InitialEndEvent`
+-   前端判斷：`data.pendingPlayerIds.length === 0` = 全員已選；收到 `InitialEndEvent` = 進入牌局
+-   **重整/重連補狀態**：選將階段呼叫 `GET /api/games/{gameId}?playerId=xxx`，推播的 `findGameEvent` 會在 `data.selectionStatus` 帶同一份進度物件（非選將階段為 `null`）
+
+### 連線狀態廣播 PlayerConnectionStatusEvent（issue #239）
+
+玩家 WebSocket 訂閱 `/websocket/legendsOfTheThreeKingdoms/{gameId}/{playerId}` 或斷線時，廣播該局全員：
+
+```json
+{
+    "gameId": "my-id",
+    "event": "PlayerConnectionStatusEvent",
+    "data": {
+        "connectedPlayerIds": ["Scolley", "Happypola", "Tux"],
+        "connectedCount": 3,
+        "totalCount": 4
+    },
+    "message": "Tux 已連線（3/4）"
+}
+```
+
+-   連線是傳輸層狀態（不進遊戲存檔）：訂閱即連線、STOMP session 斷線即離線；重整會連發「已離線」+「已連線」兩則，前端照最後一則渲染
+-   同玩家多分頁：首個分頁連上才算連線、最後一個關閉才算離線
+-   遊戲尚未建立時的訂閱、或非該局玩家的訂閱（觀戰）→ 不廣播
+-   前端判斷：`data.connectedCount === data.totalCount` = 全員在線；此事件在**整場遊戲**都會發（牌局中掉線也會廣播，可做斷線提示）
 
 ---
 
@@ -693,7 +740,7 @@ POST /api/games/{gameId}/player:useSkillEffect
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | 反饋（司馬懿）             | 受傷後（含南蠻/萬箭）                                                                                                                | `ACCEPT` / `SKIP`                                                      | 可選 1 個值：來源**手牌 index**（數字字串，0-based，同順手牽羊 `targetCardIndex`；張數見 seats）或來源**裝備 id**（`dataCardIds` 列出）；不給 = 取手牌 index 0（無手牌則取第一件裝備） | —                                            |
 | 遺計（郭嘉）               | 受傷後                                                                                                                               | `ACCEPT`（自摸 2）/ `GIVE`（令他人獲得 1）/ `SKIP`                     | —                                                                                                                                                                                      | GIVE 必填                                    |
-| 剛烈（夏侯惇）第一段       | 受傷後                                                                                                                               | `ACCEPT`（判定）/ `SKIP`                                               | —                                                                                                                                                                                      | —                                            |
+| 剛烈（夏侯惇）第一段       | 受傷後（含南蠻/萬箭）                                                                                                                | `ACCEPT`（判定）/ `SKIP`                                               | —                                                                                                                                                                                      | —                                            |
 | 剛烈 第二段（問傷害來源）  | 判定非紅桃後                                                                                                                         | `DISCARD` / `DAMAGE`                                                   | DISCARD 必填 2 張手牌                                                                                                                                                                  | —                                            |
 | 激將（劉備主公技）         | 主公劉備被南蠻/決鬥要求出殺時，依座位順序詢問蜀將                                                                                    | `ACCEPT` / `DECLINE`                                                   | ACCEPT 必填 [殺 id]（蜀將手中）                                                                                                                                                        | —                                            |
 | 流離（大喬）               | 大喬成為殺目標、被問閃之前                                                                                                           | `ACCEPT` / `SKIP`                                                      | ACCEPT 必填 [要棄的手牌 id]                                                                                                                                                            | ACCEPT 必填：轉移目標（距離 1 內、非攻擊者） |
@@ -726,20 +773,66 @@ POST /api/games/{gameId}/player:useSkillEffect
 
 ### 轉化牌技（choice = 轉化目標型別）
 
-| 技能         | choice           | cardIds           | targetPlayerId | 使用情境                                                   |
-| ------------ | ---------------- | ----------------- | -------------- | ---------------------------------------------------------- |
-| 武聖（關羽） | `KILL`           | [紅色手牌 id]     | 主動殺必填     | 主動出殺（topBehavior 空）或回應南蠻/決鬥（KILL response） |
-| 龍膽（趙雲） | `KILL` / `DODGE` | [閃 id] / [殺 id] | 主動殺必填     | 殺↔閃雙向；回應問閃用 DODGE、回應需殺用 KILL              |
-| 傾國（甄姬） | `DODGE`          | [黑色手牌 id]     | —              | 被問閃時（被殺/萬箭/方天畫戟）                             |
-| 奇襲（甘寧） | `DISMANTLE`      | [黑色手牌 id]     | 必填           | 主動；後續走 useDismantleEffect                            |
-| 國色（大喬） | `CONTENTMENT`    | [方塊手牌 id]     | 必填           | 主動；牌以樂不思蜀身份進判定區                             |
+| 技能         | choice           | cardIds           | targetPlayerId | 使用情境                                                                                                                     |
+| ------------ | ---------------- | ----------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 武聖（關羽） | `KILL`           | [紅色手牌 id]     | 主動殺必填     | 主動出殺（topBehavior 空）或回應南蠻/決鬥（KILL response）                                                                   |
+| 龍膽（趙雲） | `KILL` / `DODGE` | [閃 id] / [殺 id] | 主動殺必填     | 殺↔閃雙向；回應問閃用 DODGE、回應需殺用 KILL；問閃時亦可直接以 `player:playCard` 打出殺，後端自動視為發動龍膽（issue #229） |
+| 傾國（甄姬） | `DODGE`          | [黑色手牌 id]     | —              | 被問閃時（被殺/萬箭/方天畫戟）；亦可直接以 `player:playCard` 打出黑牌，後端自動視為發動傾國（issue #229）                    |
+| 奇襲（甘寧） | `DISMANTLE`      | [黑色手牌 id]     | 必填           | 主動；後續走 useDismantleEffect                                                                                              |
+| 國色（大喬） | `CONTENTMENT`    | [方塊手牌 id]     | 必填           | 主動；牌以樂不思蜀身份進判定區                                                                                               |
 
 轉化殺計入出殺次數限制（咆哮/諸葛連弩豁免照常）；轉化殺對空城/謙遜的目標限制照常套用。
 
+**問閃時的出牌驗證（issue #229）**：被問閃時以 `player:playCard` 打出非閃牌 —
+可轉化（傾國黑牌 / 龍膽殺）→ 自動發動轉化技視為出閃；不可轉化 → 400 明確錯誤（先前會被默默吞掉導致卡住）。
+
+#### 傾國（甄姬）發動與使用
+
+**條件**：甄姬（`WEI007`）**被問閃時**（被殺、萬箭齊發、方天畫戟 — 收到 `AskDodgeEvent` 或成為問閃對象），手上有黑色（黑桃/梅花）手牌。傾國沒有事前的 `AskSkillEffectEvent` 詢問 — 由前端在問閃 UI 直接提供黑牌作為出閃選項。
+
+**方式一：直接出牌（推薦，前端不需特殊處理）** — 把黑色手牌當一般出牌打出：
+
+```json
+POST /api/games/{gameId}/player:playCard
+{
+  "playerId": "甄姬的playerId",
+  "targetPlayerId": "攻擊者playerId",
+  "cardId": "黑色手牌id",
+  "playType": "active"
+}
+```
+
+後端偵測「被問閃 + 非閃牌 + 有傾國」自動發動轉化。
+
+**方式二：useSkillEffect**：
+
+```json
+POST /api/games/{gameId}/player:useSkillEffect
+{
+  "playerId": "甄姬的playerId",
+  "skillName": "傾國",
+  "choice": "DODGE",
+  "cardIds": ["黑色手牌id"]
+}
+```
+
+**結算（兩種方式相同）**：
+
+-   廣播 `SkillEffectEvent`（skillName=傾國、accepted=true、dataCardIds=[該黑牌]）+ `PlayCardEvent`（視為出閃）
+-   該黑牌進墓地，效果等同出閃：殺被擋、萬箭/方天畫戟輪詢推進到下一位
+-   `round.activePlayer` 回到應繼續行動者（普通殺 → 攻擊者；輪詢 → 下一位被詢問者）
+-   攻擊者裝青龍偃月刀/貫石斧時照常觸發後續詢問（同真閃）
+
+**錯誤情境（400）**：
+
+-   出紅色牌 / 牌不在手 → `IllegalArgumentException`
+-   不想發動：照原本流程出真閃或 `playType: "skip"`
+
 **v1 範圍備註**：
 
--   反饋在 AOE polling（南蠻 / 萬箭）中可觸發（PR #221：受傷 → 反饋詢問 → resolve 後 resume 輪詢）；
-    遺計 / 剛烈在 AOE polling 中仍不觸發（可循同一 resume flag 開啟，follow-up）；三者瀕死皆不觸發
+-   反饋 / 剛烈在 AOE polling（南蠻 / 萬箭）中可觸發（PR #221 / issue #165：受傷 → 詢問 →
+    詢問鏈收斂後 resume 輪詢；剛烈兩段式與鬼才巢狀介入亦支援）；
+    遺計在 AOE polling 中仍不觸發（可循同一收鏈掃描開啟，follow-up）；三者瀕死皆不觸發
 -   剛烈 DAMAGE 反傷不進瀕死流程整合（follow-up）
 -   鐵騎 v1 自動判定（不問）；目標有八卦陣時走防具路徑不受鐵騎影響（follow-up）
 -   梟姬不覆蓋「主動換裝蓋掉舊裝備」路徑（follow-up）
@@ -790,13 +883,15 @@ Stack trace 僅記錄於 server log。
 
 ### 遊戲流程事件
 
-| 事件                | 說明                           | 觸發 API                |
-| ------------------- | ------------------------------ | ----------------------- |
-| `PlayCardEvent`     | 有人出牌                       | playCard                |
-| `PlayWardCardEvent` | 有人出無懈可擊                 | playWardCard            |
-| `GameStatusEvent`   | 遊戲狀態更新（每次操作都附帶） | 所有 API                |
-| `DrawCardEvent`     | 玩家摸牌                       | finishAction / playCard |
-| `DiscardEvent`      | 玩家棄牌                       | discardCards            |
+| 事件                          | 說明                                                           | 觸發 API                                  |
+| ----------------------------- | -------------------------------------------------------------- | ----------------------------------------- |
+| `GeneralSelectionStatusEvent` | 選將進度（每次有人選完武將廣播全員；格式見「其他玩家選將」節） | monarchChooseGeneral / otherChooseGeneral |
+| `PlayerConnectionStatusEvent` | 連線狀態（玩家訂閱/斷線時廣播全員；格式見「其他玩家選將」節）  | WebSocket 訂閱/斷線（非 HTTP API）        |
+| `PlayCardEvent`               | 有人出牌                                                       | playCard                                  |
+| `PlayWardCardEvent`           | 有人出無懈可擊                                                 | playWardCard                              |
+| `GameStatusEvent`             | 遊戲狀態更新（每次操作都附帶）                                 | 所有 API                                  |
+| `DrawCardEvent`               | 玩家摸牌                                                       | finishAction / playCard                   |
+| `DiscardEvent`                | 玩家棄牌                                                       | discardCards                              |
 
 ### 需要玩家回應的事件
 

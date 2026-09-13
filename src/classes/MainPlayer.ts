@@ -309,6 +309,7 @@ export default class MainPlayer extends Player {
         // 非自己回合僅允許反應事件出牌（殺/閃/桃/無懈）
         const isReactiveEvent =
             this.event === 'AskKillEvent' ||
+            this.event === 'BorrowedSwordEvent' ||
             this.event === 'AskDodgeEvent' ||
             this.event === 'AskPeachEvent' ||
             this.event === 'AskPlayWardEvent'
@@ -326,7 +327,7 @@ export default class MainPlayer extends Player {
             return
         }
         /// event check
-        if (this.event === 'AskKillEvent') {
+        if (this.event === 'AskKillEvent' || this.event === 'BorrowedSwordEvent') {
             if (card.name !== '殺') {
                 return
             }
@@ -606,12 +607,15 @@ export default class MainPlayer extends Player {
     }
     canUseCardAsKill = (card: Card) => {
         if (card.name !== '殺') return true
-        if (this.event === 'AskKillEvent') return true
+        if (this.event === 'AskKillEvent' || this.event === 'BorrowedSwordEvent') return true
         if (this.game?.gameData?.round?.showKill !== true) return true
         const weaponCardId = this.equipments[0]
         if (!weaponCardId) return false
         const weaponCard = threeKingdomsCards[weaponCardId]
         return weaponCard?.name === '諸葛連弩'
+    }
+    isKillResponseEvent = () => {
+        return this.event === 'AskKillEvent' || this.event === 'BorrowedSwordEvent'
     }
     canTriggerViperSpear = () => {
         const weaponCardId = this.equipments[0]
@@ -619,7 +623,7 @@ export default class MainPlayer extends Player {
         const weaponCard = threeKingdomsCards[weaponCardId]
         if (weaponCard.name !== '丈八蛇矛') return false
         const canUseDuringTurn = this.game?.getActivePlayer() === this.id && !this.event
-        const canUseForAskKill = this.event === 'AskKillEvent'
+        const canUseForAskKill = this.isKillResponseEvent()
         if (!canUseDuringTurn && !canUseForAskKill) return false
         if (this.discardMode || this.reactionMode || this.selectedCard) return false
         return this.handCards.filter((card) => !card.played).length >= 2
@@ -629,7 +633,7 @@ export default class MainPlayer extends Player {
         this.selectedWeapon = this.equipments[0]
         this.viperSpearMode = true
         this.weaponActionBorder?.setAlpha(1)
-        if (this.event === 'AskKillEvent') {
+        if (this.isKillResponseEvent()) {
             this.handCards.forEach((card) => card.instance.setAlpha(1))
             if (this.hintInstance) {
                 const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
@@ -663,12 +667,12 @@ export default class MainPlayer extends Player {
         this.viperSpearTarget = player
     }
     startViperSpearDiscard = () => {
-        if (this.event !== 'AskKillEvent' && !this.viperSpearTarget) return
+        if (!this.isKillResponseEvent() && !this.viperSpearTarget) return
         this.mainInstanceMap.checkModal?.setAlpha(0)
         this.askDiscardCards(2)
         if (this.hintInstance) {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-            if (this.event === 'AskKillEvent') {
+            if (this.isKillResponseEvent()) {
                 hintText?.setText('丈八蛇矛：請棄兩張牌，當作出殺')
             } else {
                 hintText?.setText(
@@ -709,7 +713,7 @@ export default class MainPlayer extends Player {
         this.handCards.forEach((card) => {
             card.instance.setAlpha(1)
         })
-        if (this.event === 'AskKillEvent') {
+        if (this.isKillResponseEvent()) {
             this.event = ''
             this.eventData = null
             this.reactionType = ''
@@ -739,7 +743,7 @@ export default class MainPlayer extends Player {
         this.resetOutofDistance()
         this.weaponActionBorder?.setAlpha(this.canTriggerViperSpear() ? 0.45 : 0)
         if (this.checkBtnInstance) this.checkBtnInstance.setAlpha(0)
-        if (restoreAskKillPrompt && this.event === 'AskKillEvent') {
+        if (restoreAskKillPrompt && this.isKillResponseEvent()) {
             const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
             hintText?.setText('請出一張殺')
             this.hintInstance?.setAlpha(1)
@@ -879,6 +883,10 @@ export default class MainPlayer extends Player {
         this.event = event.event
         this.eventData = event.data
         switch (this.event) {
+            case 'BorrowedSwordEvent': {
+                this.handleBorrowedSwordEvent()
+                break
+            }
             case 'AskKillEvent': {
                 const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
                 hintText?.setText('請出一張殺')
@@ -1429,6 +1437,64 @@ export default class MainPlayer extends Player {
             },
         })
     }
+    getBorrowedSwordKillContext = () => {
+        const data = this.eventData || {}
+        const targetPlayerId = data.targetPlayerId || data.attackTargetPlayerId || ''
+        const sourcePlayerId =
+            data.currentPlayerId ||
+            data.sourcePlayerId ||
+            data.playerId ||
+            data.borrowedSwordSourcePlayerId ||
+            data.lenderPlayerId ||
+            data.loanerPlayerId ||
+            ''
+        return { targetPlayerId, sourcePlayerId }
+    }
+    resetBorrowedSwordResponse = () => {
+        this.event = ''
+        this.eventData = null
+        this.reactionType = ''
+        this.reactionMode = false
+        this.mainInstanceMap.checkModal?.setAlpha(0)
+        this.mainInstanceMap.confirmModal?.setAlpha(0)
+        this.hintInstance?.setAlpha(0)
+        this.handCards.forEach((card) => {
+            card.instance.setAlpha(1)
+        })
+    }
+    beginBorrowedSwordKill = (targetName: string) => {
+        const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+        hintText?.setText(`請對${targetName}出一張殺`)
+        this.hintInstance?.setAlpha(1)
+        this.handCards.forEach((card) => {
+            if (card.name !== '殺') {
+                card.instance.setAlpha(0.3)
+            }
+        })
+        this.mainInstanceMap.checkModal?.setAlpha(1)
+    }
+    handleBorrowedSwordEvent = () => {
+        const { sourcePlayerId, targetPlayerId } = this.getBorrowedSwordKillContext()
+        const allPlayers = [...this.seats, this]
+        const sourcePlayer = allPlayers.find((player) => player.id === sourcePlayerId)
+        const targetPlayer = allPlayers.find((player) => player.id === targetPlayerId)
+        const sourceName = sourcePlayer?.general?.name || sourcePlayerId || '出借刀者'
+        const targetName = targetPlayer?.general?.name || targetPlayerId || '指定目標'
+
+        this.useConfirmModal({
+            message: `${sourceName}要你對${targetName}出殺，是否出殺？`,
+            confirmText: '出殺',
+            cancelText: '不出殺',
+            handleConfirm: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+                this.beginBorrowedSwordKill(targetName)
+            },
+            handleCancel: () => {
+                this.game?.declineBorrowedSword(sourcePlayerId)
+                this.resetBorrowedSwordResponse()
+            },
+        })
+    }
     createConfirmModal(scene: Phaser.Scene) {
         // 確認視窗
         const background = scene.add.graphics()
@@ -1511,44 +1577,19 @@ export default class MainPlayer extends Player {
             this.hintInstance?.setAlpha(0)
             return
         }
-        if (!this.event && this.selectedCard?.name === '殺') {
-            const targetPlayer = this.game?.selectTargetPlayers[0]
-            if (!targetPlayer) {
-                this.showKillBlockedReason('不能出殺：請先選擇一位攻擊目標。')
-                this.updateKillTargetSelectionHint(0, 1, false)
+        if (!this.event && this.selectedCard?.name === '借刀殺人') {
+            const [borrowedPlayer, attackTargetPlayer] = this.game?.selectTargetPlayers || []
+            if (!borrowedPlayer || !attackTargetPlayer) {
+                this.showKillBlockedReason('借刀殺人必須依序選擇持有武器者與受攻擊者。')
                 return
             }
             const card = this.selectedCard
-            this.game?.playActiveKill(card.id, targetPlayer.id)
-            atkLine({
-                endPoint: new Phaser.Math.Vector2(targetPlayer.instance.x, targetPlayer.instance.y),
-                scene: this.scene,
-            })
-            this.selectedCard = null
+            this.gamePlayCardHandler(card)
             card.playCard()
-            targetPlayer.setPlayerSelected(false)
-            if (this.game) {
-                this.game.selectTargetPlayers = []
-            }
-            this.resetOutofDistance()
+            this.selectedCard = null
             this.mainInstanceMap.checkModal?.setAlpha(0)
-            this.hintInstance?.setAlpha(0)
+            this.resetOutofDistance()
             return
-        }
-        if (this.selectedCard?.name === '借刀殺人') {
-            if (this.game?.selectTargetPlayers.length !== 2) {
-                console.log('請選擇兩名玩家')
-                this.showKillBlockedReason(
-                    '不能出殺：借刀殺人必須依序選擇「借刀者」與「受攻擊者」。',
-                )
-                return
-            } else {
-                this.gamePlayCardHandler(this.selectedCard)
-                this.selectedCard.playCard()
-                this.selectedCard = null
-                this.mainInstanceMap.checkModal?.setAlpha(0)
-                console.log('選擇完成')
-            }
         }
         if (this.event === 'AskDodgeEvent' || this.event === 'AskPeachEvent') {
             if (this.selectedCard === null) {
@@ -1621,6 +1662,35 @@ export default class MainPlayer extends Player {
             this.resetOutofDistance()
             return
         }
+        if (this.event === 'BorrowedSwordEvent') {
+            if (this.selectedCard?.name !== '殺') {
+                this.showKillBlockedReason(
+                    '不能出殺：目前選中的並不是「殺」，請選擇一張殺牌再確認。',
+                )
+                return
+            }
+            const { targetPlayerId } = this.getBorrowedSwordKillContext()
+            if (!targetPlayerId) {
+                this.showKillBlockedReason('不能出殺：借刀殺人缺少指定攻擊目標。')
+                return
+            }
+            const card = this.selectedCard
+            this.game?.respondToBorrowedSword(card.id, targetPlayerId)
+            const targetPlayer = this.seats.find((player) => player.id === targetPlayerId)
+            if (targetPlayer) {
+                atkLine({
+                    endPoint: new Phaser.Math.Vector2(
+                        targetPlayer.instance.x,
+                        targetPlayer.instance.y,
+                    ),
+                    scene: this.scene,
+                })
+            }
+            this.selectedCard = null
+            card.playCard()
+            this.resetBorrowedSwordResponse()
+            return
+        }
         if (this.event === 'AskKillEvent') {
             if (this.selectedCard?.name !== '殺') {
                 this.showKillBlockedReason(
@@ -1660,7 +1730,7 @@ export default class MainPlayer extends Player {
     handleCancelClick = () => {
         console.log('否 按鈕被按下')
         if (this.viperSpearMode) {
-            this.clearViperSpearState(this.event === 'AskKillEvent')
+            this.clearViperSpearState(this.isKillResponseEvent())
             return
         }
         if (this.heavenlyDoubleHalberdMode) {
@@ -1674,6 +1744,12 @@ export default class MainPlayer extends Player {
         ) {
             this.gamePlayCardHandler({}, this.event)
             this.event = ''
+        }
+        if (this.event === 'BorrowedSwordEvent') {
+            const { sourcePlayerId } = this.getBorrowedSwordKillContext()
+            this.game?.declineBorrowedSword(sourcePlayerId)
+            this.resetBorrowedSwordResponse()
+            return
         }
         this.reactionType = ''
         if (this.hintInstance) this.hintInstance.setAlpha(0)
