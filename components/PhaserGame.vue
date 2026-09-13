@@ -655,7 +655,10 @@ onBeforeUnmount(() => {
         <div v-if="!demo">
             <div v-if="playerId" class="p-2 text-white">
                 <div>您好：{{ playerId }}</div>
-                <div class="mt-3 rounded-xl border border-gray-700 bg-gray-900 p-3">
+                <div
+                    v-if="!startGameFlag"
+                    class="mt-3 rounded-xl border border-gray-700 bg-gray-900 p-3"
+                >
                     <div class="text-lg text-gray-300">
                         已連上玩家（{{ connectedPlayersLabel.length }}/{{ playerIds.length }}）
                     </div>
@@ -713,7 +716,10 @@ onBeforeUnmount(() => {
                         ChenQQ(demo)
                     </button>
                 </div>
-                <div class="mt-4 rounded-xl border border-gray-700 bg-gray-900 p-3 text-white">
+                <div
+                    v-if="!startGameFlag"
+                    class="mt-4 rounded-xl border border-gray-700 bg-gray-900 p-3 text-white"
+                >
                     <div class="text-lg text-gray-300">
                         已連上玩家（{{ connectedPlayersLabel.length }}/{{ playerIds.length }}）
                     </div>
