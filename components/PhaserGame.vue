@@ -48,7 +48,7 @@ const eventTargetPlayer = ref('曹操')
 const eventSelectedCard = ref('閃')
 const players = ref([])
 
-const playerIds = ['Scolley', 'Happypola', 'YangJun', 'Tux']
+const playerIds = ['Scolley', 'Dino', 'YangJun', 'Tux']
 const connectedPlayers = ref([])
 const selectedPlayers = ref([])
 const playerId = ref(null)
@@ -153,7 +153,7 @@ const initDemo = () => {
                 delayScrolls: [],
             },
             {
-                id: 'Happypola',
+                id: 'Dino',
                 generalId: 'WEI001',
                 general: {
                     name: '曹操',

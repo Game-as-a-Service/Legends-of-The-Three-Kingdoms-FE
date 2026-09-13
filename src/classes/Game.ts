@@ -643,7 +643,7 @@ export default class Game {
                 // {
                 //     "event": "AskPlayWardEvent",
                 //     "data": {
-                //         "wardTriggerPlayerId": "Happypola",
+                //         "wardTriggerPlayerId": "Dino",
                 //         "wardTriggerCardId": "SS7007",
                 //         "targetPlayerIds": [
                 //             "YangJun"
