@@ -295,7 +295,27 @@ POST /api/games/{gameId}/player:useBorrowedSwordEffect
 | borrowedPlayerId     | String | 被借刀的玩家 ID（擁有武器的人） |
 | attackTargetPlayerId | String | 被借刀者需要殺的目標            |
 
-**流程**：出借刀殺人 → (Ward 詢問) → 被借刀者出殺或交出武器
+**流程**：出借刀殺人 → (Ward 詢問) → 出借刀者以本 API 指定被借刀者與攻擊目標 → 被借刀者收到 `BorrowedSwordEvent` 後回應（見下）
+
+### 被借刀者的回應（走 playCard API，無獨立 endpoint）
+
+**出殺** — 對指定目標出殺，之後進入正常的殺 → 閃流程：
+
+```json
+POST /api/games/{gameId}/player:playCard
+{ "playerId": "<被借刀者>", "targetPlayerId": "<攻擊目標>", "cardId": "<殺的 cardId>", "playType": "active" }
+```
+
+**不出殺（交出武器）** — `playType: "skip"`、`cardId` 空字串；武器移入出借刀者手牌，廣播 `WeaponUsurpationEvent`：
+
+```json
+POST /api/games/{gameId}/player:playCard
+{ "playerId": "<被借刀者>", "targetPlayerId": "<出借刀者>", "cardId": "", "playType": "skip" }
+```
+
+**注意**：被借刀者手上完全沒有殺（且不能以丈八蛇矛替代）時，系統不詢問、直接自動交出武器 —
+前端不會收到 `BorrowedSwordEvent`，直接收 `WeaponUsurpationEvent`。有轉化技（龍膽/武聖）時亦可改用
+`player:useSkillEffect` 以轉化牌當殺回應（見 §轉化技）。
 
 ---
 
@@ -345,6 +365,9 @@ POST /api/games/{gameId}/player:chooseCardFromBountifulHarvest
 | cardId   | String | 從牌池中選擇的 cardId |
 
 **流程**：出五穀豐登 → (Ward Phase1) → 翻 N 張牌 → 逐人選牌 → (Ward Phase2 每人詢問) → 選一張加入手牌
+
+**Ward 詢問名單**：Phase 1（取消整張五穀豐登）不含出牌者；Phase 2 為逐人效果結算，
+詢問名單含**所有**持無懈者 — 包括出牌者與剛從牌池選走無懈的玩家（取得後立即可用）
 
 ---
 
@@ -695,18 +718,17 @@ A 對曹操 (B) 出殺（或萬箭齊發/方天畫戟瞄到曹操）
 以下技能為鎖定技或自動觸發，後端自動套用，前端不需呼叫任何 API；
 僅需注意對應的遊戲狀態變化（摸牌數 / 距離 / 目標合法性 / 出殺次數）。
 
-| 武將          | 技能 | 效果（後端自動套用）                        | 前端可觀察的差異                                              |
-| ------------- | ---- | ------------------------------------------- | ------------------------------------------------------------- |
-| 馬超 SHU006   | 馬術 | 計算與其他角色距離 -1                       | 攻擊/順手牽羊範圍變大；超距出牌不再 400                       |
-| 張飛 SHU003   | 咆哮 | 使用殺無次數限制                            | 同回合第二張殺不再 400                                        |
-| 周瑜 WU005    | 英姿 | 摸牌階段 +1（共 3）；手牌上限 = max(HP, 4)  | DrawCardEvent 數量、NotifyDiscardEvent 棄牌數                 |
-| 許褚 WEI005   | 裸衣 | 摸牌階段 -1（共 1）；自己回合殺/決鬥傷害 +1 | DrawCardEvent 數量、PlayerDamagedEvent 扣 2                   |
-| 陸遜 WU007    | 謙遜 | 不能成為南蠻/萬箭/樂不思蜀/閃電目標         | AOE 詢問跳過陸遜；樂不思蜀指定陸遜 → 400                      |
-| 陸遜 WU007    | 連營 | 失去最後一張手牌 → 摸 1                     | 出/棄最後一張牌後緊接 DrawCardEvent                           |
-| 諸葛亮 SHU004 | 空城 | 手牌 0 時不能被殺/決鬥指定                  | 指定空手牌諸葛亮 → 400                                        |
-| 黃月英 SHU007 | 集智 | 使用錦囊 → 摸 1                             | 出錦囊後緊接 DrawCardEvent                                    |
-| 黃月英 SHU007 | 奇才 | 使用錦囊無距離限制                          | 超距順手牽羊不再 400                                          |
-| 呂蒙 WU003    | 克己 | 本回合未使用過殺 → 略過棄牌階段             | finishAction 後 NotifyDiscardEvent 棄牌數為 0，直接進下一回合 |
+| 武將          | 技能 | 效果（後端自動套用）                       | 前端可觀察的差異                                              |
+| ------------- | ---- | ------------------------------------------ | ------------------------------------------------------------- |
+| 馬超 SHU006   | 馬術 | 計算與其他角色距離 -1                      | 攻擊/順手牽羊範圍變大；超距出牌不再 400                       |
+| 張飛 SHU003   | 咆哮 | 使用殺無次數限制                           | 同回合第二張殺不再 400                                        |
+| 周瑜 WU005    | 英姿 | 摸牌階段 +1（共 3）；手牌上限 = max(HP, 4) | DrawCardEvent 數量、NotifyDiscardEvent 棄牌數                 |
+| 陸遜 WU007    | 謙遜 | 不能成為南蠻/萬箭/樂不思蜀/閃電目標        | AOE 詢問跳過陸遜；樂不思蜀指定陸遜 → 400                      |
+| 陸遜 WU007    | 連營 | 失去最後一張手牌 → 摸 1                    | 出/棄最後一張牌後緊接 DrawCardEvent                           |
+| 諸葛亮 SHU004 | 空城 | 手牌 0 時不能被殺/決鬥指定                 | 指定空手牌諸葛亮 → 400                                        |
+| 黃月英 SHU007 | 集智 | 使用錦囊 → 摸 1                            | 出錦囊後緊接 DrawCardEvent                                    |
+| 黃月英 SHU007 | 奇才 | 使用錦囊無距離限制                         | 超距順手牽羊不再 400                                          |
+| 呂蒙 WU003    | 克己 | 本回合未使用過殺 → 略過棄牌階段            | finishAction 後 NotifyDiscardEvent 棄牌數為 0，直接進下一回合 |
 
 **v1 範圍備註**：
 
@@ -746,6 +768,7 @@ POST /api/games/{gameId}/player:useSkillEffect
 | 流離（大喬）               | 大喬成為殺目標、被問閃之前                                                                                                           | `ACCEPT` / `SKIP`                                                      | ACCEPT 必填 [要棄的手牌 id]                                                                                                                                                            | ACCEPT 必填：轉移目標（距離 1 內、非攻擊者） |
 | 鬼才（司馬懿）             | 任意角色判定牌抽出後、生效前（閃電 / 樂不思蜀 / 八卦陣 / 鐵騎 / 剛烈 / 洛神；dataCardIds = [原判定牌]、dataPlayerId = 判定所屬玩家） | `ACCEPT` / `SKIP`                                                      | ACCEPT 必填 [替換用手牌 id]                                                                                                                                                            | —                                            |
 | 洛神（甄姬）               | 甄姬回合開始、延遲錦囊（閃電/樂不思蜀）判定之前（issue #227）                                                                        | `ACCEPT`（開始判定：黑色收入手牌自動續判、紅色停，不逐輪詢問）/ `SKIP` | —                                                                                                                                                                                      | —                                            |
+| 裸衣（許褚）               | 許褚回合開始、判定階段之後、摸牌之前（原自動觸發改主動）                                                                             | `ACCEPT`（少摸一張、本回合殺/決鬥傷害 +1）/ `SKIP`（正常摸牌無加成）   | —                                                                                                                                                                                      | —                                            |
 | 護駕（曹操主公技）發動詢問 | 主公曹操被要求出閃、且有其他存活魏將時（issue #217）                                                                                 | `ACCEPT`（開始魏將輪詢，見 §21）/ `SKIP`（自己出閃）                   | —                                                                                                                                                                                      | —                                            |
 
 ### 自動觸發技（無需呼叫本 API，僅廣播 `SkillEffectEvent`）

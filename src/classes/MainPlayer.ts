@@ -1440,15 +1440,7 @@ export default class MainPlayer extends Player {
     getBorrowedSwordKillContext = () => {
         const data = this.eventData || {}
         const targetPlayerId = data.targetPlayerId || data.attackTargetPlayerId || ''
-        const sourcePlayerId =
-            data.currentPlayerId ||
-            data.sourcePlayerId ||
-            data.playerId ||
-            data.borrowedSwordSourcePlayerId ||
-            data.lenderPlayerId ||
-            data.loanerPlayerId ||
-            ''
-        return { targetPlayerId, sourcePlayerId }
+        return { targetPlayerId }
     }
     resetBorrowedSwordResponse = () => {
         this.event = ''
@@ -1474,15 +1466,13 @@ export default class MainPlayer extends Player {
         this.mainInstanceMap.checkModal?.setAlpha(1)
     }
     handleBorrowedSwordEvent = () => {
-        const { sourcePlayerId, targetPlayerId } = this.getBorrowedSwordKillContext()
+        const { targetPlayerId } = this.getBorrowedSwordKillContext()
         const allPlayers = [...this.seats, this]
-        const sourcePlayer = allPlayers.find((player) => player.id === sourcePlayerId)
         const targetPlayer = allPlayers.find((player) => player.id === targetPlayerId)
-        const sourceName = sourcePlayer?.general?.name || sourcePlayerId || '出借刀者'
         const targetName = targetPlayer?.general?.name || targetPlayerId || '指定目標'
 
         this.useConfirmModal({
-            message: `${sourceName}要你對${targetName}出殺，是否出殺？`,
+            message: `是否對${targetName}出殺？`,
             confirmText: '出殺',
             cancelText: '不出殺',
             handleConfirm: () => {
@@ -1490,7 +1480,7 @@ export default class MainPlayer extends Player {
                 this.beginBorrowedSwordKill(targetName)
             },
             handleCancel: () => {
-                this.game?.declineBorrowedSword(sourcePlayerId)
+                this.game?.declineBorrowedSword()
                 this.resetBorrowedSwordResponse()
             },
         })
@@ -1746,8 +1736,7 @@ export default class MainPlayer extends Player {
             this.event = ''
         }
         if (this.event === 'BorrowedSwordEvent') {
-            const { sourcePlayerId } = this.getBorrowedSwordKillContext()
-            this.game?.declineBorrowedSword(sourcePlayerId)
+            this.game?.declineBorrowedSword()
             this.resetBorrowedSwordResponse()
             return
         }
