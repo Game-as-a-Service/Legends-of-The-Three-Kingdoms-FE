@@ -1604,6 +1604,27 @@ export default class MainPlayer extends Player {
             })
             this.event = ''
         }
+        if (!this.event && this.selectedCard?.name === '殺') {
+            const targetPlayer = this.game?.selectTargetPlayers[0]
+            if (!targetPlayer) {
+                this.showKillBlockedReason('不能出殺：請先選擇攻擊目標。')
+                return
+            }
+            const card = this.selectedCard
+            this.game?.playActiveKill(card.id, targetPlayer.id)
+            atkLine({
+                endPoint: new Phaser.Math.Vector2(targetPlayer.instance.x, targetPlayer.instance.y),
+                scene: this.scene,
+            })
+            this.selectedCard = null
+            card.playCard()
+            targetPlayer.setPlayerSelected(false)
+            this.game!.selectTargetPlayers = []
+            this.resetOutofDistance()
+            this.mainInstanceMap.checkModal?.setAlpha(0)
+            this.hintInstance?.setAlpha(0)
+            return
+        }
         if (this.selectedCard?.name === '桃') {
             // 主動出桃
             const card = this.selectedCard

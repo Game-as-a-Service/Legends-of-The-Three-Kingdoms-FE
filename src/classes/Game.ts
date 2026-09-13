@@ -367,10 +367,10 @@ export default class Game {
     respondToBorrowedSword = (cardId: ThreeKingdomsCardIds, targetPlayerId: string) => {
         return this.playActiveKill(cardId, targetPlayerId)
     }
-    declineBorrowedSword = (sourcePlayerId: string) => {
+    declineBorrowedSword = () => {
         const params = {
             playerId: this.me.id,
-            targetPlayerId: sourcePlayerId,
+            targetPlayerId: '',
             cardId: '',
             playType: 'skip' as PlayType,
         }

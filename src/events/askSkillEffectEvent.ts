@@ -169,6 +169,27 @@ const handleLuoShen: SkillEffectHandler = (mainPlayer) => {
     })
 }
 
+const handleLuoYi: SkillEffectHandler = (mainPlayer) => {
+    const finishResponse = () => {
+        mainPlayer.event = ''
+        mainPlayer.eventData = null
+        mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+    }
+    mainPlayer.useConfirmModal({
+        message: '是否發動裸衣？少摸一張，本回合殺/決鬥傷害 +1。',
+        confirmText: '發動裸衣',
+        cancelText: '不發動',
+        handleConfirm: () => {
+            mainPlayer.game?.useSkillEffect('裸衣', 'ACCEPT')
+            finishResponse()
+        },
+        handleCancel: () => {
+            mainPlayer.game?.useSkillEffect('裸衣', 'SKIP')
+            finishResponse()
+        },
+    })
+}
+
 const handleGangLie: SkillEffectHandler = (mainPlayer, event) => {
     const finishResponse = () => {
         mainPlayer.event = ''
@@ -244,6 +265,7 @@ const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     鬼才: handleGuiCai,
     護駕: handleHuJia,
     洛神: handleLuoShen,
+    裸衣: handleLuoYi,
     剛烈: handleGangLie,
 }
 
