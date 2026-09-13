@@ -315,6 +315,12 @@ export default class MainPlayer extends Player {
         if (this.game!.getActivePlayer() !== this.id && !isReactiveEvent) {
             return
         }
+        if (card.name === '殺' && !this.canUseCardAsKill(card)) {
+            this.showKillBlockedReason(
+                '不能出殺：本回合已經出過一張殺，除非使用諸葛連弩或特殊連續出殺效果。',
+            )
+            return
+        }
         // 自己的主動狀態不能出無懈可擊
         if (this.event !== 'AskPlayWardEvent' && card.name === '無懈可擊' && !this.discardMode) {
             return
@@ -597,6 +603,15 @@ export default class MainPlayer extends Player {
         if (card.name === '閃') return true
         if (!this.isQingGuoDodgeAvailable()) return false
         return this.isBlackCard(card)
+    }
+    canUseCardAsKill = (card: Card) => {
+        if (card.name !== '殺') return true
+        if (this.event === 'AskKillEvent') return true
+        if (this.game?.gameData?.round?.showKill !== true) return true
+        const weaponCardId = this.equipments[0]
+        if (!weaponCardId) return false
+        const weaponCard = threeKingdomsCards[weaponCardId]
+        return weaponCard?.name === '諸葛連弩'
     }
     canTriggerViperSpear = () => {
         const weaponCardId = this.equipments[0]
@@ -1460,6 +1475,12 @@ export default class MainPlayer extends Player {
     }
     handleCheckClick = () => {
         console.log('確認 按鈕被按下', this.selectedCard, this.event)
+        if (this.selectedCard?.name === '殺' && !this.canUseCardAsKill(this.selectedCard)) {
+            this.showKillBlockedReason(
+                '不能出殺：本回合已經出過一張殺，除非使用諸葛連弩或特殊連續出殺效果。',
+            )
+            return
+        }
         if (this.viperSpearMode && !this.discardMode) {
             this.startViperSpearDiscard()
             return
