@@ -90,6 +90,21 @@ const syncSelectedPlayersFromGameData = (gameData) => {
 
     selectedPlayers.value = playerIds.filter((id) => selected.has(id))
 }
+const handleLobbyEvent = (event) => {
+    if (event.event === 'PlayerConnectionStatusEvent') {
+        connectedPlayers.value = playerIds.filter((id) =>
+            (event.data?.connectedPlayerIds || []).includes(id),
+        )
+        return true
+    }
+    if (event.event === 'GeneralSelectionStatusEvent') {
+        selectedPlayers.value = playerIds.filter((id) =>
+            (event.data?.selectedPlayerIds || []).includes(id),
+        )
+        return true
+    }
+    return false
+}
 const me = computed(() => {
     return seats.value.find((seat) => seat.id === playerId.value)
 })
@@ -257,6 +272,10 @@ onMounted(() => {
                         round.value = res.data.round
                     }
 
+                    if (handleLobbyEvent(res)) {
+                        return
+                    }
+
                     if (res.data) {
                         syncSelectedPlayersFromGameData(res.data)
                     }
@@ -294,6 +313,9 @@ onMounted(() => {
                         }
                         for (let i = 0; i < res.events.length; i++) {
                             const event = res.events[i]
+                            if (handleLobbyEvent(event)) {
+                                continue
+                            }
                             let eventMessage = event.message
                             switch (event.event) {
                                 case 'PlayCardEvent':
@@ -573,8 +595,6 @@ const socketConnect = () => {
 }
 const playerConnect = (id) => {
     if (!playerIds.includes(id)) return
-    connectedPlayers.value = [...new Set([...connectedPlayers.value, id])]
-    selectedPlayers.value = [...new Set([...selectedPlayers.value, id])]
     playerId.value = id
     if (socketClient) {
         socketClient.activate()
