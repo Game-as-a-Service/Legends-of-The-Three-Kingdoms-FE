@@ -33,6 +33,7 @@ export default class MainPlayer extends Player {
     weaponActionBorder?: Phaser.GameObjects.Graphics
     weaponHitArea?: Phaser.GameObjects.Rectangle
     mainInstanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
+    modalCardAlphas: Map<Card, number> = new Map()
     event: string = ''
     eventData: any = null
     confirmModalBaseFontSize: number = 32
@@ -246,6 +247,7 @@ export default class MainPlayer extends Player {
             playCardHandler: this.playCardHandler,
         })
         this.handCards.push(card)
+        this.syncHandCardModalState()
         // card.createInstance({ baseX: 1000, baseY: 515, scene: this.scene })
         card.arrangeCards = this.arrangeCards
         console.log('addHandCard', cardId, this.handCards.length)
@@ -269,6 +271,34 @@ export default class MainPlayer extends Player {
             })
         }
     }
+    hasOpenModal = () => {
+        return ['confirmModal', 'checkModal', 'selectCardModal'].some(
+            (modalName) => (this.mainInstanceMap[modalName]?.alpha ?? 0) > 0,
+        )
+    }
+    syncHandCardModalState = () => {
+        if (this.hasOpenModal()) {
+            this.handCards.forEach((card) => {
+                if (!this.modalCardAlphas.has(card)) {
+                    this.modalCardAlphas.set(card, card.instance.alpha)
+                }
+                card.instance.setAlpha(0.3)
+            })
+            return
+        }
+        this.modalCardAlphas.forEach((alpha, card) => {
+            card.instance.setAlpha(alpha)
+        })
+        this.modalCardAlphas.clear()
+    }
+    bindModalHandCardBlocker = (modal: Phaser.GameObjects.Container) => {
+        const setAlpha = modal.setAlpha
+        modal.setAlpha = (...values: Parameters<typeof setAlpha>) => {
+            setAlpha.apply(modal, values)
+            this.syncHandCardModalState()
+            return modal
+        }
+    }
     playCardHandler = (card: Card) => {
         // console.log(
         //     'playCardHandler',
@@ -280,6 +310,7 @@ export default class MainPlayer extends Player {
         //     'reactionType: ',
         //     this.reactionType,
         // )
+        if (this.hasOpenModal()) return
         if (this.discardMode) {
             if (card.selected) {
                 card.selected = false
@@ -1527,6 +1558,7 @@ export default class MainPlayer extends Player {
         popupContainer.setDepth(1000)
         popupContainer.setAlpha(0)
         this.mainInstanceMap.confirmModal = popupContainer
+        this.bindModalHandCardBlocker(popupContainer)
         return
     }
     handleCheckClick = () => {
@@ -1821,6 +1853,7 @@ export default class MainPlayer extends Player {
         popupContainer.setDepth(1000)
         popupContainer.setAlpha(0)
         this.mainInstanceMap.checkModal = popupContainer
+        this.bindModalHandCardBlocker(popupContainer)
         return
     }
     createSelectCardModal(scene: Phaser.Scene) {
@@ -1868,6 +1901,7 @@ export default class MainPlayer extends Player {
         popupContainer.setData('selectedCards', [])
         popupContainer.setData('selectedCardIds', [])
         this.mainInstanceMap.selectCardModal = popupContainer
+        this.bindModalHandCardBlocker(popupContainer)
         this.mainInstanceMap.selectCardModal?.setData('cardInstance', [])
         return
     }
