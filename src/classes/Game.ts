@@ -365,7 +365,13 @@ export default class Game {
         return this.api.playCard(this.gameId, params)
     }
     respondToBorrowedSword = (cardId: ThreeKingdomsCardIds, targetPlayerId: string) => {
-        return this.playActiveKill(cardId, targetPlayerId)
+        const params = {
+            playerId: this.me.id,
+            targetPlayerId,
+            cardId,
+            playType: 'inactive' as PlayType,
+        }
+        return this.api.playCard(this.gameId, params)
     }
     declineBorrowedSword = () => {
         const params = {

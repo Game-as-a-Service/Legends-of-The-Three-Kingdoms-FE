@@ -272,7 +272,7 @@ export default class MainPlayer extends Player {
         }
     }
     hasOpenModal = () => {
-        return ['confirmModal', 'checkModal', 'selectCardModal'].some(
+        return ['confirmModal', 'selectCardModal'].some(
             (modalName) => (this.mainInstanceMap[modalName]?.alpha ?? 0) > 0,
         )
     }
@@ -639,6 +639,8 @@ export default class MainPlayer extends Player {
     canUseCardAsKill = (card: Card) => {
         if (card.name !== '殺') return true
         if (this.event === 'AskKillEvent' || this.event === 'BorrowedSwordEvent') return true
+        if (this.event === 'AskDodgeEvent' && this.canUseCardAsDodge(card)) return true
+        if (this.game?.getActivePlayer() !== this.id) return true
         if (this.game?.gameData?.round?.showKill !== true) return true
         const weaponCardId = this.equipments[0]
         if (!weaponCardId) return false
@@ -1201,11 +1203,12 @@ export default class MainPlayer extends Player {
                 const dodgeCardIdsInHand = ((event.data?.dodgeCardIdsInHand || []) as string[])
                     .filter(Boolean)
                     .map((cardId) => cardId as ThreeKingdomsCardIds)
-                const fallbackDodgeCardIds = (this.hand.cardIds as ThreeKingdomsCardIds[]).filter(
-                    (cardId) => threeKingdomsCards[cardId]?.name === '閃',
-                )
-                const selectableDodgeCardIds =
-                    dodgeCardIdsInHand.length > 0 ? dodgeCardIdsInHand : fallbackDodgeCardIds
+                const usableDodgeCardIds = this.handCards
+                    .filter((card) => this.canUseCardAsDodge(card))
+                    .map((card) => card.id)
+                const selectableDodgeCardIds = [
+                    ...new Set([...dodgeCardIdsInHand, ...usableDodgeCardIds]),
+                ]
 
                 if (selectableDodgeCardIds.length === 0) {
                     this.useConfirmModal({
