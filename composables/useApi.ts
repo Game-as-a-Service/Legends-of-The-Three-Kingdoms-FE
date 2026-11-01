@@ -9,7 +9,7 @@ import axios from 'axios'
 export function useApi() {
     const runtimeConfig = useRuntimeConfig()
     const api = axios.create({
-        baseURL: (runtimeConfig.public.apiBaseUrl as string) || 'https://3k-api.parsons125.in/',
+        baseURL: (runtimeConfig.public.apiBaseUrl as string) || 'https://www.scolley31.com/',
         headers: {
             'Content-Type': 'application/json',
         },

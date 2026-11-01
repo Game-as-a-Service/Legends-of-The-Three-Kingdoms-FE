@@ -248,8 +248,8 @@ onMounted(() => {
             // brokerURL: 'ws://localhost:8080/legendsOfTheThreeKingdoms',
             brokerURL:
                 runtimeConfig.public.brokerUrl ||
-                'wss://3k-api.parsons125.in/legendsOfTheThreeKingdoms',
-            // brokerURL: 'wss://3k-api.parsons125.in/legendsOfTheThreeKingdoms',
+                'wss://www.scolley31.com/legendsOfTheThreeKingdoms',
+            // brokerURL: 'wss://www.scolley31.com/legendsOfTheThreeKingdoms',
             reconnectDelay: 5000,
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,
