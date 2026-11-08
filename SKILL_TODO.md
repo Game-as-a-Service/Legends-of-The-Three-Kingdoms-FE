@@ -18,6 +18,8 @@
 - [x] 流離（大喬）— `skillEffectHandlers`，選手牌後以 `MainPlayer.beginPlayerPick` 點座位選轉移目標
 - [x] 國色（大喬）— `MainPlayer` 的國色按鈕（`guoSeMode`），選方塊手牌 + 目標後 `useSkillEffect('國色', 'CONTENTMENT', ...)`
 
+- [x] 苦肉（黃蓋）— `MainPlayer` 的苦肉按鈕（`kuRouButton`），HP ≥ 2、自己出牌階段，確認後 `useSkillEffect('苦肉', 'ACCEPT')`
+
 ## 不需實作（被動／鎖定技，後端自動套用）
 
 - 馬術、咆哮、英姿、謙遜、連營、空城、集智、奇才、克己
@@ -42,7 +44,6 @@
 
 - [ ] 制衡（孫權）— `ACCEPT`，cardIds 放要棄的牌（手牌 + 裝備，≥1），摸等量
 - [ ] 突襲（張遼）— 每回合 1 次，`ACCEPT`，cardIds 放目標玩家 id（1~2 名）
-- [ ] 苦肉（黃蓋）— HP ≥ 2，`ACCEPT`
 - [ ] 反間 第一段（周瑜）— 每回合 1 次，`ACCEPT`，cardIds 放 1 張手牌 + targetPlayerId
 - [ ] 結姻（孫尚香）— 每回合 1 次，`ACCEPT`，cardIds 放 2 張手牌
 - [ ] 仁德（劉備）— `ACCEPT`，cardIds 放手牌（≥1）+ targetPlayerId，累積 2 張回 1 體力（回血每回合 1 次）

@@ -33,6 +33,7 @@ export default class MainPlayer extends Player {
     heavenlyDoubleHalberdMode: boolean = false
     guoSeMode: boolean = false
     guoSeButton?: Phaser.GameObjects.Container
+    kuRouButton?: Phaser.GameObjects.Container
     playerPick: {
         candidates: Player[]
         selected: Player | null
@@ -245,6 +246,7 @@ export default class MainPlayer extends Player {
         this.createSelectCardModal(scene)
         this.bindWeaponInteraction()
         this.createGuoSeButton(scene)
+        this.createKuRouButton(scene)
     }
     test() {
         console.log('test')
@@ -2121,6 +2123,53 @@ export default class MainPlayer extends Player {
         this.handCards.forEach((card) => card.instance.setAlpha(1))
         this.mainInstanceMap.checkModal?.setAlpha(0)
         this.hintInstance?.setAlpha(0)
+    }
+    isKuRouAvailable = () => {
+        return this.general?.name === '黃蓋' || this.generalId === 'WU004'
+    }
+    createKuRouButton = (scene: Phaser.Scene) => {
+        if (!this.isKuRouAvailable()) return
+        const background = scene.add.rectangle(0, 0, 90, 34, 0xdc2626)
+        const label = scene.add.text(0, 0, '苦肉', { fontSize: '20px', color: '#fff' })
+        label.setOrigin(0.5)
+        const container = scene.add.container(this.x + 55, this.y - 60, [background, label])
+        background.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+            this.handleKuRouButtonClick()
+        })
+        this.kuRouButton = container
+    }
+    handleKuRouButtonClick = () => {
+        const isMyTurn = this.game?.getActivePlayer() === this.id
+        if (!isMyTurn || this.event || this.discardMode || this.reactionMode) {
+            this.showKillBlockedReason('苦肉只能在自己的出牌階段發動。')
+            return
+        }
+        if (
+            this.guoSeMode ||
+            this.viperSpearMode ||
+            this.heavenlyDoubleHalberdMode ||
+            this.selectedCard ||
+            this.playerPick
+        ) {
+            this.showKillBlockedReason('請先完成目前的出牌動作。')
+            return
+        }
+        if (this.hp < 2) {
+            this.showKillBlockedReason('體力不足，無法發動苦肉。')
+            return
+        }
+        this.useConfirmModal({
+            message: '是否發動苦肉？失去 1 點體力，摸兩張牌',
+            confirmText: '發動',
+            cancelText: '取消',
+            handleConfirm: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+                this.game?.useSkillEffect('苦肉', 'ACCEPT')
+            },
+            handleCancel: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+            },
+        })
     }
     createCheckModal(scene: Phaser.Scene) {
         // 出牌確認視窗
