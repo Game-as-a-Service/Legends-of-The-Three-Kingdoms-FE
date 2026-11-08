@@ -1,5 +1,6 @@
 import { Player, MainPlayer, Card, BattleScene } from './index'
 import { atkLine } from '../utils/drawing'
+import { killLog } from '../utils/killDebug'
 import type {
     ThreeKingdomsCardIds,
     GameData,
@@ -207,7 +208,14 @@ export default class Game {
             handleHeavenlyDoubleHalberdTargetSelection()
             return
         }
-        if (!this.me.selectedCard || player.isOutofDistance) return
+        if (!this.me.selectedCard || player.isOutofDistance) {
+            killLog('warn', '點擊玩家被忽略：沒有選牌或目標超出距離', {
+                clickedPlayerId: player.id,
+                isOutofDistance: player.isOutofDistance,
+                ...this.me.getDebugSnapshot(),
+            })
+            return
+        }
         if (
             this.me.selectedCard.name === '殺' &&
             this.me.canTriggerHeavenlyDoubleHalberd(this.me.selectedCard)
@@ -231,6 +239,10 @@ export default class Game {
             }
             this.me.updateKillTargetSelectionHint(this.selectTargetPlayers.length, 1, false)
             this.me.mainInstanceMap.checkModal?.setAlpha(1)
+            killLog('info', '殺 選擇目標', {
+                clickedPlayerId: player.id,
+                ...this.me.getDebugSnapshot(),
+            })
             return
         }
         if (this.me.selectedCard.name === '過河拆橋') {
@@ -362,7 +374,22 @@ export default class Game {
             cardId,
             playType: 'active' as PlayType,
         }
-        return this.api.playCard(this.gameId, params)
+        killLog('info', '送出 playActiveKill API', params)
+        return this.api
+            .playCard(this.gameId, params)
+            .then((res: any) => {
+                killLog('info', 'playActiveKill API 成功', { status: res?.status, data: res?.data })
+                return res
+            })
+            .catch((error: any) => {
+                killLog('error', 'playActiveKill API 失敗', {
+                    params,
+                    message: error?.message,
+                    status: error?.response?.status,
+                    data: error?.response?.data,
+                })
+                throw error
+            })
     }
     respondToBorrowedSword = (cardId: ThreeKingdomsCardIds, targetPlayerId: string) => {
         const params = {

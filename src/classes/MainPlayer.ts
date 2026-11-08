@@ -11,6 +11,7 @@ import type {
 } from '~/src/types'
 import Game from './Game'
 import { handleAskSkillEffectEvent } from '../events/askSkillEffectEvent'
+import { killLog } from '../utils/killDebug'
 
 const threeKingdomsCards: { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard } =
     threeKingdomsCardsJson as { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard }
@@ -36,6 +37,7 @@ export default class MainPlayer extends Player {
     modalCardAlphas: Map<Card, number> = new Map()
     event: string = ''
     eventData: any = null
+    blockedReasonCount: number = 0
     confirmModalBaseFontSize: number = 32
     confirmModalMinFontSize: number = 20
     confirmModalMaxLines: number = 4
@@ -310,7 +312,12 @@ export default class MainPlayer extends Player {
         //     'reactionType: ',
         //     this.reactionType,
         // )
-        if (this.hasOpenModal()) return
+        if (this.hasOpenModal()) {
+            if (card.name === '殺') {
+                killLog('warn', '點擊殺被忽略：有彈窗開啟', this.getDebugSnapshot())
+            }
+            return
+        }
         if (this.discardMode) {
             if (card.selected) {
                 card.selected = false
@@ -345,9 +352,13 @@ export default class MainPlayer extends Player {
             this.event === 'AskPeachEvent' ||
             this.event === 'AskPlayWardEvent'
         if (this.game!.getActivePlayer() !== this.id && !isReactiveEvent) {
+            if (card.name === '殺') {
+                killLog('warn', '點擊殺被忽略：不是自己的回合且無反應事件', this.getDebugSnapshot())
+            }
             return
         }
         if (card.name === '殺' && !this.canUseCardAsKill(card)) {
+            killLog('warn', '點擊殺被擋：canUseCardAsKill=false', this.getDebugSnapshot())
             this.showKillBlockedReason(
                 '不能出殺：本回合已經出過一張殺，除非使用諸葛連弩或特殊連續出殺效果。',
             )
@@ -356,6 +367,9 @@ export default class MainPlayer extends Player {
         // 自己的主動狀態不能出無懈可擊
         if (this.event !== 'AskPlayWardEvent' && card.name === '無懈可擊' && !this.discardMode) {
             return
+        }
+        if (card.name === '殺') {
+            killLog('info', '點擊殺', this.getDebugSnapshot())
         }
         /// event check
         if (this.event === 'AskKillEvent' || this.event === 'BorrowedSwordEvent') {
@@ -411,7 +425,7 @@ export default class MainPlayer extends Player {
                     duration: 500, // 持續時間（毫秒）
                     ease: 'Power2',
                     onComplete: () => {
-                        this.selectedCard = null
+                        this.clearSelectedCardAfterTween(card)
                     },
                 })
                 this.clearHeavenlyDoubleHalberdMode()
@@ -528,7 +542,7 @@ export default class MainPlayer extends Player {
                     duration: 500, // 持續時間（毫秒）
                     ease: 'Power2',
                     onComplete: () => {
-                        this.selectedCard = null
+                        this.clearSelectedCardAfterTween(card)
                     },
                 })
                 this.resetOutofDistance()
@@ -913,6 +927,9 @@ export default class MainPlayer extends Player {
     }
     processEvent = (event: any) => {
         console.log('processEvent', event)
+        if (this.event && this.event !== event.event) {
+            killLog('warn', `processEvent 覆蓋尚未清除的 event：${this.event} -> ${event.event}`)
+        }
         this.event = event.event
         this.eventData = event.data
         switch (this.event) {
@@ -1459,6 +1476,8 @@ export default class MainPlayer extends Player {
         // popupContainer.setDepth(1000)
     }
     showKillBlockedReason = (reason: string) => {
+        this.blockedReasonCount++
+        killLog('warn', `顯示阻擋訊息：${reason}`, this.getDebugSnapshot())
         this.useConfirmModal({
             message: reason,
             confirmText: '知道了',
@@ -1564,7 +1583,80 @@ export default class MainPlayer extends Player {
         this.bindModalHandCardBlocker(popupContainer)
         return
     }
+    // 取消選牌的動畫結束後才清掉 selectedCard；若期間已改選別張牌，這裡會把新選的牌清掉
+    clearSelectedCardAfterTween = (expectedCard: Card) => {
+        if (this.selectedCard !== expectedCard) {
+            killLog(
+                'warn',
+                '取消選牌動畫結束時 selectedCard 已被改選，仍將其清除',
+                this.getDebugSnapshot(),
+            )
+        }
+        this.selectedCard = null
+    }
+    getDebugSnapshot = () => {
+        const selectedCard = this.selectedCard
+        const isReactiveEvent = [
+            'AskKillEvent',
+            'BorrowedSwordEvent',
+            'AskDodgeEvent',
+            'AskPeachEvent',
+            'AskPlayWardEvent',
+        ].includes(this.event)
+        const activePlayer = this.game?.getActivePlayer()
+        const suspects: string[] = []
+        // 自己回合要出牌時 event 仍殘留，會導致 handleCheckClick 的 !this.event 分支不成立
+        if (this.event && activePlayer === this.id && !isReactiveEvent) {
+            suspects.push(`STALE_EVENT:${this.event}`)
+        }
+        if (this.viperSpearMode) suspects.push('viperSpearMode=true')
+        if (this.heavenlyDoubleHalberdMode) suspects.push('heavenlyDoubleHalberdMode=true')
+        if (this.discardMode) suspects.push('discardMode=true')
+        if (selectedCard && !selectedCard.instance?.active) suspects.push('selectedCard 已被銷毀')
+        return {
+            suspects,
+            meId: this.id,
+            activePlayer,
+            event: this.event,
+            eventData: this.eventData,
+            reactionType: this.reactionType,
+            reactionMode: this.reactionMode,
+            discardMode: this.discardMode,
+            viperSpearMode: this.viperSpearMode,
+            heavenlyDoubleHalberdMode: this.heavenlyDoubleHalberdMode,
+            selectedCard: selectedCard ? { id: selectedCard.id, name: selectedCard.name } : null,
+            selectedCardPlayed: selectedCard?.played,
+            targets: (this.game?.selectTargetPlayers || []).map((p) => p.id),
+            checkModalAlpha: this.mainInstanceMap.checkModal?.alpha,
+            confirmModalAlpha: this.mainInstanceMap.confirmModal?.alpha,
+            selectCardModalAlpha: this.mainInstanceMap.selectCardModal?.alpha,
+            showKill: this.game?.gameData?.round?.showKill,
+            weapon: this.equipments[0],
+            handCount: this.handCards.length,
+            outOfDistance: this.seats.map((p) => ({ id: p.id, out: p.isOutofDistance, hp: p.hp })),
+        }
+    }
     handleCheckClick = () => {
+        const cardBefore = this.selectedCard
+        const blockedBefore = this.blockedReasonCount
+        const snapshot = this.getDebugSnapshot()
+        killLog('info', '確定 被點擊', snapshot)
+        try {
+            this.handleCheckClickInternal()
+        } catch (error) {
+            killLog('error', 'handleCheckClick 發生例外', { error: String(error), snapshot })
+            throw error
+        }
+        // 沒有送出(selectedCard 沒被消耗)、也沒有任何阻擋訊息 = 靜默失敗
+        if (
+            cardBefore &&
+            this.selectedCard === cardBefore &&
+            this.blockedReasonCount === blockedBefore
+        ) {
+            killLog('error', '確定 被點擊但沒有任何動作(靜默失敗)', snapshot)
+        }
+    }
+    handleCheckClickInternal = () => {
         console.log('確認 按鈕被按下', this.selectedCard, this.event)
         if (this.selectedCard?.name === '殺' && !this.canUseCardAsKill(this.selectedCard)) {
             this.showKillBlockedReason(
@@ -1813,6 +1905,7 @@ export default class MainPlayer extends Player {
             this.game.selectTargetPlayers = []
         }
         if (this.selectedCard) {
+            const deselectedCard = this.selectedCard
             this.selectedCard.instance.setAlpha(1)
             this.scene.tweens.add({
                 targets: this.selectedCard.instance,
@@ -1821,7 +1914,7 @@ export default class MainPlayer extends Player {
                 duration: 500, // 持續時間（毫秒）
                 ease: 'Power2',
                 onComplete: () => {
-                    this.selectedCard = null
+                    this.clearSelectedCardAfterTween(deselectedCard)
                 },
             })
         }
@@ -1836,7 +1929,10 @@ export default class MainPlayer extends Player {
             .text(50, 30, '確定', { fontSize: '32px', color: '#0f0' })
             .setInteractive()
             .on('pointerdown', () => {
-                if ((this.mainInstanceMap.checkModal?.alpha ?? 0) <= 0) return
+                if ((this.mainInstanceMap.checkModal?.alpha ?? 0) <= 0) {
+                    killLog('warn', '確定 被點擊但 checkModal 為隱藏，已忽略', this.getDebugSnapshot())
+                    return
+                }
                 this.handleCheckClick()
             })
         yesButton.setOrigin(0.5)
