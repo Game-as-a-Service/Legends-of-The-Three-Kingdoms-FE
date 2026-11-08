@@ -191,6 +191,18 @@ export default class Game {
             this.me.updateKillTargetSelectionHint(this.selectTargetPlayers.length, 3, true)
             return true
         }
+        if (this.me.playerPick) {
+            this.me.handlePlayerPickClick(player)
+            return
+        }
+        if (this.me.guoSeMode) {
+            if (!this.me.selectedCard || player.isOutofDistance) return
+            this.selectTargetPlayers.forEach((targetPlayer) => targetPlayer.setPlayerSelected(false))
+            player.setPlayerSelected(true, 'from')
+            this.selectTargetPlayers = [player]
+            this.me.mainInstanceMap.checkModal?.setAlpha(1)
+            return
+        }
         if (this.me.viperSpearMode) {
             if (!player.isOutofDistance) {
                 this.me.handleViperSpearTarget(player)

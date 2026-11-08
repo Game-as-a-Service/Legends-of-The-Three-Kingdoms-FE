@@ -260,6 +260,76 @@ const handleGangLie: SkillEffectHandler = (mainPlayer, event) => {
     })
 }
 
+const handleLiuLi: SkillEffectHandler = (mainPlayer, event) => {
+    const attackerId = event.data?.dataPlayerId
+    const attackerName =
+        mainPlayer.seats.find((player) => player.id === attackerId)?.general?.name || '攻擊者'
+    const handCardIds = (mainPlayer.hand.cardIds as ThreeKingdomsCardIds[]).filter(Boolean)
+    const candidates = mainPlayer.seats.filter(
+        (player) =>
+            player.hp > 0 &&
+            player.id !== attackerId &&
+            (mainPlayer.game?.canSnatch(mainPlayer, player) ?? false),
+    )
+    let responseSubmitted = false
+    const finishResponse = () => {
+        mainPlayer.event = ''
+        mainPlayer.eventData = null
+        mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+        mainPlayer.closeSelectCardModal()
+        mainPlayer.clearPlayerPick()
+    }
+    const submitResponse = (
+        choice: 'ACCEPT' | 'SKIP',
+        cardIds: string[] = [],
+        targetPlayerId?: string,
+    ) => {
+        if (responseSubmitted) return
+        responseSubmitted = true
+        mainPlayer.game?.useSkillEffect('流離', choice, cardIds, targetPlayerId)
+        finishResponse()
+    }
+    const skip = () => submitResponse('SKIP')
+
+    if (handCardIds.length === 0 || candidates.length === 0) {
+        mainPlayer.useConfirmModal({
+            message: `${attackerName}對你使用殺，但你無法發動流離。`,
+            confirmText: '略過',
+            cancelText: '略過',
+            handleConfirm: skip,
+            handleCancel: skip,
+        })
+        return
+    }
+
+    mainPlayer.useConfirmModal({
+        message: `${attackerName}對你使用殺，是否發動流離，棄一張手牌將殺轉移給距離 1 內的其他角色？`,
+        confirmText: '發動流離',
+        cancelText: '跳過',
+        handleConfirm: () => {
+            mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+            mainPlayer.useSelectCardModal({
+                type: 'small',
+                message: '選擇一張手牌棄置',
+                cardIds: handCardIds,
+                confirmText: '棄置',
+                cancelText: '跳過',
+                handleConfirm: (discardCardId) => {
+                    mainPlayer.beginPlayerPick({
+                        message: '流離：請選擇殺的轉移目標',
+                        candidates,
+                        onConfirm: (target) =>
+                            submitResponse('ACCEPT', [String(discardCardId)], target.id),
+                        onCancel: skip,
+                    })
+                },
+                handleCancel: skip,
+            })
+        },
+        handleCancel: skip,
+    })
+}
+
 const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     反饋: handleFanKui,
     鬼才: handleGuiCai,
@@ -267,6 +337,7 @@ const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     洛神: handleLuoShen,
     裸衣: handleLuoYi,
     剛烈: handleGangLie,
+    流離: handleLiuLi,
 }
 
 export const handleAskSkillEffectEvent = (mainPlayer: MainPlayer, event: AskSkillEffectEvent) => {

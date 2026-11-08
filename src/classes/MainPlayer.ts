@@ -31,6 +31,14 @@ export default class MainPlayer extends Player {
     viperSpearMode: boolean = false
     viperSpearTarget: Player | null = null
     heavenlyDoubleHalberdMode: boolean = false
+    guoSeMode: boolean = false
+    guoSeButton?: Phaser.GameObjects.Container
+    playerPick: {
+        candidates: Player[]
+        selected: Player | null
+        onConfirm: (player: Player) => void
+        onCancel: () => void
+    } | null = null
     weaponActionBorder?: Phaser.GameObjects.Graphics
     weaponHitArea?: Phaser.GameObjects.Rectangle
     mainInstanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
@@ -236,6 +244,7 @@ export default class MainPlayer extends Player {
         this.createCheckModal(scene)
         this.createSelectCardModal(scene)
         this.bindWeaponInteraction()
+        this.createGuoSeButton(scene)
     }
     test() {
         console.log('test')
@@ -355,6 +364,10 @@ export default class MainPlayer extends Player {
             if (card.name === '殺') {
                 killLog('warn', '點擊殺被忽略：不是自己的回合且無反應事件', this.getDebugSnapshot())
             }
+            return
+        }
+        if (this.guoSeMode && !this.event) {
+            this.handleGuoSeCardClick(card)
             return
         }
         if (card.name === '殺' && !this.canUseCardAsKill(card)) {
@@ -930,6 +943,7 @@ export default class MainPlayer extends Player {
         if (this.event && this.event !== event.event) {
             killLog('warn', `processEvent 覆蓋尚未清除的 event：${this.event} -> ${event.event}`)
         }
+        this.clearGuoSeMode()
         this.event = event.event
         this.eventData = event.data
         switch (this.event) {
@@ -1658,6 +1672,19 @@ export default class MainPlayer extends Player {
     }
     handleCheckClickInternal = () => {
         console.log('確認 按鈕被按下', this.selectedCard, this.event)
+        if (this.playerPick) {
+            const target = this.playerPick.selected
+            if (!target) {
+                this.showKillBlockedReason('請先選擇一位目標。')
+                return
+            }
+            this.playerPick.onConfirm(target)
+            return
+        }
+        if (this.guoSeMode && this.selectedCard) {
+            this.submitGuoSe()
+            return
+        }
         if (this.selectedCard?.name === '殺' && !this.canUseCardAsKill(this.selectedCard)) {
             this.showKillBlockedReason(
                 '不能出殺：本回合已經出過一張殺，除非使用諸葛連弩或特殊連續出殺效果。',
@@ -1867,6 +1894,10 @@ export default class MainPlayer extends Player {
     }
     handleCancelClick = () => {
         console.log('否 按鈕被按下')
+        if (this.playerPick) {
+            this.playerPick.onCancel()
+            return
+        }
         if (this.viperSpearMode) {
             this.clearViperSpearState(this.isKillResponseEvent())
             return
@@ -1918,6 +1949,178 @@ export default class MainPlayer extends Player {
                 },
             })
         }
+        if (this.guoSeMode) {
+            this.applyGuoSeMode()
+        }
+    }
+    beginPlayerPick = ({
+        message,
+        candidates,
+        onConfirm,
+        onCancel,
+    }: {
+        message: string
+        candidates: Player[]
+        onConfirm: (player: Player) => void
+        onCancel: () => void
+    }) => {
+        this.playerPick = { candidates, selected: null, onConfirm, onCancel }
+        this.seats.forEach((player) => {
+            player.setPlayerSelected(false)
+            player.setOutOfDistance(!candidates.some((candidate) => candidate.id === player.id))
+        })
+        const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+        hintText?.setText(message)
+        this.hintInstance?.setAlpha(1)
+        this.mainInstanceMap.checkModal?.setAlpha(1)
+    }
+    handlePlayerPickClick = (player: Player) => {
+        const pick = this.playerPick
+        if (!pick || player.isOutofDistance) return
+        if (pick.selected?.id === player.id) {
+            player.setPlayerSelected(false)
+            pick.selected = null
+            return
+        }
+        pick.selected?.setPlayerSelected(false)
+        player.setPlayerSelected(true, 'to')
+        pick.selected = player
+    }
+    clearPlayerPick = () => {
+        if (!this.playerPick) return
+        this.playerPick.selected?.setPlayerSelected(false)
+        this.playerPick = null
+        this.resetOutofDistance()
+        this.mainInstanceMap.checkModal?.setAlpha(0)
+        this.hintInstance?.setAlpha(0)
+    }
+    isGuoSeAvailable = () => {
+        return this.general?.name === '大喬' || this.generalId === 'WU006'
+    }
+    isDiamondCard = (card: Card) => {
+        return threeKingdomsCards[card.id]?.suit === 'diamond'
+    }
+    createGuoSeButton = (scene: Phaser.Scene) => {
+        if (!this.isGuoSeAvailable()) return
+        const background = scene.add.rectangle(0, 0, 90, 34, 0x3b82f6)
+        const label = scene.add.text(0, 0, '國色', { fontSize: '20px', color: '#fff' })
+        label.setOrigin(0.5)
+        const container = scene.add.container(this.x + 55, this.y - 60, [background, label])
+        background.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+            this.handleGuoSeButtonClick()
+        })
+        this.guoSeButton = container
+    }
+    handleGuoSeButtonClick = () => {
+        if (this.guoSeMode) {
+            this.cancelGuoSeMode()
+            return
+        }
+        const isMyTurn = this.game?.getActivePlayer() === this.id
+        if (!isMyTurn || this.event || this.discardMode || this.reactionMode) {
+            this.showKillBlockedReason('國色只能在自己的出牌階段發動。')
+            return
+        }
+        if (this.viperSpearMode || this.heavenlyDoubleHalberdMode) {
+            this.showKillBlockedReason('請先完成目前的出牌動作。')
+            return
+        }
+        if (!this.handCards.some((card) => !card.played && this.isDiamondCard(card))) {
+            this.showKillBlockedReason('你沒有方塊手牌，無法發動國色。')
+            return
+        }
+        if (this.selectedCard) {
+            this.handleCancelClick()
+        }
+        this.guoSeMode = true
+        this.applyGuoSeMode()
+    }
+    applyGuoSeMode = () => {
+        this.handCards.forEach((card) => {
+            card.instance.setAlpha(this.isDiamondCard(card) ? 1 : 0.3)
+        })
+        this.guoSeButton?.setScale(1.1)
+        const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+        hintText?.setText('國色：請選擇一張方塊手牌，當作樂不思蜀')
+        this.hintInstance?.setAlpha(1)
+    }
+    handleGuoSeCardClick = (card: Card) => {
+        if (!this.isDiamondCard(card)) return
+        const previousCard = this.selectedCard
+        if (previousCard) {
+            this.scene.tweens.add({
+                targets: previousCard.instance,
+                x: previousCard.instance.x,
+                y: previousCard.instance.y + 20,
+                duration: 500,
+                ease: 'Power2',
+            })
+        }
+        if (this.game) {
+            this.game.selectTargetPlayers.forEach((player) => player.setPlayerSelected(false))
+            this.game.selectTargetPlayers = []
+        }
+        if (previousCard === card) {
+            this.selectedCard = null
+            this.mainInstanceMap.checkModal?.setAlpha(0)
+            return
+        }
+        this.selectedCard = card
+        this.scene.tweens.add({
+            targets: card.instance,
+            x: card.instance.x,
+            y: card.instance.y - 20,
+            duration: 500,
+            ease: 'Power2',
+        })
+        this.resetOutofDistance()
+        this.mainInstanceMap.checkModal?.setAlpha(1)
+    }
+    submitGuoSe = () => {
+        const card = this.selectedCard
+        const targetPlayer = this.game?.selectTargetPlayers[0]
+        if (!card) return
+        if (!targetPlayer) {
+            this.showKillBlockedReason('國色：請先選擇樂不思蜀的目標。')
+            this.mainInstanceMap.checkModal?.setAlpha(0)
+            return
+        }
+        this.game?.useSkillEffect('國色', 'CONTENTMENT', [card.id], targetPlayer.id)
+        atkLine({
+            endPoint: new Phaser.Math.Vector2(targetPlayer.instance.x, targetPlayer.instance.y),
+            scene: this.scene,
+        })
+        targetPlayer.setPlayerSelected(false)
+        if (this.game) this.game.selectTargetPlayers = []
+        this.selectedCard = null
+        card.playCard()
+        this.clearGuoSeMode()
+    }
+    cancelGuoSeMode = () => {
+        const card = this.selectedCard
+        if (card) {
+            this.selectedCard = null
+            this.scene.tweens.add({
+                targets: card.instance,
+                x: card.instance.x,
+                y: card.instance.y + 20,
+                duration: 500,
+                ease: 'Power2',
+            })
+        }
+        if (this.game) {
+            this.game.selectTargetPlayers.forEach((player) => player.setPlayerSelected(false))
+            this.game.selectTargetPlayers = []
+        }
+        this.clearGuoSeMode()
+    }
+    clearGuoSeMode = () => {
+        if (!this.guoSeMode) return
+        this.guoSeMode = false
+        this.guoSeButton?.setScale(1)
+        this.handCards.forEach((card) => card.instance.setAlpha(1))
+        this.mainInstanceMap.checkModal?.setAlpha(0)
+        this.hintInstance?.setAlpha(0)
     }
     createCheckModal(scene: Phaser.Scene) {
         // 出牌確認視窗
