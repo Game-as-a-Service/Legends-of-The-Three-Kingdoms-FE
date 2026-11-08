@@ -4,6 +4,7 @@ import { atkLine } from '../utils/drawing'
 import { roleMap, suits, ranks } from '~/src/utils/domain'
 import weaponFeaturesJson from '~/assets/weaponFeatures.json'
 import type {
+    DelayScroll,
     ThreeKingdomsCardIds,
     ThreeKingdomsGeneralIds,
     ThreeKingdomsCard,
@@ -78,7 +79,7 @@ export default class MainPlayer extends Player {
             cardIds: string[]
         }
         equipments: ThreeKingdomsCardIds[]
-        delayScrolls: ThreeKingdomsCardIds[]
+        delayScrolls: DelayScroll[]
         handleClickPlayer: any
         gamePlayCardHandler: any
         discardCardsAction: ([]) => void
@@ -1395,6 +1396,12 @@ export default class MainPlayer extends Player {
             ranks[card.rank] || card.rank
         })`
     }
+    /** 判定區的牌：效果與原牌不同時（國色）兩者都顯示，例「樂不思蜀(順手牽羊(♦3))」 */
+    formatDelayScrollLabel = (delayScroll: DelayScroll) => {
+        const label = this.formatCardLabel(delayScroll.cardId)
+        const card = threeKingdomsCards[delayScroll.cardId]
+        return card.name === delayScroll.effectName ? label : `${delayScroll.effectName}(${label})`
+    }
     getCardLabelFontSize = (label: string) => {
         const visualUnits = Array.from(label).reduce(
             (total, char) => total + this.getTextVisualUnit(char),
@@ -2291,7 +2298,7 @@ export default class MainPlayer extends Player {
         message?: string
         handCardCount?: number
         cardIds?: ThreeKingdomsCardIds[]
-        delayScrolls?: ThreeKingdomsCardIds[]
+        delayScrolls?: DelayScroll[]
         confirmText?: string
         cancelText?: string
         maxSelectionCount?: number
@@ -2526,7 +2533,7 @@ export default class MainPlayer extends Player {
         for (let i = 0; i < delayScrolls.length; i++) {
             const leftBase = 300 - (delayScrolls.length - 1) * 60
             const r = this.scene.add.rectangle(leftBase + i * 120, 280, 100, 40, 0xffffff)
-            const label = this.formatCardLabel(delayScrolls[i])
+            const label = this.formatDelayScrollLabel(delayScrolls[i])
             const t = this.scene.add.text(leftBase + i * 120, 280, label, {
                 fontSize: `${this.getCardLabelFontSize(label)}px`,
                 color: '#000',
@@ -2537,7 +2544,7 @@ export default class MainPlayer extends Player {
             r.setInteractive().on('pointerdown', () => {
                 const preCard = this.mainInstanceMap.selectCardModal?.getData('selectedCard')
                 const preCardId = this.mainInstanceMap.selectCardModal?.getData('selectedCardId')
-                if (preCardId === delayScrolls[i]) {
+                if (preCardId === delayScrolls[i].cardId) {
                     this.scene.tweens.add({
                         targets: preCard,
                         x: preCard.x,
@@ -2579,7 +2586,8 @@ export default class MainPlayer extends Player {
                     }
                 }
                 this.mainInstanceMap.selectCardModal?.setData('selectedCard', container)
-                this.mainInstanceMap.selectCardModal?.setData('selectedCardId', delayScrolls[i])
+                // 送給後端的是實際的牌 id（過河拆橋 / 順手牽羊以 cardId 指定判定區的牌）
+                this.mainInstanceMap.selectCardModal?.setData('selectedCardId', delayScrolls[i].cardId)
             })
             this.mainInstanceMap.selectCardModal?.add(container)
             this.mainInstanceMap.selectCardModal?.getData('cardInstance').push(container)

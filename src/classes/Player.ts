@@ -1,7 +1,7 @@
 import generalCards from '~/assets/generalCards.json'
 import threeKingdomsCards from '~/assets/cards.json'
 import { roleMap, suits } from '~/src/utils/domain'
-import type { ThreeKingdomsCardIds, ThreeKingdomsGeneralIds, WeaponFeature } from '~/src/types'
+import type { DelayScroll, ThreeKingdomsCardIds, ThreeKingdomsGeneralIds, WeaponFeature } from '~/src/types'
 import { BattleScene } from './index'
 import Game from './Game'
 import weaponFeaturesJson from '~/assets/weaponFeatures.json'
@@ -18,7 +18,7 @@ export default class Player {
         cardIds: string[]
     }
     equipments: ThreeKingdomsCardIds[]
-    delayScrolls: ThreeKingdomsCardIds[]
+    delayScrolls: DelayScroll[]
     instance!: Phaser.GameObjects.Container
     scene!: BattleScene
     handleClickPlayer!: (player: Player) => void
@@ -68,7 +68,7 @@ export default class Player {
             cardIds: string[]
         }
         equipments: ThreeKingdomsCardIds[]
-        delayScrolls: ThreeKingdomsCardIds[]
+        delayScrolls: DelayScroll[]
         handleClickPlayer: any
         x: number
         y: number
@@ -253,7 +253,7 @@ export default class Player {
             this.equipments = data.equipments
         }
         // 延遲錦囊卡確認
-        if (data.delayScrolls.join() !== this.delayScrolls.join()) {
+        if (JSON.stringify(data.delayScrolls) !== JSON.stringify(this.delayScrolls)) {
             this.delayScrolls = data.delayScrolls
             this.instanceMap.delayScrolls.destroy()
             const delayScrollsContainer = this.initDelayScrollsInstance()
@@ -393,11 +393,11 @@ export default class Player {
         const delayScrollsContainer = this.scene.add.container(0, 0)
         const delayScrolls = this.delayScrolls
         for (let i = 0; i < delayScrolls.length; i++) {
-            const delayScroll = threeKingdomsCards[delayScrolls[i]]
             const delayScrollText = this.scene.add.text(
                 -100 + 12, // 左邊界+位移
                 -100 + 12 + 22 * i, // 上邊界+位移
-                `${delayScroll.name[0]}`,
+                // 顯示效果（國色轉化的方塊牌要顯示「樂」，不是原牌名）
+                `${delayScrolls[i].effectName[0]}`,
                 {
                     fontSize: '20px',
                     color: '#FFFFFF',
