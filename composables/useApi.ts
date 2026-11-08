@@ -299,8 +299,9 @@ export function useApi() {
         params: {
             playerId: string
             skillName: string
-            choice: 'ACCEPT' | 'SKIP'
+            choice: string
             cardIds?: string[]
+            targetPlayerId?: string
         },
     ) => {
         return api.post(`/api/games/${gameId}/player:useSkillEffect`, params)

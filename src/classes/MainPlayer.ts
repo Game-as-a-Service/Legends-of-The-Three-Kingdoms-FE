@@ -2078,7 +2078,7 @@ export default class MainPlayer extends Player {
         this.resetOutofDistance()
         this.mainInstanceMap.checkModal?.setAlpha(1)
     }
-    submitGuoSe = () => {
+    submitGuoSe = async () => {
         const card = this.selectedCard
         const targetPlayer = this.game?.selectTargetPlayers[0]
         if (!card) return
@@ -2087,7 +2087,14 @@ export default class MainPlayer extends Player {
             this.mainInstanceMap.checkModal?.setAlpha(0)
             return
         }
-        this.game?.useSkillEffect('國色', 'CONTENTMENT', [card.id], targetPlayer.id)
+        try {
+            await this.game?.useSkillEffect('國色', 'CONTENTMENT', [card.id], targetPlayer.id)
+        } catch (error: any) {
+            const data = error?.response?.data
+            console.error('國色 API 失敗', error?.response?.status, data)
+            this.showKillBlockedReason(`國色發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`)
+            return
+        }
         atkLine({
             endPoint: new Phaser.Math.Vector2(targetPlayer.instance.x, targetPlayer.instance.y),
             scene: this.scene,
