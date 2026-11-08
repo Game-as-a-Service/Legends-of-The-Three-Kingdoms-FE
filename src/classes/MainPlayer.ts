@@ -2010,16 +2010,26 @@ export default class MainPlayer extends Player {
     isDiamondCard = (card: Card) => {
         return threeKingdomsCards[card.id]?.suit === 'diamond'
     }
+    // 技能鈕固定在武將卡的資訊列右側（手牌數的右邊），避免遮擋其他資訊
+    createSkillButton = (
+        scene: Phaser.Scene,
+        text: string,
+        color: number,
+        onClick: () => void,
+    ) => {
+        const background = scene.add.rectangle(0, 0, 72, 28, color)
+        const label = scene.add.text(0, 0, text, { fontSize: '18px', color: '#fff' })
+        label.setOrigin(0.5)
+        const container = scene.add.container(54, -14, [background, label])
+        background.setInteractive({ useHandCursor: true }).on('pointerdown', onClick)
+        this.instance.add(container)
+        return container
+    }
     createGuoSeButton = (scene: Phaser.Scene) => {
         if (!this.isGuoSeAvailable()) return
-        const background = scene.add.rectangle(0, 0, 90, 34, 0x3b82f6)
-        const label = scene.add.text(0, 0, '國色', { fontSize: '20px', color: '#fff' })
-        label.setOrigin(0.5)
-        const container = scene.add.container(this.x + 55, this.y - 60, [background, label])
-        background.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-            this.handleGuoSeButtonClick()
-        })
-        this.guoSeButton = container
+        this.guoSeButton = this.createSkillButton(scene, '國色', 0x3b82f6, () =>
+            this.handleGuoSeButtonClick(),
+        )
     }
     handleGuoSeButtonClick = () => {
         if (this.guoSeMode) {
@@ -2144,14 +2154,9 @@ export default class MainPlayer extends Player {
     }
     createKuRouButton = (scene: Phaser.Scene) => {
         if (!this.isKuRouAvailable()) return
-        const background = scene.add.rectangle(0, 0, 90, 34, 0xdc2626)
-        const label = scene.add.text(0, 0, '苦肉', { fontSize: '20px', color: '#fff' })
-        label.setOrigin(0.5)
-        const container = scene.add.container(this.x + 55, this.y - 60, [background, label])
-        background.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-            this.handleKuRouButtonClick()
-        })
-        this.kuRouButton = container
+        this.kuRouButton = this.createSkillButton(scene, '苦肉', 0xdc2626, () =>
+            this.handleKuRouButtonClick(),
+        )
     }
     handleKuRouButtonClick = () => {
         const isMyTurn = this.game?.getActivePlayer() === this.id

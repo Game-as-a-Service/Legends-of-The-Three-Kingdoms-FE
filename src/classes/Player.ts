@@ -32,6 +32,15 @@ export default class Player {
     handText!: Phaser.GameObjects.Text
     game: Game | null = null
     readonly cardLeftX: number = -96
+    readonly contentLeftX: number = -66
+    readonly equipmentX: number = -90
+    readonly equipmentKeys = ['weapon', 'armor', 'horsePlus', 'horseMinus']
+    readonly campColors: { [key: string]: number } = {
+        魏: 0x2563eb,
+        蜀: 0xc0392b,
+        吳: 0x2e8b57,
+        群: 0x6b7280,
+    }
     private glowFx: Phaser.FX.Glow | null = null
     // properties and methods go here
     constructor({
@@ -85,97 +94,71 @@ export default class Player {
         const baseX = this.x
         const baseY = this.y
         const scene = this.scene
-        // 創建一個白色的矩形
+        // 卡片版面（以卡片中心為原點，200x200）：
+        // 左側欄 x -100~-72：延遲錦囊（上）、血量（下）
+        // 標題列 y -82：ID、身分；武將列 y -44：陣營、武將名；資訊列 y -14：手牌數、技能鈕；下方 y 4~100：裝備
         const rectangle = scene.add.rectangle(0, 0, 200, 200, 0xffffff)
-        // 創建文字
-        const idText = scene.add.text(0, -80, this.id, {
-            fontSize: '24px',
+        const idText = scene.add.text(this.contentLeftX, -82, this.id, {
+            fontSize: '18px',
             color: '#000000',
         })
-        const generralText = scene.add.text(0, -50, this.general.name, {
+        idText.setOrigin(0, 0.5)
+        if (idText.width > 96) idText.setScale(96 / idText.width)
+        const roleBadge = scene.add.rectangle(64, -82, 56, 24, 0x1f2937)
+        const roleText = scene.add.text(64, -82, roleMap[this.roleId] || '?', {
+            fontSize: '16px',
+            color: '#fff',
+        })
+        roleText.setOrigin(0.5)
+        const campBadge = scene.add.rectangle(
+            this.contentLeftX + 14,
+            -44,
+            28,
+            28,
+            this.campColors[this.general.camp] ?? 0x6b7280,
+        )
+        const campText = scene.add.text(this.contentLeftX + 14, -44, this.general.camp, {
             fontSize: '20px',
+            color: '#fff',
+        })
+        campText.setOrigin(0.5)
+        const generralText = scene.add.text(this.contentLeftX + 36, -44, this.general.name, {
+            fontSize: '30px',
             color: '#000',
         })
-        const campText = scene.add.text(this.cardLeftX, -50, this.general.camp, {
-            fontSize: '20px',
-            color: '#000',
-        })
-        campText.setOrigin(0, 0.5)
-        const roleText = scene.add.text(0, -30, roleMap[this.roleId] || '?', {
-            fontSize: '20px',
-            color: '#000',
-        })
+        generralText.setOrigin(0, 0.5)
         const hpContainer = this.initHpInstance(this.hp, this.general.hp)
         this.instanceMap.hp = hpContainer
 
         const delayScrollsContainer = this.initDelayScrollsInstance()
         this.instanceMap.delayScrolls = delayScrollsContainer
-        // const hpText = scene.add.text(0, -10, `血量: ${this.hp}`, {
-        //     fontSize: '10px',
-        //     color: '#000',
-        // })
-        const handText = scene.add.text(0, -10, `手牌: ${this.hand.size}`, {
-            fontSize: '20px',
+        const handText = scene.add.text(this.contentLeftX, -14, `手牌: ${this.hand.size}`, {
+            fontSize: '18px',
             color: '#000',
         })
+        handText.setOrigin(0, 0.5)
         this.handText = handText
-        const weapon = this.equipments[0] ? threeKingdomsCards[this.equipments[0]] : null
-        const armor = this.equipments[1] ? threeKingdomsCards[this.equipments[1]].name : ''
-        const horsePlus = this.equipments[2] ? threeKingdomsCards[this.equipments[2]].name : ''
-        const horseMinus = this.equipments[3] ? threeKingdomsCards[this.equipments[3]].name : ''
-        const equipmentContainer1 = scene.add.container(0, 0)
-
-        if (weapon) {
-            const equipmentContainer1 = this.initEquipmentInstance(weapon)
-            this.instanceMap.weapon = equipmentContainer1
-        }
-        const armorText = scene.add.text(0, 70, `${armor}`, {
-            fontSize: '10px',
-            color: '#000',
-        })
-        const horsePlusText = scene.add.text(0, 80, `${horsePlus}`, {
-            fontSize: '10px',
-            color: '#000',
-        })
-        const horseMinusText = scene.add.text(0, 90, `${horseMinus}`, {
-            fontSize: '10px',
-            color: '#000',
-        })
-
-        // const equipmentText = scene.add.text(0, 70, `裝備: ${equipmentNames}`, {
-        //     fontSize: '20px',
-        //     color: '#000',
-        // })
-        // 設置文字位置在矩形中心
-        const texts = [
-            idText,
-            generralText,
-            roleText,
-            // hpText,
-            handText,
-            armorText,
-            horsePlusText,
-            horseMinusText,
-        ]
-        texts.forEach((text) => {
-            text.setOrigin(0.5)
-        })
         // 將矩形和文字添加到容器中，以便一起操作
         const container = scene.add.container(0, 0, [
             rectangle,
             idText,
+            roleBadge,
             roleText,
+            campBadge,
             campText,
             generralText,
-            // hpText,
             handText,
-            equipmentContainer1,
-            armorText,
-            horsePlusText,
-            horseMinusText,
             hpContainer,
+            delayScrollsContainer,
         ])
-        equipmentContainer1.setPosition(-100, 100 - 24 * 4)
+        for (let i = 0; i < 4; i++) {
+            const equipmentId = this.equipments[i]
+            if (!equipmentId) continue
+            const equipmentContainer = this.initEquipmentInstance(threeKingdomsCards[equipmentId])
+            equipmentContainer.setPosition(this.equipmentX, 100 - 24 * (4 - i))
+            container.add(equipmentContainer)
+            this.instanceMap[this.equipmentKeys[i]] = equipmentContainer
+        }
         // 設置容器位置在遊戲場景中心
         container.setPosition(baseX, baseY)
         this.instance = container
@@ -252,7 +235,7 @@ export default class Player {
             this.handText.setText(`手牌: ${this.hand.size}`)
             this.scene.tweens.add({
                 targets: this.handText,
-                scale: 1.5,
+                scale: 1.25,
                 duration: 150, // 持續時間（毫秒）
                 ease: 'Power2',
                 yoyo: true,
@@ -309,7 +292,7 @@ export default class Player {
             const equipmentContainer = this.initEquipmentInstance(threeKingdomsCards[equipment])
             this.instanceMap[equipments[index]] = equipmentContainer
             this.instance.add(equipmentContainer)
-            equipmentContainer.setPosition(-100, 100 - 24 * (4 - index))
+            equipmentContainer.setPosition(this.equipmentX, 100 - 24 * (4 - index))
             this.scene.tweens.add({
                 targets: equipmentContainer,
                 scale: 1.5,
@@ -332,7 +315,7 @@ export default class Player {
             fontSize: '16px',
             color: suits[weapon.suit].color,
         })
-        const weaponSuitText = this.scene.add.text(24 + 12, 4, `${suits[weapon.suit].symbol}`, {
+        const weaponSuitText = this.scene.add.text(24 + 20, 4, `${suits[weapon.suit].symbol}`, {
             fontSize: '16px',
             color: suits[weapon.suit].color,
         })
