@@ -1019,10 +1019,14 @@ export default class MainPlayer extends Player {
                         console.log('選擇', cardId)
                         this.game?.chooseCardFromBountifulHarvest(cardId)
                         this.reactionType = ''
+                        this.event = ''
+                        this.eventData = null
                     },
                     handleCancel: () => {
                         console.log('取消')
                         this.reactionType = ''
+                        this.event = ''
+                        this.eventData = null
                     },
                 })
                 break
@@ -1057,9 +1061,13 @@ export default class MainPlayer extends Player {
                     handleConfirm: (cardId) => {
                         console.log('選擇', cardId)
                         this.game?.chooseHorseCard(cardId)
+                        this.event = ''
+                        this.eventData = null
                     },
                     handleCancel: () => {
                         console.log('取消')
+                        this.event = ''
+                        this.eventData = null
                     },
                 })
                 break
