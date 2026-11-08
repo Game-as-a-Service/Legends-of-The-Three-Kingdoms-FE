@@ -2169,12 +2169,11 @@ export default class MainPlayer extends Player {
             this.showKillBlockedReason('請先完成目前的出牌動作。')
             return
         }
-        if (this.hp < 2) {
-            this.showKillBlockedReason('體力不足，無法發動苦肉。')
-            return
-        }
         this.useConfirmModal({
-            message: '是否發動苦肉？失去 1 點體力，摸兩張牌',
+            message:
+                this.hp <= 1
+                    ? '是否發動苦肉？你將進入瀕死狀態，摸兩張牌'
+                    : '是否發動苦肉？失去 1 點體力，摸兩張牌',
             confirmText: '發動',
             cancelText: '取消',
             handleConfirm: () => {

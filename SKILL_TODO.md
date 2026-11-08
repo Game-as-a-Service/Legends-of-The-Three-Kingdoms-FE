@@ -18,7 +18,7 @@
 - [x] 流離（大喬）— `skillEffectHandlers`，選手牌後以 `MainPlayer.beginPlayerPick` 點座位選轉移目標
 - [x] 國色（大喬）— `MainPlayer` 的國色按鈕（`guoSeMode`），選方塊手牌 + 目標後 `useSkillEffect('國色', 'CONTENTMENT', ...)`
 
-- [x] 苦肉（黃蓋）— `MainPlayer` 的苦肉按鈕（`kuRouButton`），HP ≥ 2、自己出牌階段，確認後 `useSkillEffect('苦肉', 'ACCEPT')`
+- [x] 苦肉（黃蓋）— `MainPlayer` 的苦肉按鈕（`kuRouButton`），自己出牌階段（可扣到 0 滴，交由瀕死求桃流程），確認後 `useSkillEffect('苦肉', 'ACCEPT')`
 
 ## 不需實作（被動／鎖定技，後端自動套用）
 
