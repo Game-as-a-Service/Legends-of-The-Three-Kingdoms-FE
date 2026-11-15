@@ -541,7 +541,7 @@ const eventTrigger = () => {
             scene: myScene.value,
         })
     } else if (
-        eventSelectedCard.value === '赤兔馬' ||
+        eventSelectedCard.value === '赤兔' ||
         eventSelectedCard.value === '絕影' ||
         eventSelectedCard.value === '八卦陣' ||
         eventSelectedCard.value === '麒麟弓' ||
@@ -559,7 +559,7 @@ const eventTrigger = () => {
         })
         dodgeCard.playCard()
         const equipments = [...player.equipments]
-        if (card.name === '赤兔馬') {
+        if (card.name === '赤兔') {
             equipments[3] = card.id
         } else if (card.name === '絕影') {
             equipments[2] = card.id
