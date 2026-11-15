@@ -51,7 +51,11 @@ export default class MainPlayer extends Player {
     playerPick: {
         candidates: Player[]
         selected: Player | null
+        // 多選（maxSelections > 1，如突襲最多兩名）時使用；單選維持 selected
+        selectedList: Player[]
+        maxSelections: number
         onConfirm: (player: Player) => void
+        onConfirmMany?: (players: Player[]) => void
         onCancel: () => void
     } | null = null
     weaponActionBorder?: Phaser.GameObjects.Graphics
@@ -1785,6 +1789,15 @@ export default class MainPlayer extends Player {
     handleCheckClickInternal = () => {
         console.log('確認 按鈕被按下', this.selectedCard, this.event)
         if (this.playerPick) {
+            if (this.playerPick.maxSelections > 1) {
+                const targets = this.playerPick.selectedList
+                if (targets.length === 0) {
+                    this.showKillBlockedReason('請至少選擇一位目標。')
+                    return
+                }
+                this.playerPick.onConfirmMany?.(targets)
+                return
+            }
             const target = this.playerPick.selected
             if (!target) {
                 this.showKillBlockedReason('請先選擇一位目標。')
@@ -2076,15 +2089,27 @@ export default class MainPlayer extends Player {
     beginPlayerPick = ({
         message,
         candidates,
-        onConfirm,
+        onConfirm = () => {},
+        onConfirmMany,
         onCancel,
+        maxSelections = 1,
     }: {
         message: string
         candidates: Player[]
-        onConfirm: (player: Player) => void
+        onConfirm?: (player: Player) => void
+        onConfirmMany?: (players: Player[]) => void
         onCancel: () => void
+        maxSelections?: number
     }) => {
-        this.playerPick = { candidates, selected: null, onConfirm, onCancel }
+        this.playerPick = {
+            candidates,
+            selected: null,
+            selectedList: [],
+            maxSelections,
+            onConfirm,
+            onConfirmMany,
+            onCancel,
+        }
         this.seats.forEach((player) => {
             player.setPlayerSelected(false)
             player.setOutOfDistance(!candidates.some((candidate) => candidate.id === player.id))
@@ -2097,6 +2122,18 @@ export default class MainPlayer extends Player {
     handlePlayerPickClick = (player: Player) => {
         const pick = this.playerPick
         if (!pick || player.isOutofDistance) return
+        if (pick.maxSelections > 1) {
+            const index = pick.selectedList.findIndex((p) => p.id === player.id)
+            if (index >= 0) {
+                player.setPlayerSelected(false)
+                pick.selectedList.splice(index, 1)
+                return
+            }
+            if (pick.selectedList.length >= pick.maxSelections) return
+            player.setPlayerSelected(true, 'to')
+            pick.selectedList.push(player)
+            return
+        }
         if (pick.selected?.id === player.id) {
             player.setPlayerSelected(false)
             pick.selected = null
@@ -2109,6 +2146,7 @@ export default class MainPlayer extends Player {
     clearPlayerPick = () => {
         if (!this.playerPick) return
         this.playerPick.selected?.setPlayerSelected(false)
+        this.playerPick.selectedList.forEach((player) => player.setPlayerSelected(false))
         this.playerPick = null
         this.resetOutofDistance()
         this.mainInstanceMap.checkModal?.setAlpha(0)
