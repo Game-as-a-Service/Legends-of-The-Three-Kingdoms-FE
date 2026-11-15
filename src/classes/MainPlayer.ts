@@ -43,6 +43,7 @@ export default class MainPlayer extends Player {
     guoSeButton?: Phaser.GameObjects.Container
     kuRouButton?: Phaser.GameObjects.Container
     fanJianButton?: Phaser.GameObjects.Container
+    jieYinButton?: Phaser.GameObjects.Container
     playerPick: {
         candidates: Player[]
         selected: Player | null
@@ -258,6 +259,7 @@ export default class MainPlayer extends Player {
         this.createGuoSeButton(scene)
         this.createKuRouButton(scene)
         this.createFanJianButton(scene)
+        this.createJieYinButton(scene)
     }
     test() {
         console.log('test')
@@ -2334,6 +2336,73 @@ export default class MainPlayer extends Player {
             scene: this.scene,
         })
         finish()
+    }
+    isJieYinAvailable = () => {
+        return this.general?.name === '孫尚香' || this.generalId === 'WU008'
+    }
+    createJieYinButton = (scene: Phaser.Scene) => {
+        if (!this.isJieYinAvailable()) return
+        this.jieYinButton = this.createSkillButton(scene, '結姻', 0xec4899, () =>
+            this.handleJieYinButtonClick(),
+        )
+    }
+    handleJieYinButtonClick = () => {
+        const isMyTurn = this.game?.getActivePlayer() === this.id
+        if (!isMyTurn || this.event || this.discardMode || this.reactionMode) {
+            this.showKillBlockedReason('結姻只能在自己的出牌階段發動。')
+            return
+        }
+        if (
+            this.guoSeMode ||
+            this.viperSpearMode ||
+            this.heavenlyDoubleHalberdMode ||
+            this.selectedCard ||
+            this.playerPick
+        ) {
+            this.showKillBlockedReason('請先完成目前的出牌動作。')
+            return
+        }
+        const handCardIds = (this.hand.cardIds as ThreeKingdomsCardIds[]).filter(Boolean)
+        if (handCardIds.length < 2) {
+            this.showKillBlockedReason('你的手牌不足 2 張，無法發動結姻。')
+            return
+        }
+        this.useConfirmModal({
+            message:
+                '是否發動結姻？每回合限一次。棄置兩張手牌，你與體力最少的受傷男性角色各回復 1 點體力。',
+            confirmText: '發動',
+            cancelText: '取消',
+            handleConfirm: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+                this.useSelectCardModal({
+                    type: 'small',
+                    message: '結姻：選擇兩張手牌棄置',
+                    cardIds: handCardIds,
+                    maxSelectionCount: 2,
+                    minSelectionCount: 2,
+                    confirmText: '確定',
+                    cancelText: '取消',
+                    handleConfirm: (cardIds: ThreeKingdomsCardIds[]) =>
+                        this.submitJieYin(cardIds.map(String)),
+                    handleCancel: () => this.closeSelectCardModal(),
+                })
+            },
+            handleCancel: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+            },
+        })
+    }
+    submitJieYin = async (cardIds: string[]) => {
+        try {
+            await this.game?.useSkillEffect('結姻', 'ACCEPT', cardIds)
+        } catch (error: any) {
+            const data = error?.response?.data
+            console.error('結姻 API 失敗', error?.response?.status, data)
+            this.closeSelectCardModal()
+            this.showKillBlockedReason(`結姻發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`)
+            return
+        }
+        this.closeSelectCardModal()
     }
     createCheckModal(scene: Phaser.Scene) {
         // 出牌確認視窗
