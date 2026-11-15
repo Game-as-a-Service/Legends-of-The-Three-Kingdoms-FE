@@ -1358,7 +1358,17 @@ export default class MainPlayer extends Player {
                 this.selectedConversionEquipmentId &&
                 !this.equipments.includes(this.selectedConversionEquipmentId)
             ) {
+                // 選中的裝備已不在：連同目標與確認鈕一起重置，避免確認鈕亮著卻按了沒反應
                 this.selectedConversionEquipmentId = null
+                if (!this.selectedCard) {
+                    if (this.game) {
+                        this.game.selectTargetPlayers.forEach((player) =>
+                            player.setPlayerSelected(false),
+                        )
+                        this.game.selectTargetPlayers = []
+                    }
+                    this.mainInstanceMap.checkModal?.setAlpha(0)
+                }
             }
             this.applyGuoSeEquipmentOptions()
         }
