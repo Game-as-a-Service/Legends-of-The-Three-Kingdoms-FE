@@ -27,6 +27,8 @@
 
 - [x] 仁德（劉備）— `MainPlayer` 的仁德按鈕（`renDeButton`），自己出牌階段：確認 → 選 ≥1 張手牌 → `beginPlayerPick` 點座位選接收者 → `useSkillEffect('仁德', 'ACCEPT', cardIds, targetId)`；累積 2 張回血與每回合限一次由後端判定，失敗時顯示錯誤訊息。劉備 id 以 `SHU001` 判斷（亦比對武將名稱）
 
+- [x] 觀星 第一段（諸葛亮）— `MainPlayer` 的觀星按鈕（`guanXingButton`），自己出牌階段：確認 → `useSkillEffect('觀星', 'ACCEPT')`，之後由後端 `AskSkillEffectEvent` 接第二段（`skillEffectHandlers`）；每回合限一次由後端驗證，失敗時顯示錯誤訊息。諸葛亮 id 以 `SHU004` 判斷（亦比對武將名稱）
+
 ## 不需實作（被動／鎖定技，後端自動套用）
 
 - 馬術、咆哮、英姿、謙遜、連營、空城、集智、奇才、克己
@@ -47,7 +49,6 @@
 
 - [ ] 制衡（孫權）— `ACCEPT`，cardIds 放要棄的牌（手牌 + 裝備，≥1），摸等量
 - [ ] 突襲（張遼）— 每回合 1 次，`ACCEPT`，cardIds 放目標玩家 id（1~2 名）
-- [ ] 觀星 第一段（諸葛亮）— 每回合 1 次，`ACCEPT`，之後接 A 類第二段
 
 ### C. 轉化牌技（卡牌合法性判斷擋住）
 

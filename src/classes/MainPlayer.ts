@@ -45,6 +45,7 @@ export default class MainPlayer extends Player {
     fanJianButton?: Phaser.GameObjects.Container
     jieYinButton?: Phaser.GameObjects.Container
     renDeButton?: Phaser.GameObjects.Container
+    guanXingButton?: Phaser.GameObjects.Container
     playerPick: {
         candidates: Player[]
         selected: Player | null
@@ -262,6 +263,7 @@ export default class MainPlayer extends Player {
         this.createFanJianButton(scene)
         this.createJieYinButton(scene)
         this.createRenDeButton(scene)
+        this.createGuanXingButton(scene)
     }
     test() {
         console.log('test')
@@ -2490,6 +2492,54 @@ export default class MainPlayer extends Player {
             scene: this.scene,
         })
         finish()
+    }
+    isGuanXingAvailable = () => {
+        return this.general?.name === '諸葛亮' || this.generalId === 'SHU004'
+    }
+    createGuanXingButton = (scene: Phaser.Scene) => {
+        if (!this.isGuanXingAvailable()) return
+        this.guanXingButton = this.createSkillButton(scene, '觀星', 0x0ea5e9, () =>
+            this.handleGuanXingButtonClick(),
+        )
+    }
+    handleGuanXingButtonClick = () => {
+        const isMyTurn = this.game?.getActivePlayer() === this.id
+        if (!isMyTurn || this.event || this.discardMode || this.reactionMode) {
+            this.showKillBlockedReason('觀星只能在自己的出牌階段發動。')
+            return
+        }
+        if (
+            this.guoSeMode ||
+            this.viperSpearMode ||
+            this.heavenlyDoubleHalberdMode ||
+            this.selectedCard ||
+            this.playerPick
+        ) {
+            this.showKillBlockedReason('請先完成目前的出牌動作。')
+            return
+        }
+        this.useConfirmModal({
+            message: '是否發動觀星？每回合限一次。觀看牌堆頂的牌並重新排列。',
+            confirmText: '發動',
+            cancelText: '取消',
+            handleConfirm: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+                this.submitGuanXing()
+            },
+            handleCancel: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+            },
+        })
+    }
+    // 第二段由後端回傳的 AskSkillEffectEvent（觀星）接手，見 askSkillEffectEvent.ts
+    submitGuanXing = async () => {
+        try {
+            await this.game?.useSkillEffect('觀星', 'ACCEPT')
+        } catch (error: any) {
+            const data = error?.response?.data
+            console.error('觀星 API 失敗', error?.response?.status, data)
+            this.showKillBlockedReason(`觀星發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`)
+        }
     }
     createCheckModal(scene: Phaser.Scene) {
         // 出牌確認視窗
