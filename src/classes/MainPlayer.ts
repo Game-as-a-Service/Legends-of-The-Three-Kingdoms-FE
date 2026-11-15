@@ -44,6 +44,7 @@ export default class MainPlayer extends Player {
     kuRouButton?: Phaser.GameObjects.Container
     fanJianButton?: Phaser.GameObjects.Container
     jieYinButton?: Phaser.GameObjects.Container
+    renDeButton?: Phaser.GameObjects.Container
     playerPick: {
         candidates: Player[]
         selected: Player | null
@@ -260,6 +261,7 @@ export default class MainPlayer extends Player {
         this.createKuRouButton(scene)
         this.createFanJianButton(scene)
         this.createJieYinButton(scene)
+        this.createRenDeButton(scene)
     }
     test() {
         console.log('test')
@@ -2403,6 +2405,90 @@ export default class MainPlayer extends Player {
             return
         }
         this.closeSelectCardModal()
+    }
+    isRenDeAvailable = () => {
+        return this.general?.name === '劉備' || this.generalId === 'SHU001'
+    }
+    createRenDeButton = (scene: Phaser.Scene) => {
+        if (!this.isRenDeAvailable()) return
+        this.renDeButton = this.createSkillButton(scene, '仁德', 0xf59e0b, () =>
+            this.handleRenDeButtonClick(),
+        )
+    }
+    handleRenDeButtonClick = () => {
+        const isMyTurn = this.game?.getActivePlayer() === this.id
+        if (!isMyTurn || this.event || this.discardMode || this.reactionMode) {
+            this.showKillBlockedReason('仁德只能在自己的出牌階段發動。')
+            return
+        }
+        if (
+            this.guoSeMode ||
+            this.viperSpearMode ||
+            this.heavenlyDoubleHalberdMode ||
+            this.selectedCard ||
+            this.playerPick
+        ) {
+            this.showKillBlockedReason('請先完成目前的出牌動作。')
+            return
+        }
+        const handCardIds = (this.hand.cardIds as ThreeKingdomsCardIds[]).filter(Boolean)
+        const candidates = this.seats.filter((player) => player.hp > 0 && player.id !== this.id)
+        if (handCardIds.length === 0 || candidates.length === 0) {
+            this.showKillBlockedReason('你沒有手牌可交給其他角色，無法發動仁德。')
+            return
+        }
+        const finish = () => {
+            this.closeSelectCardModal()
+            this.clearPlayerPick()
+        }
+        this.useConfirmModal({
+            message:
+                '是否發動仁德？將任意張手牌交給其他角色，本回合累積給出兩張以上手牌時，回復 1 點體力（每回合限一次）。',
+            confirmText: '發動',
+            cancelText: '取消',
+            handleConfirm: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+                this.useSelectCardModal({
+                    type: 'small',
+                    message: '仁德：選擇要交給其他角色的手牌',
+                    cardIds: handCardIds,
+                    maxSelectionCount: handCardIds.length,
+                    minSelectionCount: 1,
+                    confirmText: '選擇',
+                    cancelText: '取消',
+                    handleConfirm: (cardIds: ThreeKingdomsCardIds[]) => {
+                        const selectedIds = cardIds.map(String)
+                        this.closeSelectCardModal()
+                        this.beginPlayerPick({
+                            message: '仁德：請選擇接收手牌的角色',
+                            candidates,
+                            onConfirm: (target) => this.submitRenDe(selectedIds, target, finish),
+                            onCancel: finish,
+                        })
+                    },
+                    handleCancel: finish,
+                })
+            },
+            handleCancel: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+            },
+        })
+    }
+    submitRenDe = async (cardIds: string[], target: Player, finish: () => void) => {
+        try {
+            await this.game?.useSkillEffect('仁德', 'ACCEPT', cardIds, target.id)
+        } catch (error: any) {
+            const data = error?.response?.data
+            console.error('仁德 API 失敗', error?.response?.status, data)
+            finish()
+            this.showKillBlockedReason(`仁德發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`)
+            return
+        }
+        atkLine({
+            endPoint: new Phaser.Math.Vector2(target.instance.x, target.instance.y),
+            scene: this.scene,
+        })
+        finish()
     }
     createCheckModal(scene: Phaser.Scene) {
         // 出牌確認視窗
