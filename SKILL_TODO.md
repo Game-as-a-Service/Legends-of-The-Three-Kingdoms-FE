@@ -22,12 +22,11 @@
 - [x] 反間 第二段（周瑜的目標）— `skillEffectHandlers`，以 `MainPlayer.useSuitModal` 四花色按鈕選擇後 `useSkillEffect('反間', 'SPADE'|'HEART'|'DIAMOND'|'CLUB')`
 - [x] 反間 第一段（周瑜）— `MainPlayer` 的反間按鈕（`fanJianButton`），自己出牌階段：確認 → 選 1 張手牌 → `beginPlayerPick` 點座位選目標 → `useSkillEffect('反間', 'ACCEPT', [cardId], targetId)`；每回合限一次由後端驗證，失敗時顯示錯誤訊息
 
-- [x] 觀星 第二段（諸葛亮）— `skillEffectHandlers`，以 `useSelectCardModal` 依點選順序（先點在最上）選出回牌堆頂的牌，`useSkillEffect('觀星', 'ARRANGE', cardIds)`，未選者置牌堆底；事件格式（`dataCardIds` = 所觀看的牌）依 API_DOC 推測，待與後端確認
+- [x] 觀星（諸葛亮）— 回合開始（準備階段、判定之前）由後端 `AskSkillEffectEvent`（`options` = `ARRANGE`/`SKIP`，`dataCardIds` = 觀看的牌）詢問，`skillEffectHandlers` 以 `useSelectCardModal` 依點選順序（先點在最上）選出回牌堆頂的牌 → `useSkillEffect('觀星', 'ARRANGE', cardIds)`，未選者置牌堆底（不選 = 全置底）；「不發動」→ `useSkillEffect('觀星', 'SKIP')`。出牌階段的觀星按鈕已移除（後端不再接受主動發動）
 - [x] 結姻（孫尚香）— `MainPlayer` 的結姻按鈕（`jieYinButton`），自己出牌階段：確認 → 選 2 張手牌 → `useSkillEffect('結姻', 'ACCEPT', cardIds)`；每回合限一次與回血對象由後端判定，失敗時顯示錯誤訊息。孫尚香 id 暫以 `WU008` 判斷（亦比對武將名稱）
 
 - [x] 仁德（劉備）— `MainPlayer` 的仁德按鈕（`renDeButton`），自己出牌階段：確認 → 選 ≥1 張手牌 → `beginPlayerPick` 點座位選接收者 → `useSkillEffect('仁德', 'ACCEPT', cardIds, targetId)`；累積 2 張回血與每回合限一次由後端判定，失敗時顯示錯誤訊息。劉備 id 以 `SHU001` 判斷（亦比對武將名稱）
 
-- [x] 觀星 第一段（諸葛亮）— `MainPlayer` 的觀星按鈕（`guanXingButton`），自己出牌階段：確認 → `useSkillEffect('觀星', 'ACCEPT')`，之後由後端 `AskSkillEffectEvent` 接第二段（`skillEffectHandlers`）；每回合限一次由後端驗證，失敗時顯示錯誤訊息。諸葛亮 id 以 `SHU004` 判斷（亦比對武將名稱）
 
 - [x] 遺計（郭嘉）— `skillEffectHandlers`，確認發動後二選一：`ACCEPT`（自摸 2）或 `beginPlayerPick` 點座位選其他存活角色 → `GIVE`（令其獲得 1 張）；跳過為 `SKIP`
 
