@@ -533,6 +533,7 @@ export default class MainPlayer extends Player {
                 if (this.equipments[3]) {
                     distance -= 1
                 }
+                if (this.hasHorseSkill()) distance -= 1
                 if (this.equipments[0]) {
                     // 考慮武器攻擊距離
                     const weaponCard = threeKingdomsCards[this.equipments[0]]

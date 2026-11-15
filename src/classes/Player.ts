@@ -265,6 +265,8 @@ export default class Player {
             this.hpChange(data.hp - this.hp)
         }
     }
+    // 馬術：鎖定技，計算與其他角色的距離 -1
+    hasHorseSkill = () => this.general?.name === '馬超' || this.generalId === 'SHU006'
     setOutOfDistance(isOutofDistance: boolean) {
         this.isOutofDistance = isOutofDistance
         if (isOutofDistance) {

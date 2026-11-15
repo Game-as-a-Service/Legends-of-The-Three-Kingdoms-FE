@@ -1035,6 +1035,7 @@ export default class Game {
         if (player.equipments[3]) {
             distance -= 1
         }
+        if (player.hasHorseSkill()) distance -= 1
         if (player.equipments[0]) {
             // 考慮武器攻擊距離
             const weaponCard = threeKingdomsCards[player.equipments[0]]
@@ -1050,6 +1051,7 @@ export default class Game {
         if (!Number.isFinite(distance)) return false
         if (targetPlayer.equipments[2]) distance += 1
         if (player.equipments[3]) distance -= 1
+        if (player.hasHorseSkill()) distance -= 1
         return distance <= 1
     }
 }
