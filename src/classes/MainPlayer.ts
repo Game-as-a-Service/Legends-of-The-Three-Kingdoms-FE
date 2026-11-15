@@ -17,6 +17,13 @@ import { killLog } from '../utils/killDebug'
 const threeKingdomsCards: { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard } =
     threeKingdomsCardsJson as { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard }
 const weaponFeatures: { [key: string]: WeaponFeature } = weaponFeaturesJson
+export type SuitName = 'SPADE' | 'HEART' | 'DIAMOND' | 'CLUB'
+const SUIT_OPTIONS: { suit: SuitName; symbol: string; color: string }[] = [
+    { suit: 'SPADE', symbol: suits.spade.symbol, color: suits.spade.color },
+    { suit: 'HEART', symbol: suits.heart.symbol, color: suits.heart.color },
+    { suit: 'DIAMOND', symbol: suits.diamond.symbol, color: suits.diamond.color },
+    { suit: 'CLUB', symbol: suits.club.symbol, color: suits.club.color },
+]
 export default class MainPlayer extends Player {
     handCards: Card[] = []
     selectedCard: Card | null = null
@@ -35,6 +42,7 @@ export default class MainPlayer extends Player {
     guoSeMode: boolean = false
     guoSeButton?: Phaser.GameObjects.Container
     kuRouButton?: Phaser.GameObjects.Container
+    fanJianButton?: Phaser.GameObjects.Container
     playerPick: {
         candidates: Player[]
         selected: Player | null
@@ -243,11 +251,13 @@ export default class MainPlayer extends Player {
         this.hintInstance = hintContainer
 
         this.createConfirmModal(scene)
+        this.createSuitModal(scene)
         this.createCheckModal(scene)
         this.createSelectCardModal(scene)
         this.bindWeaponInteraction()
         this.createGuoSeButton(scene)
         this.createKuRouButton(scene)
+        this.createFanJianButton(scene)
     }
     test() {
         console.log('test')
@@ -286,7 +296,7 @@ export default class MainPlayer extends Player {
         }
     }
     hasOpenModal = () => {
-        return ['confirmModal', 'selectCardModal'].some(
+        return ['confirmModal', 'selectCardModal', 'suitModal'].some(
             (modalName) => (this.mainInstanceMap[modalName]?.alpha ?? 0) > 0,
         )
     }
@@ -1569,6 +1579,55 @@ export default class MainPlayer extends Player {
             },
         })
     }
+    createSuitModal(scene: Phaser.Scene) {
+        const background = scene.add.graphics()
+        background.fillStyle(0x000000, 0.5)
+        background.fillRect(0, 0, 600, 400)
+        const messageText = scene.add.text(300, 100, '請選擇花色', {
+            fontSize: '28px',
+            color: '#fff',
+            align: 'center',
+            wordWrap: { width: 540 },
+        })
+        messageText.setOrigin(0.5)
+        const suitButtons = SUIT_OPTIONS.map(({ symbol, color }, index) =>
+            scene.add
+                .text(90 + index * 140, 250, symbol, {
+                    fontSize: '72px',
+                    color,
+                    backgroundColor: '#fff',
+                    padding: { x: 16, y: 4 },
+                })
+                .setOrigin(0.5),
+        )
+        const popupContainer = scene.add.container(100, 100, [
+            background,
+            messageText,
+            ...suitButtons,
+        ])
+        popupContainer.setSize(600, 400)
+        popupContainer.setDepth(1000)
+        popupContainer.setAlpha(0)
+        this.mainInstanceMap.suitModal = popupContainer
+        this.bindModalHandCardBlocker(popupContainer)
+    }
+    useSuitModal = ({
+        message = '請選擇花色',
+        handleConfirm = (_suit: SuitName) => {},
+    }: {
+        message?: string
+        handleConfirm?: (suit: SuitName) => void
+    }) => {
+        const modal = this.mainInstanceMap.suitModal
+        if (!modal) return
+        const messageText = modal.getAt(1) as Phaser.GameObjects.Text
+        messageText.setText(message)
+        SUIT_OPTIONS.forEach(({ suit }, index) => {
+            const button = modal.getAt(2 + index) as Phaser.GameObjects.Text
+            button.setInteractive().off('pointerdown').on('pointerdown', () => handleConfirm(suit))
+        })
+        modal.setAlpha(1)
+    }
     createConfirmModal(scene: Phaser.Scene) {
         // 確認視窗
         const background = scene.add.graphics()
@@ -2196,6 +2255,85 @@ export default class MainPlayer extends Player {
                 this.mainInstanceMap.confirmModal?.setAlpha(0)
             },
         })
+    }
+    isFanJianAvailable = () => {
+        return this.general?.name === '周瑜' || this.generalId === 'WU005'
+    }
+    createFanJianButton = (scene: Phaser.Scene) => {
+        if (!this.isFanJianAvailable()) return
+        this.fanJianButton = this.createSkillButton(scene, '反間', 0x7c3aed, () =>
+            this.handleFanJianButtonClick(),
+        )
+    }
+    handleFanJianButtonClick = () => {
+        const isMyTurn = this.game?.getActivePlayer() === this.id
+        if (!isMyTurn || this.event || this.discardMode || this.reactionMode) {
+            this.showKillBlockedReason('反間只能在自己的出牌階段發動。')
+            return
+        }
+        if (
+            this.guoSeMode ||
+            this.viperSpearMode ||
+            this.heavenlyDoubleHalberdMode ||
+            this.selectedCard ||
+            this.playerPick
+        ) {
+            this.showKillBlockedReason('請先完成目前的出牌動作。')
+            return
+        }
+        const handCardIds = (this.hand.cardIds as ThreeKingdomsCardIds[]).filter(Boolean)
+        const candidates = this.seats.filter((player) => player.hp > 0)
+        if (handCardIds.length === 0 || candidates.length === 0) {
+            this.showKillBlockedReason('你沒有手牌可交給目標，無法發動反間。')
+            return
+        }
+        const finish = () => {
+            this.closeSelectCardModal()
+            this.clearPlayerPick()
+        }
+        this.useConfirmModal({
+            message: '是否發動反間？每回合限一次。選一張手牌交給目標，目標猜錯花色時受 1 點傷害。',
+            confirmText: '發動',
+            cancelText: '取消',
+            handleConfirm: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+                this.useSelectCardModal({
+                    type: 'small',
+                    message: '反間：選擇一張手牌交給目標',
+                    cardIds: handCardIds,
+                    confirmText: '選擇',
+                    cancelText: '取消',
+                    handleConfirm: (cardId) => {
+                        this.beginPlayerPick({
+                            message: '反間：請選擇目標角色',
+                            candidates,
+                            onConfirm: (target) => this.submitFanJian(String(cardId), target, finish),
+                            onCancel: finish,
+                        })
+                    },
+                    handleCancel: finish,
+                })
+            },
+            handleCancel: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+            },
+        })
+    }
+    submitFanJian = async (cardId: string, target: Player, finish: () => void) => {
+        try {
+            await this.game?.useSkillEffect('反間', 'ACCEPT', [cardId], target.id)
+        } catch (error: any) {
+            const data = error?.response?.data
+            console.error('反間 API 失敗', error?.response?.status, data)
+            finish()
+            this.showKillBlockedReason(`反間發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`)
+            return
+        }
+        atkLine({
+            endPoint: new Phaser.Math.Vector2(target.instance.x, target.instance.y),
+            scene: this.scene,
+        })
+        finish()
     }
     createCheckModal(scene: Phaser.Scene) {
         // 出牌確認視窗

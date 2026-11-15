@@ -19,6 +19,8 @@
 - [x] 國色（大喬）— `MainPlayer` 的國色按鈕（`guoSeMode`），選方塊手牌 + 目標後 `useSkillEffect('國色', 'CONTENTMENT', ...)`
 
 - [x] 苦肉（黃蓋）— `MainPlayer` 的苦肉按鈕（`kuRouButton`），自己出牌階段（可扣到 0 滴，交由瀕死求桃流程），確認後 `useSkillEffect('苦肉', 'ACCEPT')`
+- [x] 反間 第二段（周瑜的目標）— `skillEffectHandlers`，以 `MainPlayer.useSuitModal` 四花色按鈕選擇後 `useSkillEffect('反間', 'SPADE'|'HEART'|'DIAMOND'|'CLUB')`
+- [x] 反間 第一段（周瑜）— `MainPlayer` 的反間按鈕（`fanJianButton`），自己出牌階段：確認 → 選 1 張手牌 → `beginPlayerPick` 點座位選目標 → `useSkillEffect('反間', 'ACCEPT', [cardId], targetId)`；每回合限一次由後端驗證，失敗時顯示錯誤訊息
 
 ## 不需實作（被動／鎖定技，後端自動套用）
 
@@ -33,10 +35,9 @@
 
 - [ ] 遺計（郭嘉）— `ACCEPT`（自摸 2）/ `GIVE`（選目標給 1 張）/ `SKIP`
 - [ ] 激將（劉備主公技，詢問蜀將）— `ACCEPT`（cardIds 放 1 張殺）/ `DECLINE`
-- [ ] 反間 第二段（周瑜的目標）— 猜花色 `SPADE` / `HEART` / `DIAMOND` / `CLUB`
 - [ ] 觀星 第二段（諸葛亮）— `ARRANGE`，依 `dataCardIds` 排列回牌堆頂的順序（未列出者置牌堆底）
 
-> 反間第二段、觀星第二段的事件格式依 API_DOC 推測，實作前需與後端確認。
+> 觀星第二段的事件格式依 API_DOC 推測，實作前需與後端確認。
 
 ### B. 出牌階段主動技（前端無發動入口）
 
@@ -44,7 +45,6 @@
 
 - [ ] 制衡（孫權）— `ACCEPT`，cardIds 放要棄的牌（手牌 + 裝備，≥1），摸等量
 - [ ] 突襲（張遼）— 每回合 1 次，`ACCEPT`，cardIds 放目標玩家 id（1~2 名）
-- [ ] 反間 第一段（周瑜）— 每回合 1 次，`ACCEPT`，cardIds 放 1 張手牌 + targetPlayerId
 - [ ] 結姻（孫尚香）— 每回合 1 次，`ACCEPT`，cardIds 放 2 張手牌
 - [ ] 仁德（劉備）— `ACCEPT`，cardIds 放手牌（≥1）+ targetPlayerId，累積 2 張回 1 體力（回血每回合 1 次）
 - [ ] 觀星 第一段（諸葛亮）— 每回合 1 次，`ACCEPT`，之後接 A 類第二段

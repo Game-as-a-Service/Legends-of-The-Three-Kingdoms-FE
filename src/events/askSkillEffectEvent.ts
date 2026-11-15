@@ -330,6 +330,25 @@ const handleLiuLi: SkillEffectHandler = (mainPlayer, event) => {
     })
 }
 
+const handleFanJian: SkillEffectHandler = (mainPlayer, event) => {
+    const zhouYu = [...mainPlayer.seats, mainPlayer].find(
+        (player) => player.id === event.data?.dataPlayerId,
+    )
+    const zhouYuName = zhouYu?.general?.name || event.data?.dataPlayerId || '周瑜'
+    let responseSubmitted = false
+    mainPlayer.useSuitModal({
+        message: `${zhouYuName}發動反間，請選擇一個花色。\n猜錯將受到 1 點傷害。`,
+        handleConfirm: (suit) => {
+            if (responseSubmitted) return
+            responseSubmitted = true
+            mainPlayer.game?.useSkillEffect('反間', suit)
+            mainPlayer.event = ''
+            mainPlayer.eventData = null
+            mainPlayer.mainInstanceMap.suitModal?.setAlpha(0)
+        },
+    })
+}
+
 const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     反饋: handleFanKui,
     鬼才: handleGuiCai,
@@ -338,6 +357,7 @@ const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     裸衣: handleLuoYi,
     剛烈: handleGangLie,
     流離: handleLiuLi,
+    反間: handleFanJian,
 }
 
 export const handleAskSkillEffectEvent = (mainPlayer: MainPlayer, event: AskSkillEffectEvent) => {
