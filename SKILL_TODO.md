@@ -22,6 +22,8 @@
 - [x] 反間 第二段（周瑜的目標）— `skillEffectHandlers`，以 `MainPlayer.useSuitModal` 四花色按鈕選擇後 `useSkillEffect('反間', 'SPADE'|'HEART'|'DIAMOND'|'CLUB')`
 - [x] 反間 第一段（周瑜）— `MainPlayer` 的反間按鈕（`fanJianButton`），自己出牌階段：確認 → 選 1 張手牌 → `beginPlayerPick` 點座位選目標 → `useSkillEffect('反間', 'ACCEPT', [cardId], targetId)`；每回合限一次由後端驗證，失敗時顯示錯誤訊息
 
+- [x] 觀星 第二段（諸葛亮）— `skillEffectHandlers`，以 `useSelectCardModal` 依點選順序（先點在最上）選出回牌堆頂的牌，`useSkillEffect('觀星', 'ARRANGE', cardIds)`，未選者置牌堆底；事件格式（`dataCardIds` = 所觀看的牌）依 API_DOC 推測，待與後端確認
+
 ## 不需實作（被動／鎖定技，後端自動套用）
 
 - 馬術、咆哮、英姿、謙遜、連營、空城、集智、奇才、克己
@@ -35,9 +37,6 @@
 
 - [ ] 遺計（郭嘉）— `ACCEPT`（自摸 2）/ `GIVE`（選目標給 1 張）/ `SKIP`
 - [ ] 激將（劉備主公技，詢問蜀將）— `ACCEPT`（cardIds 放 1 張殺）/ `DECLINE`
-- [ ] 觀星 第二段（諸葛亮）— `ARRANGE`，依 `dataCardIds` 排列回牌堆頂的順序（未列出者置牌堆底）
-
-> 觀星第二段的事件格式依 API_DOC 推測，實作前需與後端確認。
 
 ### B. 出牌階段主動技（前端無發動入口）
 

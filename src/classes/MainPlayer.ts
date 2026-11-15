@@ -2429,6 +2429,7 @@ export default class MainPlayer extends Player {
         confirmText = '是',
         cancelText = '否',
         maxSelectionCount = 1,
+        minSelectionCount = maxSelectionCount,
         handleConfirm = (cardId: any) => {},
         handleCancel = () => {},
     }: {
@@ -2440,6 +2441,7 @@ export default class MainPlayer extends Player {
         confirmText?: string
         cancelText?: string
         maxSelectionCount?: number
+        minSelectionCount?: number
         handleConfirm?: (cardId: any) => void
         handleCancel?: () => void
     }) => {
@@ -2746,8 +2748,8 @@ export default class MainPlayer extends Player {
                 if (maxSelectionCount > 1) {
                     const selectedCardIds =
                         this.mainInstanceMap.selectCardModal?.getData('selectedCardIds') || []
-                    if (selectedCardIds.length !== maxSelectionCount) {
-                        console.log(`請選擇 ${maxSelectionCount} 張卡牌`)
+                    if (selectedCardIds.length < minSelectionCount) {
+                        console.log(`請至少選擇 ${minSelectionCount} 張卡牌`)
                         return
                     }
                     handleConfirm(selectedCardIds)

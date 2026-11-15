@@ -349,6 +349,44 @@ const handleFanJian: SkillEffectHandler = (mainPlayer, event) => {
     })
 }
 
+const handleGuanXing: SkillEffectHandler = (mainPlayer, event) => {
+    const viewedCardIds = (event.data?.dataCardIds || [])
+        .filter(Boolean)
+        .map((cardId) => cardId as ThreeKingdomsCardIds)
+    let responseSubmitted = false
+    const submitArrange = (cardIds: string[]) => {
+        if (responseSubmitted) return
+        responseSubmitted = true
+        mainPlayer.game?.useSkillEffect('觀星', 'ARRANGE', cardIds)
+        mainPlayer.event = ''
+        mainPlayer.eventData = null
+        mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+        mainPlayer.closeSelectCardModal()
+    }
+
+    if (viewedCardIds.length === 0) {
+        submitArrange([])
+        return
+    }
+
+    mainPlayer.useSelectCardModal({
+        type: 'small',
+        message: '觀星：依序點選放回牌堆頂的牌（先點者在最上方），未選的牌將置於牌堆底',
+        cardIds: viewedCardIds,
+        confirmText: '確認排列',
+        cancelText: '全置牌堆底',
+        maxSelectionCount: viewedCardIds.length,
+        minSelectionCount: 0,
+        handleConfirm: (selectedCardIds) => {
+            const cardIds = Array.isArray(selectedCardIds)
+                ? selectedCardIds.filter(Boolean).map(String)
+                : [String(selectedCardIds)]
+            submitArrange(cardIds)
+        },
+        handleCancel: () => submitArrange([]),
+    })
+}
+
 const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     反饋: handleFanKui,
     鬼才: handleGuiCai,
@@ -358,6 +396,7 @@ const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     剛烈: handleGangLie,
     流離: handleLiuLi,
     反間: handleFanJian,
+    觀星: handleGuanXing,
 }
 
 export const handleAskSkillEffectEvent = (mainPlayer: MainPlayer, event: AskSkillEffectEvent) => {
