@@ -46,6 +46,8 @@ export default class MainPlayer extends Player {
     jieYinButton?: Phaser.GameObjects.Container
     renDeButton?: Phaser.GameObjects.Container
     guanXingButton?: Phaser.GameObjects.Container
+    longDanMode: boolean = false
+    longDanButton?: Phaser.GameObjects.Container
     playerPick: {
         candidates: Player[]
         selected: Player | null
@@ -223,6 +225,7 @@ export default class MainPlayer extends Player {
         skipContainer.setAlpha(0)
         this.skipInstance = skipContainer
         skipbtn.on('pointerdown', () => {
+            this.clearLongDanMode()
             if (this.event === 'AskDodgeEvent' || this.event === 'AskPeachEvent') {
                 this.gamePlayCardHandler({}, this.event)
                 this.event = ''
@@ -264,6 +267,7 @@ export default class MainPlayer extends Player {
         this.createJieYinButton(scene)
         this.createRenDeButton(scene)
         this.createGuanXingButton(scene)
+        this.createLongDanButton(scene)
     }
     test() {
         console.log('test')
@@ -389,7 +393,7 @@ export default class MainPlayer extends Player {
             this.handleGuoSeCardClick(card)
             return
         }
-        if (card.name === '殺' && !this.canUseCardAsKill(card)) {
+        if (this.isKillLikeCard(card) && !this.canUseCardAsKill(card)) {
             killLog('warn', '點擊殺被擋：canUseCardAsKill=false', this.getDebugSnapshot())
             this.showKillBlockedReason(
                 '不能出殺：本回合已經出過一張殺，除非使用諸葛連弩或特殊連續出殺效果。',
@@ -405,7 +409,7 @@ export default class MainPlayer extends Player {
         }
         /// event check
         if (this.event === 'AskKillEvent' || this.event === 'BorrowedSwordEvent') {
-            if (card.name !== '殺') {
+            if (!this.isKillLikeCard(card)) {
                 return
             }
             this.handleSelectCard(card)
@@ -510,7 +514,7 @@ export default class MainPlayer extends Player {
             if (cardInfo.type === 'scroll') {
                 return
             }
-            if (card.name === '閃') return
+            if (card.name === '閃' && !this.isKillLikeCard(card)) return
             if (card.name === '桃') {
                 // 顯示確認
                 this.mainInstanceMap.checkModal?.setAlpha(1)
@@ -678,13 +682,35 @@ export default class MainPlayer extends Player {
         const cardInfo = threeKingdomsCards[card.id]
         return cardInfo?.suit === 'spade' || cardInfo?.suit === 'club'
     }
+    isLongDanAvailable = () => {
+        return this.general?.name === '趙雲' || this.generalId === 'SHU005'
+    }
+    // 龍膽啟動時：被問閃把殺當閃；需要出殺（含主動出殺）把閃當殺
+    isLongDanDodgeCard = (card: Card) => {
+        return (
+            this.longDanMode &&
+            this.isLongDanAvailable() &&
+            this.event === 'AskDodgeEvent' &&
+            card.name === '殺'
+        )
+    }
+    isLongDanKillCard = (card: Card) => {
+        return (
+            this.longDanMode &&
+            this.isLongDanAvailable() &&
+            this.event !== 'AskDodgeEvent' &&
+            card.name === '閃'
+        )
+    }
+    isKillLikeCard = (card: Card) => card.name === '殺' || this.isLongDanKillCard(card)
     canUseCardAsDodge = (card: Card) => {
         if (card.name === '閃') return true
+        if (this.isLongDanDodgeCard(card)) return true
         if (!this.isQingGuoDodgeAvailable()) return false
         return this.isBlackCard(card)
     }
     canUseCardAsKill = (card: Card) => {
-        if (card.name !== '殺') return true
+        if (!this.isKillLikeCard(card)) return true
         if (this.event === 'AskKillEvent' || this.event === 'BorrowedSwordEvent') return true
         if (this.event === 'AskDodgeEvent' && this.canUseCardAsDodge(card)) return true
         if (this.game?.getActivePlayer() !== this.id) return true
@@ -964,6 +990,7 @@ export default class MainPlayer extends Player {
             killLog('warn', `processEvent 覆蓋尚未清除的 event：${this.event} -> ${event.event}`)
         }
         this.clearGuoSeMode()
+        this.clearLongDanMode()
         this.event = event.event
         this.eventData = event.data
         switch (this.event) {
@@ -1560,7 +1587,7 @@ export default class MainPlayer extends Player {
         hintText?.setText(`請對${targetName}出一張殺`)
         this.hintInstance?.setAlpha(1)
         this.handCards.forEach((card) => {
-            if (card.name !== '殺') {
+            if (!this.isKillLikeCard(card)) {
                 card.instance.setAlpha(0.3)
             }
         })
@@ -1736,10 +1763,12 @@ export default class MainPlayer extends Player {
     handleCheckClick = () => {
         const cardBefore = this.selectedCard
         const blockedBefore = this.blockedReasonCount
+        const eventBefore = this.event
         const snapshot = this.getDebugSnapshot()
         killLog('info', '確定 被點擊', snapshot)
         try {
             this.handleCheckClickInternal()
+            if (eventBefore && !this.event) this.clearLongDanMode()
         } catch (error) {
             killLog('error', 'handleCheckClick 發生例外', { error: String(error), snapshot })
             throw error
@@ -1766,6 +1795,10 @@ export default class MainPlayer extends Player {
         }
         if (this.guoSeMode && this.selectedCard) {
             this.submitGuoSe()
+            return
+        }
+        if (this.selectedCard && this.isLongDanConvertedCard(this.selectedCard)) {
+            this.submitLongDan()
             return
         }
         if (this.selectedCard?.name === '殺' && !this.canUseCardAsKill(this.selectedCard)) {
@@ -1988,6 +2021,7 @@ export default class MainPlayer extends Player {
         if (this.heavenlyDoubleHalberdMode) {
             this.clearHeavenlyDoubleHalberdMode(false)
         }
+        this.clearLongDanMode()
         if (
             this.event === 'AskDodgeEvent' ||
             this.event === 'AskPeachEvent' ||
@@ -2034,6 +2068,9 @@ export default class MainPlayer extends Player {
         }
         if (this.guoSeMode) {
             this.applyGuoSeMode()
+        }
+        if (this.longDanMode) {
+            this.applyLongDanMode()
         }
     }
     beginPlayerPick = ({
@@ -2492,6 +2529,181 @@ export default class MainPlayer extends Player {
             scene: this.scene,
         })
         finish()
+    }
+    isLongDanConvertedCard = (card: Card) => {
+        return this.isLongDanDodgeCard(card) || this.isLongDanKillCard(card)
+    }
+    createLongDanButton = (scene: Phaser.Scene) => {
+        if (!this.isLongDanAvailable()) return
+        this.longDanButton = this.createSkillButton(scene, '龍膽', 0x10b981, () =>
+            this.handleLongDanButtonClick(),
+        )
+    }
+    getLongDanReactiveHint = () => {
+        if (this.event === 'AskDodgeEvent') {
+            return this.isQingGuoDodgeAvailable()
+                ? '請出一張閃或黑色牌（傾國）'
+                : '請出一張閃'
+        }
+        if (this.event === 'AskKillEvent') return '請出一張殺'
+        return null
+    }
+    handleLongDanButtonClick = () => {
+        if (this.longDanMode) {
+            this.cancelLongDanMode()
+            return
+        }
+        const isReactive =
+            this.event === 'AskDodgeEvent' ||
+            this.event === 'AskKillEvent' ||
+            this.event === 'BorrowedSwordEvent'
+        const isMyTurn = this.game?.getActivePlayer() === this.id
+        if (!isReactive && (!isMyTurn || this.event || this.reactionMode)) {
+            this.showKillBlockedReason('龍膽只能在出牌階段，或需要出殺／出閃時發動。')
+            return
+        }
+        if (
+            this.discardMode ||
+            this.viperSpearMode ||
+            this.heavenlyDoubleHalberdMode ||
+            this.guoSeMode ||
+            this.playerPick
+        ) {
+            this.showKillBlockedReason('請先完成目前的出牌動作。')
+            return
+        }
+        const needCardName = this.event === 'AskDodgeEvent' ? '殺' : '閃'
+        if (!this.handCards.some((card) => !card.played && card.name === needCardName)) {
+            this.showKillBlockedReason(`你沒有${needCardName}，無法發動龍膽。`)
+            return
+        }
+        this.longDanMode = true
+        this.applyLongDanMode()
+    }
+    applyLongDanMode = () => {
+        this.longDanButton?.setScale(1.1)
+        const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+        if (this.event === 'AskDodgeEvent') {
+            this.handCards.forEach((card) => {
+                card.instance.setAlpha(this.canUseCardAsDodge(card) ? 1 : 0.3)
+            })
+            hintText?.setText('龍膽：請出一張閃，或將一張殺當閃')
+        } else if (this.event) {
+            this.handCards.forEach((card) => {
+                card.instance.setAlpha(this.isKillLikeCard(card) ? 1 : 0.3)
+            })
+            if (this.event === 'AskKillEvent') {
+                hintText?.setText('龍膽：請出一張殺，或將一張閃當殺')
+            }
+        } else {
+            hintText?.setText('龍膽：請選擇一張閃當殺使用，再選擇攻擊目標')
+        }
+        this.hintInstance?.setAlpha(1)
+    }
+    // 關閉龍膽並還原畫面；若已選的是轉化牌則一併取消選取
+    cancelLongDanMode = () => {
+        const convertedCard =
+            this.selectedCard && this.isLongDanConvertedCard(this.selectedCard)
+                ? this.selectedCard
+                : null
+        this.clearLongDanMode()
+        if (convertedCard) {
+            this.selectedCard = null
+            this.scene.tweens.add({
+                targets: convertedCard.instance,
+                x: convertedCard.instance.x,
+                y: convertedCard.instance.y + 20,
+                duration: 500,
+                ease: 'Power2',
+            })
+            if (this.game) {
+                this.game.selectTargetPlayers.forEach((player) => player.setPlayerSelected(false))
+                this.game.selectTargetPlayers = []
+            }
+            this.resetOutofDistance()
+        }
+        if (this.event) {
+            const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
+            const reactiveHint = this.getLongDanReactiveHint()
+            if (reactiveHint) hintText?.setText(reactiveHint)
+            this.handCards.forEach((card) => {
+                const usable =
+                    this.event === 'AskDodgeEvent'
+                        ? this.canUseCardAsDodge(card)
+                        : this.event === 'AskKillEvent' || this.event === 'BorrowedSwordEvent'
+                          ? this.isKillLikeCard(card)
+                          : true
+                card.instance.setAlpha(usable ? 1 : 0.3)
+            })
+            if (!convertedCard) return
+            this.mainInstanceMap.checkModal?.setAlpha(1)
+            return
+        }
+        this.mainInstanceMap.checkModal?.setAlpha(0)
+        this.hintInstance?.setAlpha(0)
+    }
+    clearLongDanMode = () => {
+        if (!this.longDanMode) return
+        this.longDanMode = false
+        this.longDanButton?.setScale(1)
+    }
+    submitLongDan = async () => {
+        const card = this.selectedCard
+        if (!card) return
+        const isDodge = this.event === 'AskDodgeEvent'
+        const isActive = !this.event
+        const targetPlayer = isActive ? this.game?.selectTargetPlayers[0] : undefined
+        let targetPlayerId: string | undefined
+        if (isActive) {
+            if (!targetPlayer) {
+                this.showKillBlockedReason('龍膽：請先選擇攻擊目標。')
+                return
+            }
+            targetPlayerId = targetPlayer.id
+        } else if (this.event === 'BorrowedSwordEvent') {
+            targetPlayerId = this.getBorrowedSwordKillContext().targetPlayerId
+            if (!targetPlayerId) {
+                this.showKillBlockedReason('不能出殺：借刀殺人缺少指定攻擊目標。')
+                return
+            }
+        }
+        try {
+            await this.game?.useSkillEffect(
+                '龍膽',
+                isDodge ? 'DODGE' : 'KILL',
+                [card.id],
+                targetPlayerId,
+            )
+        } catch (error: any) {
+            const data = error?.response?.data
+            console.error('龍膽 API 失敗', error?.response?.status, data)
+            this.showKillBlockedReason(`龍膽發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`)
+            return
+        }
+        const attackedPlayer = targetPlayer ?? this.seats.find((p) => p.id === targetPlayerId)
+        if (attackedPlayer) {
+            atkLine({
+                endPoint: new Phaser.Math.Vector2(
+                    attackedPlayer.instance.x,
+                    attackedPlayer.instance.y,
+                ),
+                scene: this.scene,
+            })
+        }
+        targetPlayer?.setPlayerSelected(false)
+        if (this.game) this.game.selectTargetPlayers = []
+        this.selectedCard = null
+        card.playCard()
+        this.clearLongDanMode()
+        this.resetOutofDistance()
+        this.event = ''
+        this.eventData = null
+        this.reactionType = ''
+        this.reactionMode = false
+        this.mainInstanceMap.checkModal?.setAlpha(0)
+        this.mainInstanceMap.confirmModal?.setAlpha(0)
+        this.hintInstance?.setAlpha(0)
+        this.handCards.forEach((handCard) => handCard.instance.setAlpha(1))
     }
     isGuanXingAvailable = () => {
         return this.general?.name === '諸葛亮' || this.generalId === 'SHU004'

@@ -56,7 +56,7 @@
 目前 `canUseCardAsKill` / `canUseCardAsDodge` 只認殺、閃（傾國除外）。
 
 - [ ] 武聖（關羽）— `KILL`，紅色手牌當殺；主動出殺、`AskKillEvent`、決鬥回應（目前擋在 `card.name !== '殺'`）
-- [ ] 龍膽（趙雲）— `KILL` / `DODGE`，殺當閃（`AskDodgeEvent`）、閃當殺（主動與 `AskKillEvent`）
+- [x] 龍膽（趙雲）— `MainPlayer` 的龍膽按鈕（`longDanButton`，趙雲 id 暫以 `SHU005` 判斷），可切換：被問閃（`AskDodgeEvent`）時殺亮起可當閃 → `useSkillEffect('龍膽', 'DODGE', [殺 id])`；需要出殺（自己出牌階段主動出殺、`AskKillEvent`、`BorrowedSwordEvent`）時閃亮起可當殺 → `useSkillEffect('龍膽', 'KILL', [閃 id], targetId)`（主動與借刀殺人帶攻擊目標）
 - [ ] 奇襲（甘寧）— `DISMANTLE`，黑牌當過河拆橋，目標必填，後續走 `useDismantleEffect`
 
 ### D. 前端有武將資料，但 API_DOC 未列技能（待向後端確認）

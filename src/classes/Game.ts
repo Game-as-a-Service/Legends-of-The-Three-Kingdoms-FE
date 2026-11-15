@@ -237,7 +237,7 @@ export default class Game {
             handleHeavenlyDoubleHalberdTargetSelection()
             return
         }
-        if (this.me.selectedCard.name === '殺') {
+        if (this.me.isKillLikeCard(this.me.selectedCard)) {
             const selectedIndex = this.selectTargetPlayers.findIndex((p) => p.id === player.id)
             if (selectedIndex >= 0) {
                 player.setPlayerSelected(false)
