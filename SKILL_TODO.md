@@ -29,6 +29,8 @@
 
 - [x] 觀星 第一段（諸葛亮）— `MainPlayer` 的觀星按鈕（`guanXingButton`），自己出牌階段：確認 → `useSkillEffect('觀星', 'ACCEPT')`，之後由後端 `AskSkillEffectEvent` 接第二段（`skillEffectHandlers`）；每回合限一次由後端驗證，失敗時顯示錯誤訊息。諸葛亮 id 以 `SHU004` 判斷（亦比對武將名稱）
 
+- [x] 遺計（郭嘉）— `skillEffectHandlers`，確認發動後二選一：`ACCEPT`（自摸 2）或 `beginPlayerPick` 點座位選其他存活角色 → `GIVE`（令其獲得 1 張）；跳過為 `SKIP`
+
 ## 不需實作（被動／鎖定技，後端自動套用）
 
 - 馬術、咆哮、英姿、謙遜、連營、空城、集智、奇才、克己
@@ -40,7 +42,6 @@
 
 收到後只會 `console.warn('Unsupported skill effect')`。
 
-- [ ] 遺計（郭嘉）— `ACCEPT`（自摸 2）/ `GIVE`（選目標給 1 張）/ `SKIP`
 - [ ] 激將（劉備主公技，詢問蜀將）— `ACCEPT`（cardIds 放 1 張殺）/ `DECLINE`
 
 ### B. 出牌階段主動技（前端無發動入口）

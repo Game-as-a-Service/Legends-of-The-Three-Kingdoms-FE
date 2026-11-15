@@ -330,6 +330,52 @@ const handleLiuLi: SkillEffectHandler = (mainPlayer, event) => {
     })
 }
 
+const handleYiJi: SkillEffectHandler = (mainPlayer) => {
+    const candidates = mainPlayer.seats.filter((player) => player.hp > 0)
+    let responseSubmitted = false
+    const finishResponse = () => {
+        mainPlayer.event = ''
+        mainPlayer.eventData = null
+        mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+        mainPlayer.clearPlayerPick()
+    }
+    const submitResponse = (choice: 'ACCEPT' | 'GIVE' | 'SKIP', targetPlayerId?: string) => {
+        if (responseSubmitted) return
+        responseSubmitted = true
+        mainPlayer.game?.useSkillEffect('遺計', choice, [], targetPlayerId)
+        finishResponse()
+    }
+    const skip = () => submitResponse('SKIP')
+
+    mainPlayer.useConfirmModal({
+        message: '是否發動遺計？',
+        confirmText: '發動遺計',
+        cancelText: '跳過',
+        handleConfirm: () => {
+            mainPlayer.useConfirmModal({
+                message: '遺計：請選擇效果',
+                confirmText: '自己摸 2 張牌',
+                cancelText: candidates.length > 0 ? '令他人獲得 1 張牌' : '跳過',
+                handleConfirm: () => submitResponse('ACCEPT'),
+                handleCancel: () => {
+                    if (candidates.length === 0) {
+                        skip()
+                        return
+                    }
+                    mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+                    mainPlayer.beginPlayerPick({
+                        message: '遺計：請選擇獲得 1 張牌的角色',
+                        candidates,
+                        onConfirm: (target) => submitResponse('GIVE', target.id),
+                        onCancel: skip,
+                    })
+                },
+            })
+        },
+        handleCancel: skip,
+    })
+}
+
 const handleFanJian: SkillEffectHandler = (mainPlayer, event) => {
     const zhouYu = [...mainPlayer.seats, mainPlayer].find(
         (player) => player.id === event.data?.dataPlayerId,
@@ -394,6 +440,7 @@ const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     洛神: handleLuoShen,
     裸衣: handleLuoYi,
     剛烈: handleGangLie,
+    遺計: handleYiJi,
     流離: handleLiuLi,
     反間: handleFanJian,
     觀星: handleGuanXing,
