@@ -191,7 +191,7 @@ POST /api/games/{gameId}/player:playCard
 | 爪黃飛電 YellowFlash                   | EHK052         | 空字串         | 裝備+1馬 → 其他人對你距離+1                                                                                                               |
 | 赤兔 RedRabbitHorse                    | EH5044         | 空字串         | 裝備-1馬 → 你對其他人距離-1                                                                                                               |
 | 紫騂 VioletStallion                    | EDK104         | 空字串         | 裝備-1馬 → 你對其他人距離-1                                                                                                               |
-| 黃爪飛電 FerghanaHorse                 | ESK026         | 空字串         | 裝備-1馬 → 你對其他人距離-1                                                                                                               |
+| 大宛 FerghanaHorse                     | ESK026         | 空字串         | 裝備-1馬 → 你對其他人距離-1                                                                                                               |
 
 ---
 
