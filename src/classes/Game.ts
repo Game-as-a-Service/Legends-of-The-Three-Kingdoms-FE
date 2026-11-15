@@ -196,7 +196,11 @@ export default class Game {
             return
         }
         if (this.me.guoSeMode) {
-            if (!this.me.selectedCard || player.isOutofDistance) return
+            if (
+                (!this.me.selectedCard && !this.me.selectedConversionEquipmentId) ||
+                player.isOutofDistance
+            )
+                return
             this.selectTargetPlayers.forEach((targetPlayer) => targetPlayer.setPlayerSelected(false))
             player.setPlayerSelected(true, 'from')
             this.selectTargetPlayers = [player]
