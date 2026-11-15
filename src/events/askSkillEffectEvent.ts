@@ -376,6 +376,46 @@ const handleYiJi: SkillEffectHandler = (mainPlayer) => {
     })
 }
 
+// 突襲（張遼，摸牌階段）：可放棄摸牌，改為獲得至多兩名其他角色的各一張手牌
+const handleTuXi: SkillEffectHandler = (mainPlayer) => {
+    const candidates = mainPlayer.seats.filter((player) => player.hp > 0 && player.hand.size > 0)
+    let responseSubmitted = false
+    const finishResponse = () => {
+        mainPlayer.event = ''
+        mainPlayer.eventData = null
+        mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+        mainPlayer.clearPlayerPick()
+    }
+    const submitResponse = (choice: 'ACCEPT' | 'SKIP', targetPlayerIds: string[] = []) => {
+        if (responseSubmitted) return
+        responseSubmitted = true
+        mainPlayer.game?.useSkillEffect('突襲', choice, targetPlayerIds)
+        finishResponse()
+    }
+    const skip = () => submitResponse('SKIP')
+
+    mainPlayer.useConfirmModal({
+        message: '是否發動突襲？放棄摸牌，改為獲得至多兩名其他角色的各一張手牌。',
+        confirmText: '發動突襲',
+        cancelText: '照常摸牌',
+        handleConfirm: () => {
+            if (candidates.length === 0) {
+                skip()
+                return
+            }
+            mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+            mainPlayer.beginPlayerPick({
+                message: '突襲：請選擇 1～2 名有手牌的角色，再按確定',
+                candidates,
+                maxSelections: 2,
+                onConfirmMany: (targets) => submitResponse('ACCEPT', targets.map((target) => target.id)),
+                onCancel: skip,
+            })
+        },
+        handleCancel: skip,
+    })
+}
+
 const handleFanJian: SkillEffectHandler = (mainPlayer, event) => {
     const zhouYu = [...mainPlayer.seats, mainPlayer].find(
         (player) => player.id === event.data?.dataPlayerId,
@@ -443,6 +483,7 @@ const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     遺計: handleYiJi,
     流離: handleLiuLi,
     反間: handleFanJian,
+    突襲: handleTuXi,
     觀星: handleGuanXing,
 }
 
