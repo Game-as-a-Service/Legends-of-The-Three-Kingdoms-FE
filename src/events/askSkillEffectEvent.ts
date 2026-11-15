@@ -433,6 +433,63 @@ const handleGuanXing: SkillEffectHandler = (mainPlayer, event) => {
     })
 }
 
+// 激將：主公劉備需要出殺（南蠻／決鬥、出牌階段主動出殺、借刀殺人），依座位順序詢問蜀勢力角色
+// dataPlayerId = 劉備；ACCEPT 須帶手中一張殺，DECLINE 則輪到下一位蜀將
+const handleJiJiang: SkillEffectHandler = (mainPlayer, event) => {
+    const liuBei = mainPlayer.seats.find((player) => player.id === event.data?.dataPlayerId)
+    const liuBeiName = liuBei?.general?.name || event.data?.dataPlayerId || '主公'
+    const killCardIds = mainPlayer.handCards
+        .filter((card) => card.name === '殺')
+        .map((card) => card.id)
+    let responseSubmitted = false
+    const finishResponse = () => {
+        mainPlayer.event = ''
+        mainPlayer.eventData = null
+        mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+        mainPlayer.closeSelectCardModal()
+    }
+    const submitResponse = (choice: 'ACCEPT' | 'DECLINE', cardIds: string[] = []) => {
+        if (responseSubmitted) return
+        responseSubmitted = true
+        mainPlayer.game?.useSkillEffect('激將', choice, cardIds)
+        finishResponse()
+    }
+    const decline = () => submitResponse('DECLINE')
+
+    if (killCardIds.length === 0) {
+        mainPlayer.useConfirmModal({
+            message: `${liuBeiName}發動激將，但你手上沒有殺，僅能拒絕。`,
+            confirmText: '確定',
+            cancelText: '拒絕',
+            handleConfirm: decline,
+            handleCancel: decline,
+        })
+        return
+    }
+
+    mainPlayer.useConfirmModal({
+        message: `${liuBeiName}發動激將，是否替其打出一張殺？`,
+        confirmText: '出殺',
+        cancelText: '拒絕',
+        handleConfirm: () => {
+            mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+            mainPlayer.useSelectCardModal({
+                type: 'small',
+                message: '選擇要代出的殺',
+                cardIds: killCardIds,
+                confirmText: '確認出殺',
+                cancelText: '拒絕激將',
+                handleConfirm: (cardId) => {
+                    if (!cardId || Array.isArray(cardId)) return
+                    submitResponse('ACCEPT', [String(cardId)])
+                },
+                handleCancel: decline,
+            })
+        },
+        handleCancel: decline,
+    })
+}
+
 const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     反饋: handleFanKui,
     鬼才: handleGuiCai,
@@ -444,6 +501,7 @@ const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     流離: handleLiuLi,
     反間: handleFanJian,
     觀星: handleGuanXing,
+    激將: handleJiJiang,
 }
 
 export const handleAskSkillEffectEvent = (mainPlayer: MainPlayer, event: AskSkillEffectEvent) => {
