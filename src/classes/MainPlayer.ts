@@ -67,6 +67,7 @@ export default class MainPlayer extends Player {
     modalCardAlphas: Map<Card, number> = new Map()
     event: string = ''
     eventData: any = null
+    pendingEventResponse: object | null = null
     blockedReasonCount: number = 0
     confirmModalBaseFontSize: number = 32
     confirmModalMinFontSize: number = 20
@@ -993,6 +994,10 @@ export default class MainPlayer extends Player {
     }
     processEvent = (event: any) => {
         console.log('processEvent', event)
+        if (this.pendingEventResponse) {
+            this.mainInstanceMap.confirmModal?.setAlpha(0)
+            this.pendingEventResponse = null
+        }
         if (this.event && this.event !== event.event) {
             killLog('warn', `processEvent 覆蓋尚未清除的 event：${this.event} -> ${event.event}`)
         }
@@ -1086,22 +1091,22 @@ export default class MainPlayer extends Player {
                 this.useConfirmModal({
                     message: event.message,
                     handleConfirm: () => {
-                        this.game?.useEquipmentEffect(
-                            event.data.equipmentCardId,
-                            event.data.targetPlayerIds[0],
-                            'equipmentActive',
+                        void this.submitPendingEventResponse(event, (game) =>
+                            game.useEquipmentEffect(
+                                event.data.equipmentCardId,
+                                event.data.targetPlayerIds[0],
+                                'equipmentActive',
+                            ),
                         )
-                        this.mainInstanceMap.confirmModal?.setAlpha(0)
-                        this.clearPendingEvent()
                     },
                     handleCancel: () => {
-                        this.game?.useEquipmentEffect(
-                            event.data.equipmentCardId,
-                            event.data.targetPlayerIds[0],
-                            'equipmentSkip',
+                        void this.submitPendingEventResponse(event, (game) =>
+                            game.useEquipmentEffect(
+                                event.data.equipmentCardId,
+                                event.data.targetPlayerIds[0],
+                                'equipmentSkip',
+                            ),
                         )
-                        this.mainInstanceMap.confirmModal?.setAlpha(0)
-                        this.clearPendingEvent()
                     },
                 })
                 break
@@ -1133,15 +1138,15 @@ export default class MainPlayer extends Player {
                     cancelText: '跳過',
                     handleConfirm: () => {
                         console.log('發動雌雄雙股劍效果')
-                        this.game?.activateYinYangSwords('ACTIVATE')
-                        this.mainInstanceMap.confirmModal?.setAlpha(0)
-                        this.clearPendingEvent()
+                        void this.submitPendingEventResponse(event, (game) =>
+                            game.activateYinYangSwords('ACTIVATE'),
+                        )
                     },
                     handleCancel: () => {
                         console.log('跳過雌雄雙股劍效果')
-                        this.game?.activateYinYangSwords('SKIP')
-                        this.mainInstanceMap.confirmModal?.setAlpha(0)
-                        this.clearPendingEvent()
+                        void this.submitPendingEventResponse(event, (game) =>
+                            game.activateYinYangSwords('SKIP'),
+                        )
                     },
                 })
                 break
@@ -1164,9 +1169,9 @@ export default class MainPlayer extends Player {
                             cancelText: '取消',
                             handleConfirm: (cardId) => {
                                 console.log('棄牌', cardId)
-                                this.game?.useYinYangSwordsEffect('TARGET_DISCARDS', cardId)
-                                this.closeSelectCardModal()
-                                this.clearPendingEvent()
+                                void this.submitPendingEventResponse(event, (game) =>
+                                    game.useYinYangSwordsEffect('TARGET_DISCARDS', cardId),
+                                )
                             },
                             handleCancel: () => {
                                 console.log('取消棄牌')
@@ -1179,9 +1184,9 @@ export default class MainPlayer extends Player {
                     handleCancel: () => {
                         // ATTACKER_DRAWS：讓攻擊者摸牌
                         console.log('讓攻擊者摸牌')
-                        this.game?.useYinYangSwordsEffect('ATTACKER_DRAWS', '')
-                        this.mainInstanceMap.confirmModal?.setAlpha(0)
-                        this.clearPendingEvent()
+                        void this.submitPendingEventResponse(event, (game) =>
+                            game.useYinYangSwordsEffect('ATTACKER_DRAWS', ''),
+                        )
                     },
                 })
                 break
@@ -1207,9 +1212,9 @@ export default class MainPlayer extends Player {
                             cancelText: '取消',
                             handleConfirm: (cardId) => {
                                 console.log('出殺', cardId)
-                                this.game?.useGreenDragonCrescentBladeEffect('KILL', cardId)
-                                this.closeSelectCardModal()
-                                this.clearPendingEvent()
+                                void this.submitPendingEventResponse(event, (game) =>
+                                    game.useGreenDragonCrescentBladeEffect('KILL', cardId),
+                                )
                             },
                             handleCancel: () => {
                                 console.log('取消出殺')
@@ -1222,9 +1227,9 @@ export default class MainPlayer extends Player {
                     handleCancel: () => {
                         // SKIP：跳過
                         console.log('跳過青龍偃月刀效果')
-                        this.game?.useGreenDragonCrescentBladeEffect('SKIP', '')
-                        this.mainInstanceMap.confirmModal?.setAlpha(0)
-                        this.clearPendingEvent()
+                        void this.submitPendingEventResponse(event, (game) =>
+                            game.useGreenDragonCrescentBladeEffect('SKIP', ''),
+                        )
                     },
                 })
                 break
@@ -1252,9 +1257,9 @@ export default class MainPlayer extends Player {
                             maxSelectionCount: 2,
                             handleConfirm: (selectedCardIds) => {
                                 if (!Array.isArray(selectedCardIds)) return
-                                this.game?.useStonePiercingAxeEffect('DISCARD_TWO', selectedCardIds)
-                                this.closeSelectCardModal()
-                                this.clearPendingEvent()
+                                void this.submitPendingEventResponse(event, (game) =>
+                                    game.useStonePiercingAxeEffect('DISCARD_TWO', selectedCardIds),
+                                )
                             },
                             handleCancel: () => {
                                 this.closeSelectCardModal()
@@ -1264,9 +1269,9 @@ export default class MainPlayer extends Player {
                         })
                     },
                     handleCancel: () => {
-                        this.game?.useStonePiercingAxeEffect('SKIP', [])
-                        this.mainInstanceMap.confirmModal?.setAlpha(0)
-                        this.clearPendingEvent()
+                        void this.submitPendingEventResponse(event, (game) =>
+                            game.useStonePiercingAxeEffect('SKIP', []),
+                        )
                     },
                 })
                 break
@@ -1282,14 +1287,14 @@ export default class MainPlayer extends Player {
                     confirmText: '發動',
                     cancelText: '跳過',
                     handleConfirm: () => {
-                        this.game?.useJianXiongEffect('ACCEPT')
-                        this.mainInstanceMap.confirmModal?.setAlpha(0)
-                        this.clearPendingEvent()
+                        void this.submitPendingEventResponse(event, (game) =>
+                            game.useJianXiongEffect('ACCEPT'),
+                        )
                     },
                     handleCancel: () => {
-                        this.game?.useJianXiongEffect('SKIP')
-                        this.mainInstanceMap.confirmModal?.setAlpha(0)
-                        this.clearPendingEvent()
+                        void this.submitPendingEventResponse(event, (game) =>
+                            game.useJianXiongEffect('SKIP'),
+                        )
                     },
                 })
                 break
@@ -1609,7 +1614,58 @@ export default class MainPlayer extends Player {
             },
         })
     }
-    // 回應完詢問（確認／取消送出）後清掉 event，避免殘留的 event 擋住自己回合的出牌與技能
+    submitPendingEventResponse = async (
+        event: { event: string; data?: unknown },
+        submit: (game: Game) => Promise<unknown>,
+    ) => {
+        if (
+            this.pendingEventResponse ||
+            this.event !== event.event ||
+            this.eventData !== event.data
+        ) {
+            return
+        }
+        const response = {}
+        this.pendingEventResponse = response
+        const isCurrentResponse = () =>
+            this.pendingEventResponse === response &&
+            this.event === event.event &&
+            this.eventData === event.data
+
+        this.closeSelectCardModal()
+        this.useConfirmModal({
+            message: '正在送出回應，請稍候。',
+            confirmText: '送出中',
+            cancelText: '送出中',
+        })
+        try {
+            if (!this.game) throw new Error('遊戲尚未初始化，無法送出回應。')
+            await submit(this.game)
+            // WebSocket 可能比 HTTP 更早送來下一個詢問，舊請求不可清掉新狀態。
+            if (isCurrentResponse()) {
+                this.clearPendingEvent()
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+            }
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error)
+            killLog('error', '詢問回應送出失敗', { event: event.event, message })
+            if (isCurrentResponse()) {
+                const reopenQuestion = () => this.processEvent(event)
+                this.useConfirmModal({
+                    message: `回應送出失敗：${message}\n請返回詢問後重試。`,
+                    confirmText: '返回詢問',
+                    cancelText: '返回詢問',
+                    handleConfirm: reopenQuestion,
+                    handleCancel: reopenQuestion,
+                })
+            }
+        } finally {
+            if (this.pendingEventResponse === response) {
+                this.pendingEventResponse = null
+            }
+        }
+    }
+    // 後端接受回應後才清掉 event。
     clearPendingEvent = () => {
         this.event = ''
         this.eventData = null
@@ -1618,6 +1674,7 @@ export default class MainPlayer extends Player {
     // 回應中的詢問（殺／閃／桃／無懈／借刀／五穀）、畫面上仍開著的視窗，
     // 以及玩家自己正在進行的選牌／技能操作一律不動。
     clearStaleInteractionState = () => {
+        if (this.pendingEventResponse) return
         const pendingReactiveEvents = [
             'AskKillEvent',
             'BorrowedSwordEvent',

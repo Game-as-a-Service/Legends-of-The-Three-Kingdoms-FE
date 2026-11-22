@@ -328,14 +328,18 @@ export default class Game {
         // }
         this.api.discardCards(this.gameId, cardIds)
     }
-    useEquipmentEffect = (cardId: string, targetPlayerId: string, playType: EquipmentPlayType) => {
+    useEquipmentEffect = (
+        cardId: string,
+        targetPlayerId: string,
+        playType: EquipmentPlayType,
+    ): Promise<unknown> => {
         const params = {
             playerId: this.me.id,
             targetPlayerId,
             cardId,
             playType: playType,
         }
-        this.api.useEquipmentEffect(this.gameId, params)
+        return this.api.useEquipmentEffect(this.gameId, params)
     }
     chooseHorseCard = (cardId: string) => {
         const params = {
@@ -344,36 +348,45 @@ export default class Game {
         }
         this.api.chooseHorseCard(this.gameId, params)
     }
-    activateYinYangSwords = (choice: 'ACTIVATE' | 'SKIP') => {
+    activateYinYangSwords = (choice: 'ACTIVATE' | 'SKIP'): Promise<unknown> => {
         const params = {
             playerId: this.me.id,
             choice,
         }
-        this.api.activateYinYangSwords(this.gameId, params)
+        return this.api.activateYinYangSwords(this.gameId, params)
     }
-    useYinYangSwordsEffect = (choice: 'TARGET_DISCARDS' | 'ATTACKER_DRAWS', cardId: string) => {
+    useYinYangSwordsEffect = (
+        choice: 'TARGET_DISCARDS' | 'ATTACKER_DRAWS',
+        cardId: string,
+    ): Promise<unknown> => {
         const params = {
             playerId: this.me.id,
             choice,
             cardId,
         }
-        this.api.useYinYangSwordsEffect(this.gameId, params)
+        return this.api.useYinYangSwordsEffect(this.gameId, params)
     }
-    useGreenDragonCrescentBladeEffect = (choice: 'KILL' | 'SKIP', killCardId: string) => {
+    useGreenDragonCrescentBladeEffect = (
+        choice: 'KILL' | 'SKIP',
+        killCardId: string,
+    ): Promise<unknown> => {
         const params = {
             playerId: this.me.id,
             choice,
             killCardId,
         }
-        this.api.useGreenDragonCrescentBladeEffect(this.gameId, params)
+        return this.api.useGreenDragonCrescentBladeEffect(this.gameId, params)
     }
-    useStonePiercingAxeEffect = (choice: 'DISCARD_TWO' | 'SKIP', discardCardIds: string[]) => {
+    useStonePiercingAxeEffect = (
+        choice: 'DISCARD_TWO' | 'SKIP',
+        discardCardIds: string[],
+    ): Promise<unknown> => {
         const params = {
             playerId: this.me.id,
             choice,
             discardCardIds,
         }
-        this.api.useStonePiercingAxeEffect(this.gameId, params)
+        return this.api.useStonePiercingAxeEffect(this.gameId, params)
     }
     useViperSpearKill = (targetPlayerId: string, discardCardIds: string[]) => {
         const params = {
@@ -433,7 +446,7 @@ export default class Game {
         }
         return this.api.useHeavenlyDoubleHalberdKill(this.gameId, params)
     }
-    useJianXiongEffect = (choice: 'ACCEPT' | 'SKIP') => {
+    useJianXiongEffect = (choice: 'ACCEPT' | 'SKIP'): Promise<unknown> => {
         const params = {
             playerId: this.me.id,
             choice,
@@ -613,7 +626,7 @@ export default class Game {
                 //     message: '請問要否要發動裝備卡八卦陣的效果',
                 // }
                 // 詢問是否使用裝備牌的效果
-                if (data.playerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
@@ -624,7 +637,7 @@ export default class Game {
                 //     mountCardIds: ['ES5018', 'EH5044'],
                 // }
                 // 詢問是否使用裝備牌的效果
-                if (data.chooseMountCardPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
@@ -638,7 +651,7 @@ export default class Game {
                 //     message: '是否發動雌雄雙股劍效果？',
                 // }
                 // 詢問攻擊者是否發動雌雄雙股劍效果
-                if (data.attackerPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
@@ -652,7 +665,7 @@ export default class Game {
                 //     message: '請選擇是否棄一張手牌或讓攻擊者摸牌',
                 // }
                 // 詢問雌雄雙股劍效果
-                if (data.targetPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
@@ -666,28 +679,30 @@ export default class Game {
                 //     message: '青龍偃月刀效果：是否要再出一張殺',
                 // }
                 // 詢問攻擊者是否發動青龍偃月刀效果
-                if (data.attackerPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'AskStonePiercingAxeEffectEvent':
-                if (data.attackerPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'AskJianXiongEffectEvent':
-                if (data.playerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'AskSkillEffectEvent':
-                if (data.playerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'AskHuJiaEffectEvent':
-                if (data.playerId === this.me.id) {
-                    this.me.processEvent(event)
+                if (this.isEventAskingMe(event)) {
+                    if (this.isEventAskingMe(event)) {
+                        this.me.processEvent(event)
+                    }
                 }
                 break
             case 'AskPlayWardEvent':
@@ -737,7 +752,7 @@ export default class Game {
                 // this.addHandCardsToPlayer(data.drawCardPlayerId, data.size)
                 break
             case 'NotifyDiscardEvent':
-                if (data.discardPlayerId === this.me.id && data.discardCount > 0) {
+                if (this.isEventAskingMe(event)) {
                     this.me.askDiscardCards(data.discardCount)
                 }
                 break
@@ -863,22 +878,22 @@ export default class Game {
                 // healedPlayer.hpChange(healHp)
                 break
             case 'AskPeachEvent':
-                if (data.playerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'AskKillEvent':
-                if (data.playerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'BorrowedSwordEvent':
-                if (data.borrowedPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'AskDodgeEvent':
-                if (data.playerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
@@ -897,7 +912,7 @@ export default class Game {
                 //     },
                 //     "message": "輪到 諸葛亮 選牌"
                 // }
-                if (data.nextChoosingPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
@@ -1018,8 +1033,10 @@ export default class Game {
         // }
         this.gameData = gameData
     }
-    // 這個事件是否要求自己回應（與 eventHandler 轉給 me.processEvent / askDiscardCards 的條件一致）
-    isEventAskingMe = (event: any) => {
+    // 分派詢問與清理安全網共用同一份接收者判斷。
+    isEventAskingMe = (
+        event: { event?: string; data?: Record<string, unknown> } | null | undefined,
+    ): boolean => {
         const data = event?.data || {}
         const meId = this.me.id
         switch (event?.event) {
@@ -1038,16 +1055,21 @@ export default class Game {
             case 'BountifulHarvestEvent':
                 return data.nextChoosingPlayerId === meId
             case 'NotifyDiscardEvent':
-                return data.discardPlayerId === meId && data.discardCount > 0
-            default:
-                // 其他 Ask*（八卦陣、殺、閃、桃、奸雄、技能、護駕…）：data 內任何欄位指向自己就視為詢問自己
                 return (
-                    typeof event?.event === 'string' &&
-                    event.event.startsWith('Ask') &&
-                    Object.values(data).some(
-                        (value) => value === meId || (Array.isArray(value) && value.includes(meId)),
-                    )
+                    data.discardPlayerId === meId &&
+                    typeof data.discardCount === 'number' &&
+                    data.discardCount > 0
                 )
+            case 'AskPlayEquipmentEffectEvent':
+            case 'AskJianXiongEffectEvent':
+            case 'AskSkillEffectEvent':
+            case 'AskHuJiaEffectEvent':
+            case 'AskPeachEvent':
+            case 'AskKillEvent':
+            case 'AskDodgeEvent':
+                return data.playerId === meId
+            default:
+                return false
         }
     }
     // 安全網：整批事件處理完後，若是自己的出牌階段且這批沒有任何詢問自己的事件，
