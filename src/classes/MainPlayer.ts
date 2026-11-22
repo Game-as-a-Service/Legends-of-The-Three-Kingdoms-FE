@@ -13,6 +13,7 @@ import type {
 import Game from './Game'
 import { handleAskSkillEffectEvent } from '../events/askSkillEffectEvent'
 import { killLog } from '../utils/killDebug'
+import { isAxiosError } from 'axios'
 
 const threeKingdomsCards: { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard } =
     threeKingdomsCardsJson as { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard }
@@ -44,6 +45,8 @@ export default class MainPlayer extends Player {
     kuRouButton?: Phaser.GameObjects.Container
     fanJianButton?: Phaser.GameObjects.Container
     jieYinButton?: Phaser.GameObjects.Container
+    zhiHengButton?: Phaser.GameObjects.Container
+    zhiHengSubmitting: boolean = false
     renDeButton?: Phaser.GameObjects.Container
     jiJiangButton?: Phaser.GameObjects.Container
     longDanMode: boolean = false
@@ -274,6 +277,7 @@ export default class MainPlayer extends Player {
         this.createKuRouButton(scene)
         this.createFanJianButton(scene)
         this.createJieYinButton(scene)
+        this.createZhiHengButton(scene)
         this.createRenDeButton(scene)
         this.createJiJiangButton(scene)
         this.createLongDanButton(scene)
@@ -1870,7 +1874,10 @@ export default class MainPlayer extends Player {
         messageText.setText(message)
         SUIT_OPTIONS.forEach(({ suit }, index) => {
             const button = modal.getAt(2 + index) as Phaser.GameObjects.Text
-            button.setInteractive().off('pointerdown').on('pointerdown', () => handleConfirm(suit))
+            button
+                .setInteractive()
+                .off('pointerdown')
+                .on('pointerdown', () => handleConfirm(suit))
         })
         modal.setAlpha(1)
     }
@@ -2554,7 +2561,9 @@ export default class MainPlayer extends Player {
         } catch (error: any) {
             const data = error?.response?.data
             console.error('國色 API 失敗', error?.response?.status, data)
-            this.showKillBlockedReason(`國色發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`)
+            this.showKillBlockedReason(
+                `國色發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`,
+            )
             return
         }
         atkLine({
@@ -2688,7 +2697,8 @@ export default class MainPlayer extends Player {
                         this.beginPlayerPick({
                             message: '反間：請選擇目標角色',
                             candidates,
-                            onConfirm: (target) => this.submitFanJian(String(cardId), target, finish),
+                            onConfirm: (target) =>
+                                this.submitFanJian(String(cardId), target, finish),
                             onCancel: finish,
                         })
                     },
@@ -2707,7 +2717,9 @@ export default class MainPlayer extends Player {
             const data = error?.response?.data
             console.error('反間 API 失敗', error?.response?.status, data)
             finish()
-            this.showKillBlockedReason(`反間發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`)
+            this.showKillBlockedReason(
+                `反間發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`,
+            )
             return
         }
         uniqueTargets.forEach((target) =>
@@ -2780,10 +2792,118 @@ export default class MainPlayer extends Player {
             const data = error?.response?.data
             console.error('結姻 API 失敗', error?.response?.status, data)
             this.closeSelectCardModal()
-            this.showKillBlockedReason(`結姻發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`)
+            this.showKillBlockedReason(
+                `結姻發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`,
+            )
             return
         }
         this.closeSelectCardModal()
+    }
+    isZhiHengAvailable = () => {
+        return this.general?.name === '孫權' || this.generalId === 'WU001'
+    }
+    createZhiHengButton = (scene: Phaser.Scene) => {
+        if (!this.isZhiHengAvailable()) return
+        this.zhiHengButton = this.createSkillButton(scene, '制衡', 0x0891b2, () =>
+            this.handleZhiHengButtonClick(),
+        )
+    }
+    handleZhiHengButtonClick = () => {
+        if (!this.isZhiHengAvailable()) return
+        if (
+            this.game?.getActivePlayer() !== this.id ||
+            this.game?.gameData.round?.roundPhase !== 'Action' ||
+            this.game?.gameData.round?.currentRoundPlayer !== this.id ||
+            this.event ||
+            this.discardMode ||
+            this.reactionMode ||
+            this.hp <= 0
+        ) {
+            this.showKillBlockedReason('制衡只能在自己的出牌階段發動。')
+            return
+        }
+        if (
+            this.hasOpenModal() ||
+            this.zhiHengSubmitting ||
+            this.guoSeMode ||
+            this.viperSpearMode ||
+            this.heavenlyDoubleHalberdMode ||
+            this.selectedCard ||
+            this.playerPick
+        ) {
+            this.showKillBlockedReason('請先完成目前的出牌動作。')
+            return
+        }
+        const cardIds = [
+            ...new Set(
+                [...(this.hand.cardIds as ThreeKingdomsCardIds[]), ...this.equipments].filter(
+                    Boolean,
+                ),
+            ),
+        ]
+        if (cardIds.length === 0) {
+            this.showKillBlockedReason('你沒有手牌或裝備可棄置，無法發動制衡。')
+            return
+        }
+        this.useConfirmModal({
+            message: '是否發動制衡？選擇至少一張手牌或裝備棄置，然後摸等量的牌。',
+            confirmText: '發動',
+            cancelText: '取消',
+            handleConfirm: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+                this.useSelectCardModal({
+                    type: 'small',
+                    message: '制衡：選擇至少一張手牌或裝備棄置，摸等量的牌（可跨頁選擇）',
+                    cardIds,
+                    paginateCards: true,
+                    cardLabel: (cardId) =>
+                        `${
+                            this.equipments.includes(cardId) ? '裝備' : '手牌'
+                        }：${this.formatCardLabel(cardId)}`,
+                    maxSelectionCount: cardIds.length,
+                    minSelectionCount: 1,
+                    confirmText: '棄牌並摸牌',
+                    cancelText: '取消',
+                    handleConfirm: (selection: ThreeKingdomsCardIds | ThreeKingdomsCardIds[]) =>
+                        this.submitZhiHeng(Array.isArray(selection) ? selection : [selection]),
+                    handleCancel: () => this.closeSelectCardModal(),
+                })
+            },
+            handleCancel: () => this.mainInstanceMap.confirmModal?.setAlpha(0),
+        })
+    }
+    submitZhiHeng = async (cardIds: ThreeKingdomsCardIds[]) => {
+        if (this.zhiHengSubmitting) return
+        if (
+            cardIds.length === 0 ||
+            new Set(cardIds).size !== cardIds.length ||
+            cardIds.some(
+                (cardId) =>
+                    !this.hand.cardIds.includes(cardId) && !this.equipments.includes(cardId),
+            )
+        ) {
+            this.showKillBlockedReason('制衡：請選擇至少一張目前持有的手牌或裝備。')
+            return
+        }
+        if (!this.game) {
+            this.showKillBlockedReason('制衡發動失敗：遊戲尚未連線。')
+            return
+        }
+        this.zhiHengSubmitting = true
+        this.closeSelectCardModal()
+        try {
+            await this.game.useSkillEffect('制衡', 'ACCEPT', cardIds)
+        } catch (error) {
+            const data = isAxiosError<{ message?: string }>(error)
+                ? error.response?.data
+                : undefined
+            const message =
+                data?.message ?? (error instanceof Error ? error.message : String(error))
+            console.error('制衡 API 失敗', error)
+            this.showKillBlockedReason(`制衡發動失敗：${message}`)
+        } finally {
+            this.zhiHengSubmitting = false
+        }
     }
     isRenDeAvailable = () => {
         return this.general?.name === '劉備' || this.generalId === 'SHU001'
@@ -3015,7 +3135,9 @@ export default class MainPlayer extends Player {
     submitRenDe = async (assignments: { cardId: string; target: Player }[], finish: () => void) => {
         const cardIds = assignments.map((a) => a.cardId)
         const targets = assignments.map((a) => a.target)
-        const uniqueTargets = targets.filter((t, i) => targets.findIndex((x) => x.id === t.id) === i)
+        const uniqueTargets = targets.filter(
+            (t, i) => targets.findIndex((x) => x.id === t.id) === i,
+        )
         try {
             if (uniqueTargets.length === 1) {
                 // 全部給同一人：沿用 targetPlayerId（不依賴後端的 targetPlayerIds 支援）
@@ -3033,7 +3155,9 @@ export default class MainPlayer extends Player {
             const data = error?.response?.data
             console.error('仁德 API 失敗', error?.response?.status, data)
             finish()
-            this.showKillBlockedReason(`仁德發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`)
+            this.showKillBlockedReason(
+                `仁德發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`,
+            )
             return
         }
         atkLine({
@@ -3053,9 +3177,7 @@ export default class MainPlayer extends Player {
     }
     getLongDanReactiveHint = () => {
         if (this.event === 'AskDodgeEvent') {
-            return this.isQingGuoDodgeAvailable()
-                ? '請出一張閃或黑色牌（傾國）'
-                : '請出一張閃'
+            return this.isQingGuoDodgeAvailable() ? '請出一張閃或黑色牌（傾國）' : '請出一張閃'
         }
         if (this.event === 'AskKillEvent') return '請出一張殺'
         return null
@@ -3189,7 +3311,9 @@ export default class MainPlayer extends Player {
         } catch (error: any) {
             const data = error?.response?.data
             console.error('龍膽 API 失敗', error?.response?.status, data)
-            this.showKillBlockedReason(`龍膽發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`)
+            this.showKillBlockedReason(
+                `龍膽發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`,
+            )
             return
         }
         const attackedPlayer = targetPlayer ?? this.seats.find((p) => p.id === targetPlayerId)
@@ -3228,7 +3352,11 @@ export default class MainPlayer extends Player {
             .setInteractive()
             .on('pointerdown', () => {
                 if ((this.mainInstanceMap.checkModal?.alpha ?? 0) <= 0) {
-                    killLog('warn', '確定 被點擊但 checkModal 為隱藏，已忽略', this.getDebugSnapshot())
+                    killLog(
+                        'warn',
+                        '確定 被點擊但 checkModal 為隱藏，已忽略',
+                        this.getDebugSnapshot(),
+                    )
                     return
                 }
                 this.handleCheckClick()
@@ -3313,6 +3441,8 @@ export default class MainPlayer extends Player {
         cancelText = '否',
         maxSelectionCount = 1,
         minSelectionCount = maxSelectionCount,
+        paginateCards = false,
+        cardLabel = (cardId: ThreeKingdomsCardIds) => this.formatCardLabel(cardId),
         handleConfirm = (cardId: any) => {},
         handleCancel = () => {},
     }: {
@@ -3325,6 +3455,8 @@ export default class MainPlayer extends Player {
         cancelText?: string
         maxSelectionCount?: number
         minSelectionCount?: number
+        paginateCards?: boolean
+        cardLabel?: (cardId: ThreeKingdomsCardIds) => string
         handleConfirm?: (cardId: any) => void
         handleCancel?: () => void
     }) => {
@@ -3390,12 +3522,16 @@ export default class MainPlayer extends Player {
             this.mainInstanceMap.selectCardModal?.add(container)
             this.mainInstanceMap.selectCardModal?.getData('cardInstance').push(container)
         }
+        let updateCardPage: (() => void) | undefined
         if (type === 'small') {
+            const pageCards: Phaser.GameObjects.Container[] = []
             for (let i = 0; i < cardIds.length; i++) {
                 const leftBase = 300 - (cardIds.length - 1) * 60
-                const r = this.scene.add.rectangle(leftBase + i * 120, 200, 100, 40, 0xffffff)
-                const label = this.formatCardLabel(cardIds[i])
-                const t = this.scene.add.text(leftBase + i * 120, 200, label, {
+                const x = paginateCards ? 60 + (i % 5) * 120 : leftBase + i * 120
+                const y = paginateCards ? 190 + Math.floor((i % 10) / 5) * 60 : 200
+                const r = this.scene.add.rectangle(x, y, 100, 40, 0xffffff)
+                const label = cardLabel(cardIds[i])
+                const t = this.scene.add.text(x, y, label, {
                     fontSize: `${this.getCardLabelFontSize(label)}px`,
                     color: '#000',
                 })
@@ -3449,6 +3585,7 @@ export default class MainPlayer extends Player {
                             'selectedCardId',
                             selectedCardIds[0] || null,
                         )
+                        updateCardPage?.()
                         return
                     }
                     const preCard = this.mainInstanceMap.selectCardModal?.getData('selectedCard')
@@ -3464,6 +3601,8 @@ export default class MainPlayer extends Player {
                         })
                         this.mainInstanceMap.selectCardModal?.setData('selectedCard', null)
                         this.mainInstanceMap.selectCardModal?.setData('selectedCardId', null)
+                        this.mainInstanceMap.selectCardModal?.setData('selectedCardIds', [])
+                        updateCardPage?.()
                         return
                     }
                     //點擊後向上移動10px
@@ -3499,9 +3638,55 @@ export default class MainPlayer extends Player {
                     this.mainInstanceMap.selectCardModal?.setData('selectedCardId', cardIds[i])
                     this.mainInstanceMap.selectCardModal?.setData('selectedCards', [container])
                     this.mainInstanceMap.selectCardModal?.setData('selectedCardIds', [cardIds[i]])
+                    updateCardPage?.()
                 })
+                pageCards.push(container)
                 this.mainInstanceMap.selectCardModal?.add(container)
                 this.mainInstanceMap.selectCardModal?.getData('cardInstance').push(container)
+            }
+            if (paginateCards) {
+                let page = 0
+                const pageCount = Math.ceil(cardIds.length / 10)
+                const pageText = this.scene.add
+                    .text(300, 300, '', {
+                        fontSize: '18px',
+                        color: '#fff',
+                    })
+                    .setOrigin(0.5)
+                updateCardPage = () => {
+                    pageCards.forEach((card, index) =>
+                        card.setVisible(Math.floor(index / 10) === page),
+                    )
+                    const count =
+                        this.mainInstanceMap.selectCardModal?.getData('selectedCardIds').length || 0
+                    pageText.setText(
+                        `${page + 1}/${pageCount} 頁 · 已選 ${count} 張（摸 ${count} 張）`,
+                    )
+                }
+                const controls = [pageText]
+                if (pageCount > 1) {
+                    for (const [label, x, direction] of [
+                        ['上一頁', 80, -1],
+                        ['下一頁', 520, 1],
+                    ] as const) {
+                        controls.push(
+                            this.scene.add
+                                .text(x, 300, label, {
+                                    fontSize: '20px',
+                                    color: '#fff',
+                                })
+                                .setOrigin(0.5)
+                                .setInteractive({ useHandCursor: true })
+                                .on('pointerdown', () => {
+                                    page = (page + direction + pageCount) % pageCount
+                                    updateCardPage?.()
+                                }),
+                        )
+                    }
+                }
+                this.mainInstanceMap.selectCardModal?.add(controls)
+                this.mainInstanceMap.selectCardModal?.getData('cardInstance').push(...controls)
+                updateCardPage()
             }
         } else {
             cardIds.forEach((cardId, index) => {
@@ -3610,7 +3795,10 @@ export default class MainPlayer extends Player {
                 }
                 this.mainInstanceMap.selectCardModal?.setData('selectedCard', container)
                 // 送給後端的是實際的牌 id（過河拆橋 / 順手牽羊以 cardId 指定判定區的牌）
-                this.mainInstanceMap.selectCardModal?.setData('selectedCardId', delayScrolls[i].cardId)
+                this.mainInstanceMap.selectCardModal?.setData(
+                    'selectedCardId',
+                    delayScrolls[i].cardId,
+                )
             })
             this.mainInstanceMap.selectCardModal?.add(container)
             this.mainInstanceMap.selectCardModal?.getData('cardInstance').push(container)
@@ -3639,13 +3827,13 @@ export default class MainPlayer extends Player {
                     const selectedCardIds =
                         this.mainInstanceMap.selectCardModal?.getData('selectedCardIds') || []
                     if (selectedCardIds.length < minSelectionCount) {
-                        console.log(`請至少選擇 ${minSelectionCount} 張卡牌`)
+                        this.showKillBlockedReason(`請至少選擇 ${minSelectionCount} 張卡牌`)
                         return
                     }
                     handleConfirm(selectedCardIds)
                 } else {
                     if (!card) {
-                        console.log('請選擇一張卡牌')
+                        this.showKillBlockedReason('請選擇一張卡牌')
                         return
                     }
                     console.log(handleConfirm, 'handleConfirm')

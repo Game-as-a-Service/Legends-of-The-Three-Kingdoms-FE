@@ -35,7 +35,7 @@ function loadModule(filename, imports = {}) {
         outputText,
         {
             exports,
-            console: { log() {}, warn() {} },
+            console: { log() {}, warn() {}, error() {} },
             Error,
             require(specifier) {
                 if (Object.prototype.hasOwnProperty.call(imports, specifier)) {
@@ -63,6 +63,7 @@ function loadModule(filename, imports = {}) {
                     return { killLog: (...args) => logs.push(args) }
                 }
                 if (specifier === '../utils/drawing') return { atkLine() {} }
+                if (specifier === 'axios') return require('axios')
                 if (specifier === './Game') return { default: class {} }
                 if (specifier === '../events/askSkillEffectEvent') {
                     return { handleAskSkillEffectEvent() {} }
@@ -170,6 +171,271 @@ function deferred() {
 }
 
 const flush = () => new Promise((resolve) => setImmediate(resolve))
+
+function makeZhiHengPlayer(useSkillEffect = async () => {}) {
+    const player = makePlayer({
+        getActivePlayer: () => 'me',
+        gameData: {
+            round: { roundPhase: 'Action', currentRoundPlayer: 'me', activePlayer: 'me' },
+        },
+        useSkillEffect,
+    })
+    player.generalId = 'WU001'
+    player.hp = 4
+    player.showKillBlockedReason = (message) => player.notices.push({ message })
+    return player
+}
+
+test('Zhi Heng button is only created for Sun Quan by ID or name', () => {
+    const player = makeZhiHengPlayer()
+    const buttons = []
+    player.createSkillButton = (...args) => {
+        buttons.push(args)
+        return {}
+    }
+    player.createZhiHengButton(player.scene)
+    assert.equal(buttons[0][1], '制衡')
+    player.generalId = 'WEI001'
+    player.createZhiHengButton(player.scene)
+    assert.equal(buttons.length, 1)
+    player.general = { name: '孫權' }
+    player.createZhiHengButton(player.scene)
+    assert.equal(buttons.length, 2)
+})
+
+for (const [name, change] of [
+    ['another active player', (p) => (p.game.getActivePlayer = () => 'other')],
+    ['another turn owner', (p) => (p.game.gameData.round.currentRoundPlayer = 'other')],
+    ['draw phase', (p) => (p.game.gameData.round.roundPhase = 'Draw')],
+    ['discard phase', (p) => (p.game.gameData.round.roundPhase = 'Discard')],
+    ['pending event', (p) => (p.event = 'AskKillEvent')],
+    ['discard mode', (p) => (p.discardMode = true)],
+    ['reaction mode', (p) => (p.reactionMode = true)],
+    ['selected card', (p) => (p.selectedCard = {})],
+    ['player pick', (p) => (p.playerPick = {})],
+    ['open modal', (p) => p.mainInstanceMap.confirmModal.setAlpha(1)],
+    ['submission pending', (p) => (p.zhiHengSubmitting = true)],
+    ['no cards', (p) => (p.hand.cardIds = [])],
+]) {
+    test(`Zhi Heng refuses ${name}`, () => {
+        const player = makeZhiHengPlayer()
+        change(player)
+        player.handleZhiHengButtonClick()
+        assert.equal(player.confirm, undefined)
+        assert.equal(player.notices.length, 1)
+    })
+}
+
+for (const equipmentOnly of [false, true]) {
+    test(`Zhi Heng submits exact card IDs (${
+        equipmentOnly ? 'equipment only' : 'mixed'
+    })`, async () => {
+        const requests = []
+        const player = makeZhiHengPlayer((...args) => requests.push(args))
+        player.equipments = ['', 'ES2015', '', '']
+        if (equipmentOnly) player.hand.cardIds = []
+        player.handleZhiHengButtonClick()
+        player.confirm.handleConfirm()
+        const ids = equipmentOnly ? ['ES2015'] : ['SDA079', 'ES2015']
+        assert.deepEqual(Array.from(player.selection.cardIds), ids)
+        assert.equal(player.selection.minSelectionCount, 1)
+        assert.equal(player.selection.maxSelectionCount, ids.length)
+        assert.equal(player.selection.paginateCards, true)
+        assert.match(player.selection.cardLabel('ES2015'), /^裝備/)
+        player.selection.handleConfirm(equipmentOnly ? 'ES2015' : ids)
+        await flush()
+        assert.equal(requests[0][0], '制衡')
+        assert.equal(requests[0][1], 'ACCEPT')
+        assert.deepEqual(Array.from(requests[0][2]), ids)
+        assert.equal(requests[0].length, 3)
+        assert.equal(player.mainInstanceMap.selectCardModal.alpha, 0)
+        assert.deepEqual(player.equipments, ['', 'ES2015', '', ''])
+    })
+}
+
+test('Zhi Heng cancellation at either modal does not submit', () => {
+    let requests = 0
+    const player = makeZhiHengPlayer(() => requests++)
+    player.handleZhiHengButtonClick()
+    player.confirm.handleCancel()
+    assert.equal(player.mainInstanceMap.confirmModal.alpha, 0)
+    player.handleZhiHengButtonClick()
+    player.confirm.handleConfirm()
+    player.selection.handleCancel()
+    assert.equal(player.mainInstanceMap.selectCardModal.alpha, 0)
+    assert.equal(requests, 0)
+})
+
+test('Zhi Heng rejects empty, duplicate, or stale card IDs', async () => {
+    let requests = 0
+    const player = makeZhiHengPlayer(() => requests++)
+    for (const ids of [[], ['SDA079', 'SDA079'], ['ES2015']]) {
+        await player.submitZhiHeng(ids)
+    }
+    assert.equal(requests, 0)
+    assert.equal(player.notices.length, 3)
+})
+
+test('Zhi Heng prevents double submission and reports backend errors, allowing retry', async () => {
+    const pending = deferred()
+    let requests = 0
+    const player = makeZhiHengPlayer(() => {
+        requests++
+        return pending.promise
+    })
+    const first = player.submitZhiHeng(['SDA079'])
+    await player.submitZhiHeng(['SDA079'])
+    assert.equal(requests, 1)
+    assert.equal(player.zhiHengSubmitting, true)
+    pending.reject({ isAxiosError: true, response: { data: { message: '本回合已發動' } } })
+    await first
+    assert.equal(player.zhiHengSubmitting, false)
+    assert.match(player.notices[0].message, /本回合已發動/)
+    player.handleZhiHengButtonClick()
+    assert.equal(player.mainInstanceMap.confirmModal.alpha, 1)
+})
+
+function installRealSelectionModal(player) {
+    const objects = []
+    function object(x = 0, y = 0, text = '', children = []) {
+        const item = {
+            x,
+            y,
+            text,
+            children,
+            alpha: 1,
+            visible: true,
+            data: {},
+            handlers: {},
+            setOrigin() {
+                return this
+            },
+            setSize() {
+                return this
+            },
+            setDepth() {
+                return this
+            },
+            setInteractive() {
+                return this
+            },
+            fillStyle() {
+                return this
+            },
+            fillRect() {
+                return this
+            },
+            setText(text) {
+                this.text = text
+                return this
+            },
+            setAlpha(alpha) {
+                this.alpha = alpha
+                return this
+            },
+            setVisible(visible) {
+                this.visible = visible
+                return this
+            },
+            setData(key, value) {
+                this.data[key] = value
+                return this
+            },
+            getData(key) {
+                return this.data[key]
+            },
+            getAt(index) {
+                return this.children[index]
+            },
+            add(items) {
+                this.children.push(...(Array.isArray(items) ? items : [items]))
+            },
+            remove(item) {
+                this.children = this.children.filter((child) => child !== item)
+            },
+            on(event, handler) {
+                this.handlers[event] = handler
+                return this
+            },
+            off(event) {
+                delete this.handlers[event]
+                return this
+            },
+            destroy() {
+                this.destroyed = true
+            },
+        }
+        objects.push(item)
+        return item
+    }
+    player.scene.add = {
+        graphics: () => object(),
+        rectangle: (x, y) => object(x, y),
+        text: (x, y, text) => object(x, y, text),
+        container: (x, y, children) => object(x, y, '', children),
+    }
+    player.scene.tweens = { add: ({ targets, x, y }) => Object.assign(targets, { x, y }) }
+    player.applyModalMessageLayout = () => {}
+    player.bindModalHandCardBlocker = () => {}
+    const real = new MainPlayer({ hand: { cardIds: [] }, equipments: [] })
+    player.useSelectCardModal = real.useSelectCardModal.bind(player)
+    player.closeSelectCardModal = real.closeSelectCardModal.bind(player)
+    // Class-field arrows retain their original instance.
+    real.scene = player.scene
+    real.mainInstanceMap = player.mainInstanceMap
+    real.formatCardLabel = (id) => id
+    real.getCardLabelFontSize = () => 16
+    real.applyModalMessageLayout = () => {}
+    real.showKillBlockedReason = (message) => player.notices.push({ message })
+    player.createSelectCardModal(player.scene)
+    return { objects, real }
+}
+
+for (const cardCount of [1, 12]) {
+    test(`real Zhi Heng selection enforces minimum, selects across pages, and cleans up (${cardCount} cards)`, () => {
+        const player = makeZhiHengPlayer()
+        const { real } = installRealSelectionModal(player)
+        const ids = Object.keys(
+            JSON.parse(fs.readFileSync(path.join(root, 'assets/cards.json'))),
+        ).slice(0, cardCount)
+        const submitted = []
+        real.useSelectCardModal({
+            type: 'small',
+            cardIds: ids,
+            paginateCards: true,
+            minSelectionCount: 1,
+            maxSelectionCount: ids.length,
+            handleConfirm: (value) => submitted.push(value),
+            handleCancel: () => real.closeSelectCardModal(),
+        })
+        const popup = player.mainInstanceMap.selectCardModal
+        const yes = popup.getAt(2)
+        yes.handlers.pointerdown()
+        assert.equal(submitted.length, 0)
+        assert.equal(popup.alpha, 1)
+        const instances = [...popup.getData('cardInstance')]
+        const cards = instances.filter((item) => item.children.length === 2)
+        assert.equal(cards.filter((item) => item.visible).length, Math.min(cardCount, 10))
+        cards[0].children[0].handlers.pointerdown()
+        if (cardCount > 10) {
+            instances.find((item) => item.text === '下一頁').handlers.pointerdown()
+            assert.equal(cards[0].visible, false)
+            assert.equal(cards[10].visible, true)
+            cards[10].children[0].handlers.pointerdown()
+            instances.find((item) => item.text === '上一頁').handlers.pointerdown()
+            assert.match(instances.find((item) => item.text.includes('頁 ·')).text, /已選 2 張/)
+            cards[0].children[0].handlers.pointerdown()
+            assert.deepEqual(Array.from(popup.getData('selectedCardIds')), [ids[10]])
+        }
+        yes.handlers.pointerdown()
+        assert.deepEqual(Array.isArray(submitted[0]) ? Array.from(submitted[0]) : [submitted[0]], [
+            ids[cardCount > 10 ? 10 : 0],
+        ])
+        assert.equal(popup.alpha, 0)
+        assert.equal(popup.getData('selectedCardIds').length, 0)
+        assert.ok(instances.every((item) => item.destroyed))
+    })
+}
 
 const responseCases = [
     [
