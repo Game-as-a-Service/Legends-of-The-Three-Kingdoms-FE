@@ -302,6 +302,8 @@ export function useApi() {
             choice: string
             cardIds?: string[]
             targetPlayerId?: string
+            /** 與 cardIds 逐張對應的接收者（目前只有仁德支援） */
+            targetPlayerIds?: string[]
         },
     ) => {
         return api.post(`/api/games/${gameId}/player:useSkillEffect`, params)

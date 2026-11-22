@@ -25,7 +25,7 @@
 - [x] 觀星（諸葛亮）— 回合開始（準備階段、判定之前）由後端 `AskSkillEffectEvent`（`options` = `ARRANGE`/`SKIP`，`dataCardIds` = 觀看的牌）詢問，`skillEffectHandlers` 以 `useSelectCardModal` 依點選順序（先點在最上）選出回牌堆頂的牌 → `useSkillEffect('觀星', 'ARRANGE', cardIds)`，未選者置牌堆底（不選 = 全置底）；「不發動」→ `useSkillEffect('觀星', 'SKIP')`。出牌階段的觀星按鈕已移除（後端不再接受主動發動）
 - [x] 結姻（孫尚香）— `MainPlayer` 的結姻按鈕（`jieYinButton`），自己出牌階段：確認 → 選 2 張手牌 → `useSkillEffect('結姻', 'ACCEPT', cardIds)`；每回合限一次與回血對象由後端判定，失敗時顯示錯誤訊息。孫尚香 id 暫以 `WU008` 判斷（亦比對武將名稱）
 
-- [x] 仁德（劉備）— `MainPlayer` 的仁德按鈕（`renDeButton`），自己出牌階段：確認 → 選 ≥1 張手牌 → `beginPlayerPick` 點座位選接收者 → `useSkillEffect('仁德', 'ACCEPT', cardIds, targetId)`；累積 2 張回血與每回合限一次由後端判定，失敗時顯示錯誤訊息。劉備 id 以 `SHU001` 判斷（亦比對武將名稱）
+- [x] 仁德（劉備）— `MainPlayer` 的仁德按鈕（`renDeButton`），自己出牌階段：確認 → 選 ≥1 張手牌 → 逐批分配接收者（剩多張時先選「要交給同一人的牌」，全選即全部給同一人；再 `beginPlayerPick` 點座位）→ 全部分完一次送出。全部給同一人走 `useSkillEffect('仁德', 'ACCEPT', cardIds, targetId)`；分給多人帶 `targetPlayerIds`（需後端 #310）。累積 2 張回血與每回合限一次由後端判定，失敗時顯示錯誤訊息。劉備 id 以 `SHU001` 判斷（亦比對武將名稱）
 
 
 - [x] 遺計（郭嘉）— `skillEffectHandlers`，確認發動後二選一：`ACCEPT`（自摸 2）或 `beginPlayerPick` 點座位選其他存活角色 → `GIVE`（令其獲得 1 張）；跳過為 `SKIP`
