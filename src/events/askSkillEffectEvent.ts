@@ -7,6 +7,7 @@ export interface AskSkillEffectEvent {
         skillName?: string
         dataPlayerId?: string
         dataCardIds?: string[]
+        options?: string[]
     }
 }
 
@@ -435,15 +436,19 @@ const handleFanJian: SkillEffectHandler = (mainPlayer, event) => {
     })
 }
 
+// 觀星：諸葛亮回合開始（準備階段、判定之前）由後端詢問，dataCardIds = 所觀看的牌（第一張 = 牌堆頂），
+// options = ['ARRANGE', 'SKIP']。ARRANGE 帶回堆頂順序（先點者在最上，未選者置牌堆底；不選任何牌 = 全置底），
+// SKIP = 不發動（牌堆不變）。回應後後端接續判定 → 摸牌。
 const handleGuanXing: SkillEffectHandler = (mainPlayer, event) => {
     const viewedCardIds = (event.data?.dataCardIds || [])
         .filter(Boolean)
         .map((cardId) => cardId as ThreeKingdomsCardIds)
+    const canSkip = (event.data?.options || ['ARRANGE', 'SKIP']).includes('SKIP')
     let responseSubmitted = false
-    const submitArrange = (cardIds: string[]) => {
+    const submit = (choice: 'ARRANGE' | 'SKIP', cardIds: string[] = []) => {
         if (responseSubmitted) return
         responseSubmitted = true
-        mainPlayer.game?.useSkillEffect('觀星', 'ARRANGE', cardIds)
+        mainPlayer.game?.useSkillEffect('觀星', choice, cardIds)
         mainPlayer.event = ''
         mainPlayer.eventData = null
         mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
@@ -451,25 +456,26 @@ const handleGuanXing: SkillEffectHandler = (mainPlayer, event) => {
     }
 
     if (viewedCardIds.length === 0) {
-        submitArrange([])
+        submit(canSkip ? 'SKIP' : 'ARRANGE')
         return
     }
 
     mainPlayer.useSelectCardModal({
         type: 'small',
-        message: '觀星：依序點選放回牌堆頂的牌（先點者在最上方），未選的牌將置於牌堆底',
+        message:
+            '觀星（回合開始）：依序點選放回牌堆頂的牌（先點者在最上方），未選的牌將置於牌堆底；不選任何牌即全置牌堆底',
         cardIds: viewedCardIds,
         confirmText: '確認排列',
-        cancelText: '全置牌堆底',
+        cancelText: canSkip ? '不發動' : '全置牌堆底',
         maxSelectionCount: viewedCardIds.length,
         minSelectionCount: 0,
         handleConfirm: (selectedCardIds) => {
             const cardIds = Array.isArray(selectedCardIds)
                 ? selectedCardIds.filter(Boolean).map(String)
                 : [String(selectedCardIds)]
-            submitArrange(cardIds)
+            submit('ARRANGE', cardIds)
         },
-        handleCancel: () => submitArrange([]),
+        handleCancel: () => (canSkip ? submit('SKIP') : submit('ARRANGE', [])),
     })
 }
 

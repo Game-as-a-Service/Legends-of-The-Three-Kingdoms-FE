@@ -791,8 +791,6 @@ POST /api/games/{gameId}/player:useSkillEffect
 | 反間 第二段（目標回應） | —               | `SPADE`/`HEART`/`DIAMOND`/`CLUB` | —                                          | —              |
 | 結姻（孫尚香）          | 每回合 1 次     | `ACCEPT`                         | 2 張手牌 id（傷最重者由系統判定）          | —              |
 | 仁德（劉備）            | 回血每回合 1 次 | `ACCEPT`                         | 要給的手牌 id（≥1；累積 2 張回 1 體力）    | 接收者         |
-| 觀星（諸葛亮）第一段    | 每回合 1 次     | `ACCEPT`                         | —                                          | —              |
-| 觀星 第二段             | —               | `ARRANGE`                        | 回堆頂的順序（未列出 → 置堆底）            | —              |
 
 ### 轉化牌技（choice = 轉化目標型別）
 
@@ -860,7 +858,7 @@ POST /api/games/{gameId}/player:useSkillEffect
 -   鐵騎 v1 自動判定（不問）；目標有八卦陣時走防具路徑不受鐵騎影響（follow-up）
 -   梟姬不覆蓋「主動換裝蓋掉舊裝備」路徑（follow-up）
 -   苦肉 v1 需 HP ≥ 2（瀕死整合 follow-up）；反間目標受傷不進瀕死流程（follow-up）
--   觀星 issue 時機為回合開始；v1 以出牌階段主動發動實作（時機整合 follow-up）
+-   觀星改為回合開始（準備階段、延遲錦囊判定之前）由後端以 `AskSkillEffectEvent` 詢問（`options` = `ARRANGE` / `SKIP`，`dataCardIds` = 牌堆頂 X 張），不再能於出牌階段主動發動；ARRANGE 的 cardIds = 回堆頂順序（未列出 → 置堆底）
 -   突襲 issue 時機為出牌階段開始；v1 出牌階段任意時點可發動（每回合一次）
 -   激將 v1 覆蓋南蠻入侵/決鬥的 AskKill；主動出殺與借刀殺人代出為 follow-up
 -   流離 v1 只攔普通殺（方天畫戟/AOE 轉移 follow-up）；棄牌限手牌
