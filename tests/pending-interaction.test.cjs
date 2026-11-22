@@ -3,6 +3,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 const test = require('node:test')
 const vm = require('node:vm')
+const http = require('node:http')
 const ts = require('typescript')
 
 const root = path.resolve(__dirname, '..')
@@ -17,7 +18,7 @@ class PlayerStub {
     arrangeCards() {}
 }
 
-function loadClass(filename) {
+function loadModule(filename, imports = {}) {
     const source = fs.readFileSync(path.join(root, filename), 'utf8')
     const { outputText, diagnostics } = ts.transpileModule(source, {
         fileName: filename,
@@ -37,6 +38,9 @@ function loadClass(filename) {
             console: { log() {}, warn() {} },
             Error,
             require(specifier) {
+                if (Object.prototype.hasOwnProperty.call(imports, specifier)) {
+                    return imports[specifier]
+                }
                 if (specifier === './index') {
                     return { Player: PlayerStub, MainPlayer: PlayerStub }
                 }
@@ -68,11 +72,11 @@ function loadClass(filename) {
         },
         { filename },
     )
-    return exports.default
+    return exports
 }
 
-const MainPlayer = loadClass('src/classes/MainPlayer.ts')
-const Game = loadClass('src/classes/Game.ts')
+const MainPlayer = loadModule('src/classes/MainPlayer.ts').default
+const Game = loadModule('src/classes/Game.ts').default
 
 function modal() {
     return {
@@ -85,6 +89,7 @@ function modal() {
 }
 
 function makePlayer(game = {}) {
+    if (!game.clearStaleStateAfterResponse) game.clearStaleStateAfterResponse = () => {}
     const player = new MainPlayer({
         id: 'me',
         seats: [],
@@ -111,6 +116,36 @@ function makePlayer(game = {}) {
         player.mainInstanceMap.selectCardModal.setAlpha(1)
     }
     player.closeSelectCardModal = () => player.mainInstanceMap.selectCardModal.setAlpha(0)
+    player.notices = []
+    player.noticeTimers = []
+    player.scene = {
+        scale: { width: 1400 },
+        add: {
+            text: (x, y, message, style) => {
+                const notice = {
+                    x,
+                    y,
+                    message,
+                    style,
+                    destroyed: false,
+                    setOrigin() {
+                        return this
+                    },
+                    setDepth() {
+                        return this
+                    },
+                    destroy() {
+                        this.destroyed = true
+                    },
+                }
+                player.notices.push(notice)
+                return notice
+            },
+        },
+        time: {
+            delayedCall: (delay, callback) => player.noticeTimers.push({ delay, callback }),
+        },
+    }
     return player
 }
 
@@ -290,6 +325,13 @@ for (const outcome of ['resolve', 'reject']) {
         assert.equal(player.pendingEventResponse, newResponse)
         assert.equal(player.mainInstanceMap.confirmModal.alpha, 1)
         assert.equal(player.confirm.message, '正在送出回應，請稍候。')
+        assert.equal(player.notices.length, outcome === 'reject' ? 1 : 0)
+        if (outcome === 'reject') {
+            assert.match(player.notices[0].message, /old failure/)
+            assert.equal(player.noticeTimers[0].delay, 10_000)
+            player.noticeTimers[0].callback()
+            assert.equal(player.notices[0].destroyed, true)
+        }
         second.resolve({})
         await flush()
         assert.equal(player.event, '')
@@ -532,3 +574,178 @@ test('closed stale interactions clear event, reaction, and discard selections', 
     assert.equal(player.checkBtnInstance.alpha, 0)
     assert.equal(player.hintInstance.alpha, 0)
 })
+
+for (const websocketFirst of [true, false]) {
+    test(`HTTP success rechecks stale reactions when WebSocket arrives ${
+        websocketFirst ? 'first' : 'later'
+    }`, async () => {
+        const game = makeGame()
+        const request = deferred()
+        game.useJianXiongEffect = () => request.promise
+        const player = makePlayer(game)
+        player.getDebugSnapshot = () => ({})
+        game.me = player
+        game.gameData.round = {
+            roundPhase: 'Action',
+            currentRoundPlayer: 'me',
+            activePlayer: 'me',
+        }
+        const question = { event: 'AskJianXiongEffectEvent', data: { playerId: 'me' } }
+        player.processEvent(question)
+        game.clearStaleStateOnMyActionPhase([question])
+        player.reactionType = 'old'
+        player.reactionMode = true
+        player.confirm.handleConfirm()
+        const completedEvents = [{ event: 'JianXiongEffectEvent', data: {} }]
+        if (websocketFirst) {
+            game.clearStaleStateOnMyActionPhase(completedEvents)
+            assert.equal(player.reactionMode, true)
+        }
+        request.resolve({})
+        await flush()
+        if (!websocketFirst) game.clearStaleStateOnMyActionPhase(completedEvents)
+        assert.equal(player.event, '')
+        assert.equal(player.pendingEventResponse, null)
+        assert.equal(player.reactionType, '')
+        assert.equal(player.reactionMode, false)
+    })
+}
+
+test('successful HTTP response does not clear a new forced discard request in the latest batch', async () => {
+    const game = makeGame()
+    const request = deferred()
+    game.useJianXiongEffect = () => request.promise
+    const player = makePlayer(game)
+    game.me = player
+    game.gameData.round = {
+        roundPhase: 'Action',
+        currentRoundPlayer: 'me',
+        activePlayer: 'me',
+    }
+    player.processEvent({ event: 'AskJianXiongEffectEvent', data: { playerId: 'me' } })
+    player.confirm.handleConfirm()
+    player.discardMode = true
+    player.discardCount = 2
+    game.clearStaleStateOnMyActionPhase([
+        { event: 'NotifyDiscardEvent', data: { discardPlayerId: 'me', discardCount: 2 } },
+    ])
+    request.resolve({})
+    await flush()
+    assert.equal(player.discardMode, true)
+    assert.equal(player.discardCount, 2)
+})
+
+test('unknown Ask events block cleanup without guessed routing; known unrelated asks still allow cleanup', async () => {
+    const game = makeGame()
+    let cleared = 0
+    let dispatched = 0
+    game.me.clearStaleInteractionState = () => cleared++
+    game.me.processEvent = () => dispatched++
+    game.gameData.round = {
+        roundPhase: 'Action',
+        currentRoundPlayer: 'me',
+        activePlayer: 'me',
+    }
+    const unknown = { event: 'AskNewEffectEvent', data: { sourcePlayerId: 'me' } }
+    assert.equal(game.isEventAskingMe(unknown), false)
+    await game.eventHandler(unknown)
+    game.clearStaleStateOnMyActionPhase([unknown])
+    assert.equal(dispatched, 0)
+    assert.equal(cleared, 0)
+    assert.ok(
+        logs.some(
+            ([level, message]) => level === 'warn' && message === '未知詢問事件，暫停清理互動狀態',
+        ),
+    )
+    game.clearStaleStateOnMyActionPhase([
+        { event: 'AskSkillEffectEvent', data: { playerId: 'other', dataPlayerId: 'me' } },
+    ])
+    assert.equal(cleared, 1)
+})
+
+test('a superseded equipment response failure is visible without replacing the broadcast ward question', async () => {
+    const request = deferred()
+    const player = makePlayer({ useJianXiongEffect: () => request.promise })
+    player.hintInstance = {
+        setAlpha() {},
+        getAt: () => ({ setText() {} }),
+    }
+    player.processEvent({ event: 'AskJianXiongEffectEvent', data: {} })
+    player.confirm.handleConfirm()
+    const ward = { event: 'AskPlayWardEvent', data: {} }
+    player.processEvent(ward)
+    request.reject(new Error('prior request failed'))
+    await flush()
+    assert.equal(player.event, ward.event)
+    assert.equal(player.eventData, ward.data)
+    assert.equal(player.mainInstanceMap.checkModal.alpha, 1)
+    assert.equal(player.mainInstanceMap.confirmModal.alpha, 0)
+    assert.match(player.notices[0].message, /prior request failed/)
+})
+
+test('all six guarded response endpoints explicitly configure a 15000ms timeout without changing other API calls', async () => {
+    const calls = []
+    const { useApi } = loadModule('composables/useApi.ts', {
+        '#app': { useRuntimeConfig: () => ({ public: { apiBaseUrl: 'http://localhost' } }) },
+        axios: {
+            create: () => ({
+                post: (...args) => {
+                    calls.push(args)
+                    return Promise.resolve({})
+                },
+            }),
+        },
+    })
+    const api = useApi()
+    const names = [...new Set(responseCases.map(([, , , method]) => method))]
+    assert.equal(names.length, 6)
+    for (const method of names) {
+        await api[method]('game', {})
+        assert.equal(calls[calls.length - 1][2].timeout, 15_000)
+    }
+    await api.playCard('game', {})
+    assert.equal(calls[calls.length - 1][2], undefined)
+})
+
+test(
+    'a non-responsive HTTP endpoint times out and restores the question instead of freezing indefinitely',
+    { timeout: 30_000 },
+    async () => {
+        const sockets = new Set()
+        const server = http.createServer(() => {})
+        server.on('connection', (socket) => {
+            sockets.add(socket)
+            socket.on('close', () => sockets.delete(socket))
+        })
+        await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+        try {
+            const { port } = server.address()
+            const { useApi } = loadModule('composables/useApi.ts', {
+                '#app': {
+                    useRuntimeConfig: () => ({
+                        public: { apiBaseUrl: `http://127.0.0.1:${port}` },
+                    }),
+                },
+                axios: require('axios'),
+            })
+            const api = useApi()
+            const player = makePlayer({
+                useJianXiongEffect: () =>
+                    api.useJianXiongEffect('game', { playerId: 'me', choice: 'ACCEPT' }),
+            })
+            const event = { event: 'AskJianXiongEffectEvent', data: {} }
+            player.processEvent(event)
+            const started = Date.now()
+            await player.submitPendingEventResponse(event, (game) => game.useJianXiongEffect())
+            assert.ok(Date.now() - started >= 14_500)
+            assert.equal(player.event, event.event)
+            assert.equal(player.eventData, event.data)
+            assert.equal(player.pendingEventResponse, null)
+            assert.equal(player.mainInstanceMap.confirmModal.alpha, 1)
+            assert.match(player.confirm.message, /15000/)
+        } finally {
+            for (const socket of sockets) socket.destroy()
+            await new Promise((resolve) => server.close(resolve))
+        }
+    },
+)

@@ -20,6 +20,23 @@ const locations = [
 const threeKingdomsCards: { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard } =
     threeKingdomsCardsJson as { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard }
 const weaponFeatures: { [key: string]: WeaponFeature } = weaponFeaturesJson
+type InteractionEvent = { event?: string; data?: Record<string, unknown> }
+const interactionReceivers: Readonly<Record<string, string>> = {
+    AskPlayEquipmentEffectEvent: 'playerId',
+    AskChooseMountCardEvent: 'chooseMountCardPlayerId',
+    AskActivateYinYangSwordsEvent: 'attackerPlayerId',
+    AskGreenDragonCrescentBladeEffectEvent: 'attackerPlayerId',
+    AskStonePiercingAxeEffectEvent: 'attackerPlayerId',
+    AskYinYangSwordsEffectEvent: 'targetPlayerId',
+    AskJianXiongEffectEvent: 'playerId',
+    AskSkillEffectEvent: 'playerId',
+    AskHuJiaEffectEvent: 'playerId',
+    AskPeachEvent: 'playerId',
+    AskKillEvent: 'playerId',
+    AskDodgeEvent: 'playerId',
+    BorrowedSwordEvent: 'borrowedPlayerId',
+    BountifulHarvestEvent: 'nextChoosingPlayerId',
+}
 // const playCard = async (
 //     gameId: string,
 //     params: {
@@ -66,6 +83,7 @@ export default class Game {
     hintInstance!: Phaser.GameObjects.Container
     api: any
     selectTargetPlayers: Player[] = []
+    latestEventBatch: InteractionEvent[] = []
     constructor(gameData: any, scene: BattleScene, api: any) {
         this.scene = scene
         this.api = api
@@ -700,9 +718,7 @@ export default class Game {
                 break
             case 'AskHuJiaEffectEvent':
                 if (this.isEventAskingMe(event)) {
-                    if (this.isEventAskingMe(event)) {
-                        this.me.processEvent(event)
-                    }
+                    this.me.processEvent(event)
                 }
                 break
             case 'AskPlayWardEvent':
@@ -1034,53 +1050,53 @@ export default class Game {
         this.gameData = gameData
     }
     // 分派詢問與清理安全網共用同一份接收者判斷。
-    isEventAskingMe = (
-        event: { event?: string; data?: Record<string, unknown> } | null | undefined,
-    ): boolean => {
+    isEventAskingMe = (event: InteractionEvent | null | undefined): boolean => {
         const data = event?.data || {}
         const meId = this.me.id
         switch (event?.event) {
             case 'AskPlayWardEvent':
                 return true
-            case 'AskChooseMountCardEvent':
-                return data.chooseMountCardPlayerId === meId
-            case 'AskActivateYinYangSwordsEvent':
-            case 'AskGreenDragonCrescentBladeEffectEvent':
-            case 'AskStonePiercingAxeEffectEvent':
-                return data.attackerPlayerId === meId
-            case 'AskYinYangSwordsEffectEvent':
-                return data.targetPlayerId === meId
-            case 'BorrowedSwordEvent':
-                return data.borrowedPlayerId === meId
-            case 'BountifulHarvestEvent':
-                return data.nextChoosingPlayerId === meId
             case 'NotifyDiscardEvent':
                 return (
                     data.discardPlayerId === meId &&
                     typeof data.discardCount === 'number' &&
                     data.discardCount > 0
                 )
-            case 'AskPlayEquipmentEffectEvent':
-            case 'AskJianXiongEffectEvent':
-            case 'AskSkillEffectEvent':
-            case 'AskHuJiaEffectEvent':
-            case 'AskPeachEvent':
-            case 'AskKillEvent':
-            case 'AskDodgeEvent':
-                return data.playerId === meId
-            default:
-                return false
+            default: {
+                const name = event?.event || ''
+                if (!Object.prototype.hasOwnProperty.call(interactionReceivers, name)) return false
+                return data[interactionReceivers[name]] === meId
+            }
         }
     }
     // 安全網：整批事件處理完後，若是自己的出牌階段且這批沒有任何詢問自己的事件，
     // 清掉 MainPlayer 上先前詢問殘留的 event / reaction / discard 狀態（避免國色等技能被誤擋）
-    clearStaleStateOnMyActionPhase = (events: any[]) => {
+    clearStaleStateOnMyActionPhase = (events: InteractionEvent[]) => {
+        this.latestEventBatch = events
         const round = this.gameData?.round
         const meId = this.me.id
         if (!round || round.roundPhase !== 'Action') return
         if (round.currentRoundPlayer !== meId || round.activePlayer !== meId) return
-        if ((events || []).some((event) => this.isEventAskingMe(event))) return
+        if (events.some((event) => this.isEventAskingMe(event))) return
+        const unknownAsks = events.filter(
+            ({ event }) =>
+                event?.startsWith('Ask') &&
+                event !== 'AskPlayWardEvent' &&
+                !Object.prototype.hasOwnProperty.call(interactionReceivers, event),
+        )
+        if (unknownAsks.length > 0) {
+            killLog('warn', '未知詢問事件，暫停清理互動狀態', unknownAsks)
+            return
+        }
         this.me.clearStaleInteractionState()
+    }
+    clearStaleStateAfterResponse = (event: { event: string; data?: unknown }) => {
+        // 只排除已成功回應的詢問，仍保護最新批次的其他詢問與強制棄牌。
+        this.clearStaleStateOnMyActionPhase(
+            this.latestEventBatch.filter(
+                (item) => item.event !== event.event || item.data !== event.data,
+            ),
+        )
     }
     getActivePlayer = () => {
         return this.gameData.round?.activePlayer || this.gameData.round?.currentRoundPlayer

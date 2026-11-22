@@ -68,6 +68,7 @@ export default class MainPlayer extends Player {
     event: string = ''
     eventData: any = null
     pendingEventResponse: object | null = null
+    responseFailureNotice?: Phaser.GameObjects.Text
     blockedReasonCount: number = 0
     confirmModalBaseFontSize: number = 32
     confirmModalMinFontSize: number = 20
@@ -1638,14 +1639,12 @@ export default class MainPlayer extends Player {
             confirmText: '送出中',
             cancelText: '送出中',
         })
+        let accepted = false
+        let completedCurrentResponse = false
         try {
             if (!this.game) throw new Error('遊戲尚未初始化，無法送出回應。')
             await submit(this.game)
-            // WebSocket 可能比 HTTP 更早送來下一個詢問，舊請求不可清掉新狀態。
-            if (isCurrentResponse()) {
-                this.clearPendingEvent()
-                this.mainInstanceMap.confirmModal?.setAlpha(0)
-            }
+            accepted = true
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : String(error)
             killLog('error', '詢問回應送出失敗', { event: event.event, message })
@@ -1658,12 +1657,39 @@ export default class MainPlayer extends Player {
                     handleConfirm: reopenQuestion,
                     handleCancel: reopenQuestion,
                 })
+            } else {
+                this.showResponseFailureNotice(`先前的詢問回應送出失敗：${message}`)
             }
         } finally {
+            completedCurrentResponse = isCurrentResponse()
             if (this.pendingEventResponse === response) {
                 this.pendingEventResponse = null
             }
         }
+        // WebSocket 可能比 HTTP 更早送來下一個詢問，舊請求不可清掉新狀態。
+        if (accepted && completedCurrentResponse) {
+            this.clearPendingEvent()
+            this.mainInstanceMap.confirmModal?.setAlpha(0)
+            this.game?.clearStaleStateAfterResponse(event)
+        }
+    }
+    showResponseFailureNotice = (message: string) => {
+        this.responseFailureNotice?.destroy()
+        const notice = this.scene.add
+            .text(this.scene.scale.width / 2, 20, message, {
+                fontSize: '20px',
+                color: '#fff',
+                backgroundColor: '#991b1b',
+                padding: { x: 12, y: 8 },
+                wordWrap: { width: 700 },
+            })
+            .setOrigin(0.5, 0)
+            .setDepth(2000)
+        this.responseFailureNotice = notice
+        this.scene.time.delayedCall(10_000, () => {
+            notice.destroy()
+            if (this.responseFailureNotice === notice) this.responseFailureNotice = undefined
+        })
     }
     // 後端接受回應後才清掉 event。
     clearPendingEvent = () => {

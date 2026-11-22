@@ -91,3 +91,23 @@ Equipment and Jian Xiong responses retain their event context while the request 
 pending and only clear it after success. Failure is logged and shown in a dialog;
 returning to the original question lets the player retry or choose another option.
 A newer WebSocket question takes precedence over an older HTTP response.
+
+The six equipment/Jian Xiong response endpoints have a 15-second Axios timeout.
+After HTTP success, cleanup is rechecked against the latest event batch and round
+snapshot, including when WebSocket arrives before HTTP. Other pending questions,
+unknown `Ask*` events, and forced discard requests still prevent cleanup.
+Failures of superseded requests are logged and shown as a non-blocking notification
+without replacing the newer question.
+
+A failed request is not proof that the backend has discarded the question:
+timeouts may happen after an action was applied, and 4xx responses may indicate
+an invalid choice while the question is still pending. The frontend therefore
+does not clear the question merely to dismiss an error. A server-provided pending
+interaction identifier/resynchronization endpoint is needed for reliable recovery
+when the HTTP result and WebSocket updates are both lost.
+
+Follow-up scope: mount selection, Hu Jia responses, and handlers in
+[askSkillEffectEvent.ts](./src/events/askSkillEffectEvent.ts) still use their existing
+submission flows. Migrating all of those interactions to this response lifecycle
+is a separate task; this patch only standardizes the six equipment/Jian Xiong
+endpoints.
