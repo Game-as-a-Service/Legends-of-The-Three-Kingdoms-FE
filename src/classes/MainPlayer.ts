@@ -45,6 +45,7 @@ export default class MainPlayer extends Player {
     fanJianButton?: Phaser.GameObjects.Container
     jieYinButton?: Phaser.GameObjects.Container
     renDeButton?: Phaser.GameObjects.Container
+    jiJiangButton?: Phaser.GameObjects.Container
     longDanMode: boolean = false
     longDanButton?: Phaser.GameObjects.Container
     playerPick: {
@@ -272,6 +273,7 @@ export default class MainPlayer extends Player {
         this.createFanJianButton(scene)
         this.createJieYinButton(scene)
         this.createRenDeButton(scene)
+        this.createJiJiangButton(scene)
         this.createLongDanButton(scene)
     }
     test() {
@@ -1622,9 +1624,13 @@ export default class MainPlayer extends Player {
         const allPlayers = [...this.seats, this]
         const targetPlayer = allPlayers.find((player) => player.id === targetPlayerId)
         const targetName = targetPlayer?.general?.name || targetPlayerId || '指定目標'
+        const jiJiangHint =
+            this.isJiJiangAvailable() && this.hasAliveShuHelper()
+                ? '\n（也可點「激將」請蜀勢力角色代你出殺）'
+                : ''
 
         this.useConfirmModal({
-            message: `是否對${targetName}出殺？`,
+            message: `是否對${targetName}出殺？${jiJiangHint}`,
             confirmText: '出殺',
             cancelText: '不出殺',
             handleConfirm: () => {
@@ -2211,17 +2217,25 @@ export default class MainPlayer extends Player {
         this.conversionEquipmentOverlays.forEach((overlay) => overlay.destroy())
         this.conversionEquipmentOverlays = []
     }
-    // 技能鈕固定在武將卡的資訊列右側（手牌數的右邊），避免遮擋其他資訊
+    // 技能鈕固定在武將卡的資訊列右側（手牌數的右邊），避免遮擋其他資訊。
+    // 同一武將有兩顆技能鈕時（劉備：仁德＋激將）以 layout 'left' / 'right' 並排縮窄顯示
     createSkillButton = (
         scene: Phaser.Scene,
         text: string,
         color: number,
         onClick: () => void,
+        layout: 'single' | 'left' | 'right' = 'single',
     ) => {
-        const background = scene.add.rectangle(0, 0, 72, 28, color)
+        const { x, width } =
+            layout === 'left'
+                ? { x: 28, width: 44 }
+                : layout === 'right'
+                  ? { x: 76, width: 44 }
+                  : { x: 54, width: 72 }
+        const background = scene.add.rectangle(0, 0, width, 28, color)
         const label = scene.add.text(0, 0, text, { fontSize: '18px', color: '#fff' })
         label.setOrigin(0.5)
-        const container = scene.add.container(54, -14, [background, label])
+        const container = scene.add.container(x, -14, [background, label])
         background.setInteractive({ useHandCursor: true }).on('pointerdown', onClick)
         this.instance.add(container)
         return container
@@ -2592,9 +2606,120 @@ export default class MainPlayer extends Player {
     }
     createRenDeButton = (scene: Phaser.Scene) => {
         if (!this.isRenDeAvailable()) return
-        this.renDeButton = this.createSkillButton(scene, '仁德', 0xf59e0b, () =>
-            this.handleRenDeButtonClick(),
+        this.renDeButton = this.createSkillButton(
+            scene,
+            '仁德',
+            0xf59e0b,
+            () => this.handleRenDeButtonClick(),
+            this.isJiJiangAvailable() ? 'left' : 'single',
         )
+    }
+    // 激將（劉備主公技）：只有主公劉備有此按鈕
+    isJiJiangAvailable = () => {
+        return this.isRenDeAvailable() && this.roleId === 'Monarch'
+    }
+    hasAliveShuHelper = () => {
+        return this.seats.some((player) => player.hp > 0 && player.general?.camp === '蜀')
+    }
+    createJiJiangButton = (scene: Phaser.Scene) => {
+        if (!this.isJiJiangAvailable()) return
+        this.jiJiangButton = this.createSkillButton(
+            scene,
+            '激將',
+            0xb91c1c,
+            () => this.handleJiJiangButtonClick(),
+            this.isRenDeAvailable() ? 'right' : 'single',
+        )
+    }
+    // 出牌階段：選擇殺的目標（劉備的攻擊範圍）後請蜀將代出殺
+    // 借刀殺人要求劉備出殺時：目標固定為借刀殺人指定的對象，直接請蜀將代出
+    handleJiJiangButtonClick = () => {
+        if (!this.hasAliveShuHelper()) {
+            this.showKillBlockedReason('場上沒有其他存活的蜀勢力角色，無法發動激將。')
+            return
+        }
+        if (this.event === 'BorrowedSwordEvent') {
+            if (this.selectedCard || this.longDanMode || this.viperSpearMode) {
+                this.showKillBlockedReason('請先取消目前選擇的牌，再發動激將。')
+                return
+            }
+            this.submitJiJiangForBorrowedSword()
+            return
+        }
+        const isMyTurn = this.game?.getActivePlayer() === this.id
+        if (!isMyTurn || this.event || this.discardMode || this.reactionMode) {
+            this.showKillBlockedReason(
+                '激將只能在自己的出牌階段使用殺，或被借刀殺人要求出殺時發動。',
+            )
+            return
+        }
+        if (
+            this.guoSeMode ||
+            this.longDanMode ||
+            this.viperSpearMode ||
+            this.heavenlyDoubleHalberdMode ||
+            this.selectedCard ||
+            this.playerPick
+        ) {
+            this.showKillBlockedReason('請先完成目前的出牌動作。')
+            return
+        }
+        const candidates = this.seats.filter(
+            (player) => player.hp > 0 && (this.game?.canAttack(this, player) ?? false),
+        )
+        if (candidates.length === 0) {
+            this.showKillBlockedReason('攻擊範圍內沒有可以出殺的目標，無法發動激將。')
+            return
+        }
+        this.useConfirmModal({
+            message: '是否發動激將？請蜀勢力角色代你使用一張殺（計入本回合出殺次數）。',
+            confirmText: '發動',
+            cancelText: '取消',
+            handleConfirm: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+                this.beginPlayerPick({
+                    message: '激將：請選擇殺的目標',
+                    candidates,
+                    onConfirm: (target) => this.submitJiJiangActiveKill(target),
+                    onCancel: () => this.clearPlayerPick(),
+                })
+            },
+            handleCancel: () => {
+                this.mainInstanceMap.confirmModal?.setAlpha(0)
+            },
+        })
+    }
+    submitJiJiangActiveKill = async (target: Player) => {
+        this.clearPlayerPick()
+        try {
+            await this.game?.useSkillEffect('激將', 'ACCEPT', [], target.id)
+        } catch (error: any) {
+            const data = error?.response?.data
+            console.error('激將 API 失敗', error?.response?.status, data)
+            this.showKillBlockedReason(
+                `激將發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`,
+            )
+        }
+    }
+    submitJiJiangForBorrowedSword = async () => {
+        const borrowedSwordData = this.eventData
+        this.resetBorrowedSwordResponse()
+        try {
+            await this.game?.useSkillEffect('激將', 'ACCEPT')
+        } catch (error: any) {
+            const data = error?.response?.data
+            console.error('激將 API 失敗', error?.response?.status, data)
+            // 還原借刀殺人的詢問，讓劉備改為自己出殺或不出殺
+            this.event = 'BorrowedSwordEvent'
+            this.eventData = borrowedSwordData
+            this.useConfirmModal({
+                message: `激將發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`,
+                confirmText: '知道了',
+                cancelText: '關閉',
+                handleConfirm: () => this.handleBorrowedSwordEvent(),
+                handleCancel: () => this.handleBorrowedSwordEvent(),
+            })
+        }
     }
     handleRenDeButtonClick = () => {
         const isMyTurn = this.game?.getActivePlayer() === this.id
