@@ -1092,6 +1092,7 @@ export default class MainPlayer extends Player {
                             'equipmentActive',
                         )
                         this.mainInstanceMap.confirmModal?.setAlpha(0)
+                        this.clearPendingEvent()
                     },
                     handleCancel: () => {
                         this.game?.useEquipmentEffect(
@@ -1100,6 +1101,7 @@ export default class MainPlayer extends Player {
                             'equipmentSkip',
                         )
                         this.mainInstanceMap.confirmModal?.setAlpha(0)
+                        this.clearPendingEvent()
                     },
                 })
                 break
@@ -1133,11 +1135,13 @@ export default class MainPlayer extends Player {
                         console.log('發動雌雄雙股劍效果')
                         this.game?.activateYinYangSwords('ACTIVATE')
                         this.mainInstanceMap.confirmModal?.setAlpha(0)
+                        this.clearPendingEvent()
                     },
                     handleCancel: () => {
                         console.log('跳過雌雄雙股劍效果')
                         this.game?.activateYinYangSwords('SKIP')
                         this.mainInstanceMap.confirmModal?.setAlpha(0)
+                        this.clearPendingEvent()
                     },
                 })
                 break
@@ -1162,10 +1166,13 @@ export default class MainPlayer extends Player {
                                 console.log('棄牌', cardId)
                                 this.game?.useYinYangSwordsEffect('TARGET_DISCARDS', cardId)
                                 this.closeSelectCardModal()
+                                this.clearPendingEvent()
                             },
                             handleCancel: () => {
                                 console.log('取消棄牌')
                                 this.closeSelectCardModal()
+                                // 尚未回應後端，回到上一層詢問，避免詢問卡住或 event 殘留
+                                this.processEvent(event)
                             },
                         })
                     },
@@ -1174,6 +1181,7 @@ export default class MainPlayer extends Player {
                         console.log('讓攻擊者摸牌')
                         this.game?.useYinYangSwordsEffect('ATTACKER_DRAWS', '')
                         this.mainInstanceMap.confirmModal?.setAlpha(0)
+                        this.clearPendingEvent()
                     },
                 })
                 break
@@ -1201,10 +1209,13 @@ export default class MainPlayer extends Player {
                                 console.log('出殺', cardId)
                                 this.game?.useGreenDragonCrescentBladeEffect('KILL', cardId)
                                 this.closeSelectCardModal()
+                                this.clearPendingEvent()
                             },
                             handleCancel: () => {
                                 console.log('取消出殺')
                                 this.closeSelectCardModal()
+                                // 尚未回應後端，回到上一層詢問，避免詢問卡住或 event 殘留
+                                this.processEvent(event)
                             },
                         })
                     },
@@ -1213,6 +1224,7 @@ export default class MainPlayer extends Player {
                         console.log('跳過青龍偃月刀效果')
                         this.game?.useGreenDragonCrescentBladeEffect('SKIP', '')
                         this.mainInstanceMap.confirmModal?.setAlpha(0)
+                        this.clearPendingEvent()
                     },
                 })
                 break
@@ -1242,15 +1254,19 @@ export default class MainPlayer extends Player {
                                 if (!Array.isArray(selectedCardIds)) return
                                 this.game?.useStonePiercingAxeEffect('DISCARD_TWO', selectedCardIds)
                                 this.closeSelectCardModal()
+                                this.clearPendingEvent()
                             },
                             handleCancel: () => {
                                 this.closeSelectCardModal()
+                                // 尚未回應後端，回到上一層詢問，避免詢問卡住或 event 殘留
+                                this.processEvent(event)
                             },
                         })
                     },
                     handleCancel: () => {
                         this.game?.useStonePiercingAxeEffect('SKIP', [])
                         this.mainInstanceMap.confirmModal?.setAlpha(0)
+                        this.clearPendingEvent()
                     },
                 })
                 break
@@ -1268,10 +1284,12 @@ export default class MainPlayer extends Player {
                     handleConfirm: () => {
                         this.game?.useJianXiongEffect('ACCEPT')
                         this.mainInstanceMap.confirmModal?.setAlpha(0)
+                        this.clearPendingEvent()
                     },
                     handleCancel: () => {
                         this.game?.useJianXiongEffect('SKIP')
                         this.mainInstanceMap.confirmModal?.setAlpha(0)
+                        this.clearPendingEvent()
                     },
                 })
                 break
@@ -1590,6 +1608,70 @@ export default class MainPlayer extends Player {
                 this.mainInstanceMap.confirmModal?.setAlpha(0)
             },
         })
+    }
+    // 回應完詢問（確認／取消送出）後清掉 event，避免殘留的 event 擋住自己回合的出牌與技能
+    clearPendingEvent = () => {
+        this.event = ''
+        this.eventData = null
+    }
+    // 安全網：自己出牌階段且這批事件沒有詢問自己時，清掉先前詢問殘留的狀態。
+    // 回應中的詢問（殺／閃／桃／無懈／借刀／五穀）、畫面上仍開著的視窗，
+    // 以及玩家自己正在進行的選牌／技能操作一律不動。
+    clearStaleInteractionState = () => {
+        const pendingReactiveEvents = [
+            'AskKillEvent',
+            'BorrowedSwordEvent',
+            'AskDodgeEvent',
+            'AskPeachEvent',
+            'AskPlayWardEvent',
+            'BountifulHarvestEvent',
+        ]
+        if (pendingReactiveEvents.includes(this.event)) return
+        if (
+            this.selectedCard ||
+            this.guoSeMode ||
+            this.longDanMode ||
+            this.viperSpearMode ||
+            this.heavenlyDoubleHalberdMode ||
+            this.playerPick
+        ) {
+            return
+        }
+        const { confirmModal, selectCardModal, suitModal } = this.mainInstanceMap
+        if ([confirmModal, selectCardModal, suitModal].some((modal) => (modal?.alpha ?? 0) > 0)) {
+            return
+        }
+        // 呼叫端已排除這批含 NotifyDiscardEvent（要求自己棄牌）的情況
+        const clearDiscardMode = this.discardMode
+        const hasLeftover = !!(
+            this.event ||
+            this.eventData ||
+            this.reactionType ||
+            this.reactionMode
+        )
+        if (!hasLeftover && !clearDiscardMode) return
+        killLog('warn', '自己出牌階段清除殘留的互動狀態', this.getDebugSnapshot())
+        this.event = ''
+        this.eventData = null
+        this.reactionType = ''
+        this.reactionMode = false
+        if (!clearDiscardMode) return
+        this.discardMode = false
+        this.discardCount = 0
+        this.discardCards = []
+        this.handCards.forEach((card) => {
+            if (!card.selected) return
+            card.selected = false
+            this.scene.tweens.add({
+                targets: card.instance,
+                x: card.instance.x,
+                y: card.instance.y + 20,
+                duration: 300,
+                ease: 'Power2',
+            })
+        })
+        this.checkBtnInstance?.setAlpha(0)
+        this.hintInstance?.setAlpha(0)
     }
     getBorrowedSwordKillContext = () => {
         const data = this.eventData || {}

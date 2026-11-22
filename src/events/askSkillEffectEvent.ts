@@ -556,6 +556,9 @@ export const handleAskSkillEffectEvent = (mainPlayer: MainPlayer, event: AskSkil
     const handler = skillName ? skillEffectHandlers[skillName] : undefined
     if (!handler) {
         console.warn('Unsupported skill effect:', skillName)
+        // 前端無對應 UI：不要讓 event 殘留，否則會擋住自己回合的出牌與技能
+        mainPlayer.event = ''
+        mainPlayer.eventData = null
         return
     }
     handler(mainPlayer, event)

@@ -1018,6 +1018,48 @@ export default class Game {
         // }
         this.gameData = gameData
     }
+    // 這個事件是否要求自己回應（與 eventHandler 轉給 me.processEvent / askDiscardCards 的條件一致）
+    isEventAskingMe = (event: any) => {
+        const data = event?.data || {}
+        const meId = this.me.id
+        switch (event?.event) {
+            case 'AskPlayWardEvent':
+                return true
+            case 'AskChooseMountCardEvent':
+                return data.chooseMountCardPlayerId === meId
+            case 'AskActivateYinYangSwordsEvent':
+            case 'AskGreenDragonCrescentBladeEffectEvent':
+            case 'AskStonePiercingAxeEffectEvent':
+                return data.attackerPlayerId === meId
+            case 'AskYinYangSwordsEffectEvent':
+                return data.targetPlayerId === meId
+            case 'BorrowedSwordEvent':
+                return data.borrowedPlayerId === meId
+            case 'BountifulHarvestEvent':
+                return data.nextChoosingPlayerId === meId
+            case 'NotifyDiscardEvent':
+                return data.discardPlayerId === meId && data.discardCount > 0
+            default:
+                // 其他 Ask*（八卦陣、殺、閃、桃、奸雄、技能、護駕…）：data 內任何欄位指向自己就視為詢問自己
+                return (
+                    typeof event?.event === 'string' &&
+                    event.event.startsWith('Ask') &&
+                    Object.values(data).some(
+                        (value) => value === meId || (Array.isArray(value) && value.includes(meId)),
+                    )
+                )
+        }
+    }
+    // 安全網：整批事件處理完後，若是自己的出牌階段且這批沒有任何詢問自己的事件，
+    // 清掉 MainPlayer 上先前詢問殘留的 event / reaction / discard 狀態（避免國色等技能被誤擋）
+    clearStaleStateOnMyActionPhase = (events: any[]) => {
+        const round = this.gameData?.round
+        const meId = this.me.id
+        if (!round || round.roundPhase !== 'Action') return
+        if (round.currentRoundPlayer !== meId || round.activePlayer !== meId) return
+        if ((events || []).some((event) => this.isEventAskingMe(event))) return
+        this.me.clearStaleInteractionState()
+    }
     getActivePlayer = () => {
         return this.gameData.round?.activePlayer || this.gameData.round?.currentRoundPlayer
     }

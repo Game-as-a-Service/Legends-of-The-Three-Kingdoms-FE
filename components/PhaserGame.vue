@@ -355,6 +355,10 @@ onMounted(() => {
                             }
                             await myGame.value.eventHandler(event)
                         }
+                        // 整批事件都處理完才檢查，避免清掉這批剛送來的詢問
+                        if (res.data) {
+                            myGame.value.clearStaleStateOnMyActionPhase(res.events)
+                        }
                         return
                     }
                     if (res.event === 'createGameEvent') {
