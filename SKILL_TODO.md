@@ -49,7 +49,7 @@
 除 API 包裝外沒有任何按鈕／UI。topBehavior 為空時直接呼叫 `useSkillEffect` 發動。
 
 - [ ] 制衡（孫權）— `ACCEPT`，cardIds 放要棄的牌（手牌 + 裝備，≥1），摸等量
-- [ ] 突襲（張遼）— 每回合 1 次，`ACCEPT`，cardIds 放目標玩家 id（1~2 名）
+- [x] 突襲（張遼）— 摸牌階段詢問（AskSkillEffectEvent），`ACCEPT` + cardIds 放目標玩家 id（1~2 名）或 `SKIP` 照常摸牌
 
 ### C. 轉化牌技（卡牌合法性判斷擋住）
 
