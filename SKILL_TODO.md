@@ -16,7 +16,7 @@
 - [x] 奸雄（曹操）— `MainPlayer` 的 `AskJianXiongEffectEvent`
 - [x] 傾國（甄姬）— `canUseCardAsDodge`，問閃時黑牌直接 `playCard`
 - [x] 流離（大喬）— `skillEffectHandlers`，選手牌後以 `MainPlayer.beginPlayerPick` 點座位選轉移目標
-- [x] 國色（大喬）— `MainPlayer` 的國色按鈕（`guoSeMode`），選方塊手牌 + 目標後 `useSkillEffect('國色', 'CONTENTMENT', ...)`
+- [x] 國色（大喬）— `MainPlayer` 的國色按鈕（`guoSeMode`），選方塊手牌或裝備區的方塊牌（裝備欄藍框可點，需後端 PR #302）+ 目標後 `useSkillEffect('國色', 'CONTENTMENT', ...)`
 
 - [x] 苦肉（黃蓋）— `MainPlayer` 的苦肉按鈕（`kuRouButton`），自己出牌階段（可扣到 0 滴，交由瀕死求桃流程），確認後 `useSkillEffect('苦肉', 'ACCEPT')`
 - [x] 反間 第二段（周瑜的目標）— `skillEffectHandlers`，以 `MainPlayer.useSuitModal` 四花色按鈕選擇後 `useSkillEffect('反間', 'SPADE'|'HEART'|'DIAMOND'|'CLUB')`
@@ -54,9 +54,9 @@
 
 目前 `canUseCardAsKill` / `canUseCardAsDodge` 只認殺、閃（傾國除外）。
 
-- [ ] 武聖（關羽）— `KILL`，紅色手牌當殺；主動出殺、`AskKillEvent`、決鬥回應（目前擋在 `card.name !== '殺'`）
+- [ ] 武聖（關羽）— `KILL`，紅色牌（手牌或裝備區，後端 PR #302）當殺；可沿用 `showConversionEquipmentOptions`；主動出殺、`AskKillEvent`、決鬥回應（目前擋在 `card.name !== '殺'`）
 - [x] 龍膽（趙雲）— `MainPlayer` 的龍膽按鈕（`longDanButton`，趙雲 id 暫以 `SHU005` 判斷），可切換：被問閃（`AskDodgeEvent`）時殺亮起可當閃 → `useSkillEffect('龍膽', 'DODGE', [殺 id])`；需要出殺（自己出牌階段主動出殺、`AskKillEvent`、`BorrowedSwordEvent`）時閃亮起可當殺 → `useSkillEffect('龍膽', 'KILL', [閃 id], targetId)`（主動與借刀殺人帶攻擊目標）
-- [ ] 奇襲（甘寧）— `DISMANTLE`，黑牌當過河拆橋，目標必填，後續走 `useDismantleEffect`
+- [ ] 奇襲（甘寧）— `DISMANTLE`，黑牌（手牌或裝備區，後端 PR #302）當過河拆橋，可沿用 `showConversionEquipmentOptions`，目標必填，後續走 `useDismantleEffect`
 
 ### D. 前端有武將資料，但 API_DOC 未列技能（待向後端確認）
 
