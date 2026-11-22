@@ -752,6 +752,7 @@ POST /api/games/{gameId}/player:useSkillEffect
 | choice         | String          | 選擇值，依技能而定   |
 | cardIds        | List\<String\>? | 選擇的牌（依技能）   |
 | targetPlayerId | String?         | 選擇的目標（依技能） |
+| targetPlayerIds | List\<String\>? | 選填，目前只有仁德支援：與 `cardIds` 逐張對應的接收者，一次發動分給多人（後端 PR #310） |
 
 **觸發時機**：收到 `AskSkillEffectEvent`（內含 skillName / playerId / dataCardIds / dataPlayerId）後呼叫。
 回應後廣播 `SkillEffectEvent`（accepted + data）。
@@ -790,7 +791,7 @@ POST /api/games/{gameId}/player:useSkillEffect
 | 反間（周瑜）第一段      | 每回合 1 次     | `ACCEPT`                         | [要給的手牌 id]                            | 目標玩家       |
 | 反間 第二段（目標回應） | —               | `SPADE`/`HEART`/`DIAMOND`/`CLUB` | —                                          | —              |
 | 結姻（孫尚香）          | 每回合 1 次     | `ACCEPT`                         | 2 張手牌 id（傷最重者由系統判定）          | —              |
-| 仁德（劉備）            | 回血每回合 1 次 | `ACCEPT`                         | 要給的手牌 id（≥1；累積 2 張回 1 體力）    | 接收者         |
+| 仁德（劉備）            | 回血每回合 1 次；可多次發動 | `ACCEPT`                         | 要給的手牌 id（≥1；累積 2 張回 1 體力）    | 接收者；或 `targetPlayerIds` 逐張指定、一次分給多人 |
 
 ### 轉化牌技（choice = 轉化目標型別）
 

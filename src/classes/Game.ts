@@ -453,6 +453,7 @@ export default class Game {
         choice: string,
         cardIds?: string[],
         targetPlayerId?: string,
+        targetPlayerIds?: string[],
     ) => {
         const params = {
             playerId: this.me.id,
@@ -460,6 +461,7 @@ export default class Game {
             choice,
             cardIds,
             targetPlayerId,
+            ...(targetPlayerIds ? { targetPlayerIds } : {}),
         }
         return this.api.useSkillEffect(this.gameId, params)
     }

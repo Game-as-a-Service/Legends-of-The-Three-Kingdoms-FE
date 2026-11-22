@@ -2528,10 +2528,12 @@ export default class MainPlayer extends Player {
             this.showKillBlockedReason(`反間發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`)
             return
         }
-        atkLine({
-            endPoint: new Phaser.Math.Vector2(target.instance.x, target.instance.y),
-            scene: this.scene,
-        })
+        uniqueTargets.forEach((target) =>
+            atkLine({
+                endPoint: new Phaser.Math.Vector2(target.instance.x, target.instance.y),
+                scene: this.scene,
+            }),
+        )
         finish()
     }
     isJieYinAvailable = () => {
@@ -2765,12 +2767,7 @@ export default class MainPlayer extends Player {
                     handleConfirm: (cardIds: ThreeKingdomsCardIds[]) => {
                         const selectedIds = cardIds.map(String)
                         this.closeSelectCardModal()
-                        this.beginPlayerPick({
-                            message: '仁德：請選擇接收手牌的角色',
-                            candidates,
-                            onConfirm: (target) => this.submitRenDe(selectedIds, target, finish),
-                            onCancel: finish,
-                        })
+                        this.assignRenDeRecipients(selectedIds, candidates, finish)
                     },
                     handleCancel: finish,
                 })
@@ -2780,9 +2777,76 @@ export default class MainPlayer extends Player {
             },
         })
     }
-    submitRenDe = async (cardIds: string[], target: Player, finish: () => void) => {
+    /**
+     * 仁德一次分給多人：選好的牌逐批指定接收者。
+     * 剩 1 張 → 直接選接收者；剩多張 → 先選「要交給同一位角色的牌」（全選 = 全部給同一人），再選接收者，
+     * 重複到全部分配完才一次送出。任何一步取消 → 整次仁德取消（尚未送出任何請求）。
+     */
+    assignRenDeRecipients = (selectedIds: string[], candidates: Player[], finish: () => void) => {
+        const assignments: { cardId: string; target: Player }[] = []
+        let remaining = [...selectedIds]
+        const pickRecipientFor = (ids: string[]) => {
+            this.beginPlayerPick({
+                message:
+                    remaining.length === selectedIds.length && ids.length === selectedIds.length
+                        ? '仁德：請選擇接收手牌的角色'
+                        : `仁德：請選擇接收這 ${ids.length} 張牌的角色`,
+                candidates,
+                onConfirm: (target) => {
+                    this.clearPlayerPick()
+                    ids.forEach((cardId) => assignments.push({ cardId, target }))
+                    remaining = remaining.filter((id) => !ids.includes(id))
+                    askNext()
+                },
+                onCancel: finish,
+            })
+        }
+        const askNext = () => {
+            if (remaining.length === 0) {
+                this.submitRenDe(assignments, finish)
+                return
+            }
+            if (remaining.length === 1) {
+                pickRecipientFor(remaining)
+                return
+            }
+            this.useSelectCardModal({
+                type: 'small',
+                message:
+                    assignments.length === 0
+                        ? '仁德：選擇要交給同一位角色的牌（全選 = 全部給同一人）'
+                        : `仁德：還有 ${remaining.length} 張未分配，選擇要交給下一位角色的牌`,
+                cardIds: remaining as ThreeKingdomsCardIds[],
+                maxSelectionCount: remaining.length,
+                minSelectionCount: 1,
+                confirmText: '選擇',
+                cancelText: '取消',
+                handleConfirm: (cardIds: ThreeKingdomsCardIds[]) => {
+                    this.closeSelectCardModal()
+                    pickRecipientFor(cardIds.map(String))
+                },
+                handleCancel: finish,
+            })
+        }
+        askNext()
+    }
+    submitRenDe = async (assignments: { cardId: string; target: Player }[], finish: () => void) => {
+        const cardIds = assignments.map((a) => a.cardId)
+        const targets = assignments.map((a) => a.target)
+        const uniqueTargets = targets.filter((t, i) => targets.findIndex((x) => x.id === t.id) === i)
         try {
-            await this.game?.useSkillEffect('仁德', 'ACCEPT', cardIds, target.id)
+            if (uniqueTargets.length === 1) {
+                // 全部給同一人：沿用 targetPlayerId（不依賴後端的 targetPlayerIds 支援）
+                await this.game?.useSkillEffect('仁德', 'ACCEPT', cardIds, uniqueTargets[0].id)
+            } else {
+                await this.game?.useSkillEffect(
+                    '仁德',
+                    'ACCEPT',
+                    cardIds,
+                    undefined,
+                    targets.map((t) => t.id),
+                )
+            }
         } catch (error: any) {
             const data = error?.response?.data
             console.error('仁德 API 失敗', error?.response?.status, data)
