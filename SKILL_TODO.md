@@ -29,6 +29,7 @@
 
 
 - [x] 遺計（郭嘉）— `skillEffectHandlers`，確認發動後二選一：`ACCEPT`（自摸 2）或 `beginPlayerPick` 點座位選其他存活角色 → `GIVE`（令其獲得 1 張）；跳過為 `SKIP`
+- [x] 激將（劉備主公技）— 三種情境：① 南蠻／決鬥的 `AskKillEvent` 由後端自動攔截，輪詢蜀將；② 出牌階段 `MainPlayer` 的激將按鈕（`jiJiangButton`，與仁德並排，僅主公劉備）：確認 → `beginPlayerPick` 點攻擊範圍內目標 → `useSkillEffect('激將', 'ACCEPT', [], targetId)`；③ 收到 `BorrowedSwordEvent` 時按激將 → `useSkillEffect('激將', 'ACCEPT')`（目標固定為借刀殺人指定對象）。蜀將收到 `AskSkillEffectEvent`（`dataPlayerId` = 劉備）時由 `skillEffectHandlers` 的 `激將` 選 1 張殺 `ACCEPT` 或 `DECLINE`
 
 ## 不需實作（被動／鎖定技，後端自動套用）
 
@@ -39,9 +40,8 @@
 
 ### A. 後端發 `AskSkillEffectEvent`，前端無 handler（會卡住，優先處理）
 
-收到後只會 `console.warn('Unsupported skill effect')`。
+收到後只會 `console.warn('Unsupported skill effect')`。目前已全數實作。
 
-- [ ] 激將（劉備主公技，詢問蜀將）— `ACCEPT`（cardIds 放 1 張殺）/ `DECLINE`
 
 ### B. 出牌階段主動技（前端無發動入口）
 
