@@ -6,6 +6,7 @@ import type {
     EquipmentPlayType,
 } from '~/src/types'
 import axios from 'axios'
+const pendingResponseRequestConfig = { timeout: 15_000 }
 export function useApi() {
     const runtimeConfig = useRuntimeConfig()
     const api = axios.create({
@@ -56,7 +57,11 @@ export function useApi() {
             playType: EquipmentPlayType
         },
     ) => {
-        return api.post(`/api/games/${gameId}/player:useEquipmentEffect`, params)
+        return api.post(
+            `/api/games/${gameId}/player:useEquipmentEffect`,
+            params,
+            pendingResponseRequestConfig,
+        )
     }
     const chooseHorseCard = (
         gameId: string,
@@ -190,7 +195,11 @@ export function useApi() {
             choice: 'ACTIVATE' | 'SKIP'
         },
     ) => {
-        return api.post(`/api/games/${gameId}/player:activateYinYangSwords`, params)
+        return api.post(
+            `/api/games/${gameId}/player:activateYinYangSwords`,
+            params,
+            pendingResponseRequestConfig,
+        )
     }
     /// 雌雄雙股劍效果
     /**
@@ -211,7 +220,11 @@ export function useApi() {
             cardId: string
         },
     ) => {
-        return api.post(`/api/games/${gameId}/player:useYinYangSwordsEffect`, params)
+        return api.post(
+            `/api/games/${gameId}/player:useYinYangSwordsEffect`,
+            params,
+            pendingResponseRequestConfig,
+        )
     }
     /// 青龍偃月刀效果
     /**
@@ -232,7 +245,11 @@ export function useApi() {
             killCardId: string
         },
     ) => {
-        return api.post(`/api/games/${gameId}/player:useGreenDragonCrescentBladeEffect`, params)
+        return api.post(
+            `/api/games/${gameId}/player:useGreenDragonCrescentBladeEffect`,
+            params,
+            pendingResponseRequestConfig,
+        )
     }
     /// 貫石斧效果
     /**
@@ -253,7 +270,11 @@ export function useApi() {
             discardCardIds: string[]
         },
     ) => {
-        return api.post(`/api/games/${gameId}/player:useStonePiercingAxeEffect`, params)
+        return api.post(
+            `/api/games/${gameId}/player:useStonePiercingAxeEffect`,
+            params,
+            pendingResponseRequestConfig,
+        )
     }
     const useViperSpearKill = (
         gameId: string,
@@ -282,7 +303,11 @@ export function useApi() {
             choice: 'ACCEPT' | 'SKIP'
         },
     ) => {
-        return api.post(`/api/games/${gameId}/player:useJianXiongEffect`, params)
+        return api.post(
+            `/api/games/${gameId}/player:useJianXiongEffect`,
+            params,
+            pendingResponseRequestConfig,
+        )
     }
     const useHuJiaEffect = (
         gameId: string,

@@ -20,6 +20,23 @@ const locations = [
 const threeKingdomsCards: { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard } =
     threeKingdomsCardsJson as { [key in ThreeKingdomsCardIds]: ThreeKingdomsCard }
 const weaponFeatures: { [key: string]: WeaponFeature } = weaponFeaturesJson
+type InteractionEvent = { event?: string; data?: Record<string, unknown> }
+const interactionReceivers: Readonly<Record<string, string>> = {
+    AskPlayEquipmentEffectEvent: 'playerId',
+    AskChooseMountCardEvent: 'chooseMountCardPlayerId',
+    AskActivateYinYangSwordsEvent: 'attackerPlayerId',
+    AskGreenDragonCrescentBladeEffectEvent: 'attackerPlayerId',
+    AskStonePiercingAxeEffectEvent: 'attackerPlayerId',
+    AskYinYangSwordsEffectEvent: 'targetPlayerId',
+    AskJianXiongEffectEvent: 'playerId',
+    AskSkillEffectEvent: 'playerId',
+    AskHuJiaEffectEvent: 'playerId',
+    AskPeachEvent: 'playerId',
+    AskKillEvent: 'playerId',
+    AskDodgeEvent: 'playerId',
+    BorrowedSwordEvent: 'borrowedPlayerId',
+    BountifulHarvestEvent: 'nextChoosingPlayerId',
+}
 // const playCard = async (
 //     gameId: string,
 //     params: {
@@ -66,6 +83,7 @@ export default class Game {
     hintInstance!: Phaser.GameObjects.Container
     api: any
     selectTargetPlayers: Player[] = []
+    latestEventBatch: InteractionEvent[] = []
     constructor(gameData: any, scene: BattleScene, api: any) {
         this.scene = scene
         this.api = api
@@ -328,14 +346,18 @@ export default class Game {
         // }
         this.api.discardCards(this.gameId, cardIds)
     }
-    useEquipmentEffect = (cardId: string, targetPlayerId: string, playType: EquipmentPlayType) => {
+    useEquipmentEffect = (
+        cardId: string,
+        targetPlayerId: string,
+        playType: EquipmentPlayType,
+    ): Promise<unknown> => {
         const params = {
             playerId: this.me.id,
             targetPlayerId,
             cardId,
             playType: playType,
         }
-        this.api.useEquipmentEffect(this.gameId, params)
+        return this.api.useEquipmentEffect(this.gameId, params)
     }
     chooseHorseCard = (cardId: string) => {
         const params = {
@@ -344,36 +366,45 @@ export default class Game {
         }
         this.api.chooseHorseCard(this.gameId, params)
     }
-    activateYinYangSwords = (choice: 'ACTIVATE' | 'SKIP') => {
+    activateYinYangSwords = (choice: 'ACTIVATE' | 'SKIP'): Promise<unknown> => {
         const params = {
             playerId: this.me.id,
             choice,
         }
-        this.api.activateYinYangSwords(this.gameId, params)
+        return this.api.activateYinYangSwords(this.gameId, params)
     }
-    useYinYangSwordsEffect = (choice: 'TARGET_DISCARDS' | 'ATTACKER_DRAWS', cardId: string) => {
+    useYinYangSwordsEffect = (
+        choice: 'TARGET_DISCARDS' | 'ATTACKER_DRAWS',
+        cardId: string,
+    ): Promise<unknown> => {
         const params = {
             playerId: this.me.id,
             choice,
             cardId,
         }
-        this.api.useYinYangSwordsEffect(this.gameId, params)
+        return this.api.useYinYangSwordsEffect(this.gameId, params)
     }
-    useGreenDragonCrescentBladeEffect = (choice: 'KILL' | 'SKIP', killCardId: string) => {
+    useGreenDragonCrescentBladeEffect = (
+        choice: 'KILL' | 'SKIP',
+        killCardId: string,
+    ): Promise<unknown> => {
         const params = {
             playerId: this.me.id,
             choice,
             killCardId,
         }
-        this.api.useGreenDragonCrescentBladeEffect(this.gameId, params)
+        return this.api.useGreenDragonCrescentBladeEffect(this.gameId, params)
     }
-    useStonePiercingAxeEffect = (choice: 'DISCARD_TWO' | 'SKIP', discardCardIds: string[]) => {
+    useStonePiercingAxeEffect = (
+        choice: 'DISCARD_TWO' | 'SKIP',
+        discardCardIds: string[],
+    ): Promise<unknown> => {
         const params = {
             playerId: this.me.id,
             choice,
             discardCardIds,
         }
-        this.api.useStonePiercingAxeEffect(this.gameId, params)
+        return this.api.useStonePiercingAxeEffect(this.gameId, params)
     }
     useViperSpearKill = (targetPlayerId: string, discardCardIds: string[]) => {
         const params = {
@@ -433,7 +464,7 @@ export default class Game {
         }
         return this.api.useHeavenlyDoubleHalberdKill(this.gameId, params)
     }
-    useJianXiongEffect = (choice: 'ACCEPT' | 'SKIP') => {
+    useJianXiongEffect = (choice: 'ACCEPT' | 'SKIP'): Promise<unknown> => {
         const params = {
             playerId: this.me.id,
             choice,
@@ -613,7 +644,7 @@ export default class Game {
                 //     message: '請問要否要發動裝備卡八卦陣的效果',
                 // }
                 // 詢問是否使用裝備牌的效果
-                if (data.playerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
@@ -624,7 +655,7 @@ export default class Game {
                 //     mountCardIds: ['ES5018', 'EH5044'],
                 // }
                 // 詢問是否使用裝備牌的效果
-                if (data.chooseMountCardPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
@@ -638,7 +669,7 @@ export default class Game {
                 //     message: '是否發動雌雄雙股劍效果？',
                 // }
                 // 詢問攻擊者是否發動雌雄雙股劍效果
-                if (data.attackerPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
@@ -652,7 +683,7 @@ export default class Game {
                 //     message: '請選擇是否棄一張手牌或讓攻擊者摸牌',
                 // }
                 // 詢問雌雄雙股劍效果
-                if (data.targetPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
@@ -666,27 +697,27 @@ export default class Game {
                 //     message: '青龍偃月刀效果：是否要再出一張殺',
                 // }
                 // 詢問攻擊者是否發動青龍偃月刀效果
-                if (data.attackerPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'AskStonePiercingAxeEffectEvent':
-                if (data.attackerPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'AskJianXiongEffectEvent':
-                if (data.playerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'AskSkillEffectEvent':
-                if (data.playerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'AskHuJiaEffectEvent':
-                if (data.playerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
@@ -737,7 +768,7 @@ export default class Game {
                 // this.addHandCardsToPlayer(data.drawCardPlayerId, data.size)
                 break
             case 'NotifyDiscardEvent':
-                if (data.discardPlayerId === this.me.id && data.discardCount > 0) {
+                if (this.isEventAskingMe(event)) {
                     this.me.askDiscardCards(data.discardCount)
                 }
                 break
@@ -863,22 +894,22 @@ export default class Game {
                 // healedPlayer.hpChange(healHp)
                 break
             case 'AskPeachEvent':
-                if (data.playerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'AskKillEvent':
-                if (data.playerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'BorrowedSwordEvent':
-                if (data.borrowedPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
             case 'AskDodgeEvent':
-                if (data.playerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
@@ -897,7 +928,7 @@ export default class Game {
                 //     },
                 //     "message": "輪到 諸葛亮 選牌"
                 // }
-                if (data.nextChoosingPlayerId === this.me.id) {
+                if (this.isEventAskingMe(event)) {
                     this.me.processEvent(event)
                 }
                 break
@@ -1017,6 +1048,55 @@ export default class Game {
         //     }
         // }
         this.gameData = gameData
+    }
+    // 分派詢問與清理安全網共用同一份接收者判斷。
+    isEventAskingMe = (event: InteractionEvent | null | undefined): boolean => {
+        const data = event?.data || {}
+        const meId = this.me.id
+        switch (event?.event) {
+            case 'AskPlayWardEvent':
+                return true
+            case 'NotifyDiscardEvent':
+                return (
+                    data.discardPlayerId === meId &&
+                    typeof data.discardCount === 'number' &&
+                    data.discardCount > 0
+                )
+            default: {
+                const name = event?.event || ''
+                if (!Object.prototype.hasOwnProperty.call(interactionReceivers, name)) return false
+                return data[interactionReceivers[name]] === meId
+            }
+        }
+    }
+    // 安全網：整批事件處理完後，若是自己的出牌階段且這批沒有任何詢問自己的事件，
+    // 清掉 MainPlayer 上先前詢問殘留的 event / reaction / discard 狀態（避免國色等技能被誤擋）
+    clearStaleStateOnMyActionPhase = (events: InteractionEvent[]) => {
+        this.latestEventBatch = events
+        const round = this.gameData?.round
+        const meId = this.me.id
+        if (!round || round.roundPhase !== 'Action') return
+        if (round.currentRoundPlayer !== meId || round.activePlayer !== meId) return
+        if (events.some((event) => this.isEventAskingMe(event))) return
+        const unknownAsks = events.filter(
+            ({ event }) =>
+                event?.startsWith('Ask') &&
+                event !== 'AskPlayWardEvent' &&
+                !Object.prototype.hasOwnProperty.call(interactionReceivers, event),
+        )
+        if (unknownAsks.length > 0) {
+            killLog('warn', '未知詢問事件，暫停清理互動狀態', unknownAsks)
+            return
+        }
+        this.me.clearStaleInteractionState()
+    }
+    clearStaleStateAfterResponse = (event: { event: string; data?: unknown }) => {
+        // 只排除已成功回應的詢問，仍保護最新批次的其他詢問與強制棄牌。
+        this.clearStaleStateOnMyActionPhase(
+            this.latestEventBatch.filter(
+                (item) => item.event !== event.event || item.data !== event.data,
+            ),
+        )
     }
     getActivePlayer = () => {
         return this.gameData.round?.activePlayer || this.gameData.round?.currentRoundPlayer
