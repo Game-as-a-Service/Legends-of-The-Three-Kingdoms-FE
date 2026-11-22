@@ -7,6 +7,7 @@ export interface AskSkillEffectEvent {
         skillName?: string
         dataPlayerId?: string
         dataCardIds?: string[]
+        options?: string[]
     }
 }
 
@@ -376,6 +377,46 @@ const handleYiJi: SkillEffectHandler = (mainPlayer) => {
     })
 }
 
+// 突襲（張遼，摸牌階段）：可放棄摸牌，改為獲得至多兩名其他角色的各一張手牌
+const handleTuXi: SkillEffectHandler = (mainPlayer) => {
+    const candidates = mainPlayer.seats.filter((player) => player.hp > 0 && player.hand.size > 0)
+    let responseSubmitted = false
+    const finishResponse = () => {
+        mainPlayer.event = ''
+        mainPlayer.eventData = null
+        mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+        mainPlayer.clearPlayerPick()
+    }
+    const submitResponse = (choice: 'ACCEPT' | 'SKIP', targetPlayerIds: string[] = []) => {
+        if (responseSubmitted) return
+        responseSubmitted = true
+        mainPlayer.game?.useSkillEffect('突襲', choice, targetPlayerIds)
+        finishResponse()
+    }
+    const skip = () => submitResponse('SKIP')
+
+    mainPlayer.useConfirmModal({
+        message: '是否發動突襲？放棄摸牌，改為獲得至多兩名其他角色的各一張手牌。',
+        confirmText: '發動突襲',
+        cancelText: '照常摸牌',
+        handleConfirm: () => {
+            if (candidates.length === 0) {
+                skip()
+                return
+            }
+            mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
+            mainPlayer.beginPlayerPick({
+                message: '突襲：請選擇 1～2 名有手牌的角色，再按確定',
+                candidates,
+                maxSelections: 2,
+                onConfirmMany: (targets) => submitResponse('ACCEPT', targets.map((target) => target.id)),
+                onCancel: skip,
+            })
+        },
+        handleCancel: skip,
+    })
+}
+
 const handleFanJian: SkillEffectHandler = (mainPlayer, event) => {
     const zhouYu = [...mainPlayer.seats, mainPlayer].find(
         (player) => player.id === event.data?.dataPlayerId,
@@ -395,15 +436,19 @@ const handleFanJian: SkillEffectHandler = (mainPlayer, event) => {
     })
 }
 
+// 觀星：諸葛亮回合開始（準備階段、判定之前）由後端詢問，dataCardIds = 所觀看的牌（第一張 = 牌堆頂），
+// options = ['ARRANGE', 'SKIP']。ARRANGE 帶回堆頂順序（先點者在最上，未選者置牌堆底；不選任何牌 = 全置底），
+// SKIP = 不發動（牌堆不變）。回應後後端接續判定 → 摸牌。
 const handleGuanXing: SkillEffectHandler = (mainPlayer, event) => {
     const viewedCardIds = (event.data?.dataCardIds || [])
         .filter(Boolean)
         .map((cardId) => cardId as ThreeKingdomsCardIds)
+    const canSkip = (event.data?.options || ['ARRANGE', 'SKIP']).includes('SKIP')
     let responseSubmitted = false
-    const submitArrange = (cardIds: string[]) => {
+    const submit = (choice: 'ARRANGE' | 'SKIP', cardIds: string[] = []) => {
         if (responseSubmitted) return
         responseSubmitted = true
-        mainPlayer.game?.useSkillEffect('觀星', 'ARRANGE', cardIds)
+        mainPlayer.game?.useSkillEffect('觀星', choice, cardIds)
         mainPlayer.event = ''
         mainPlayer.eventData = null
         mainPlayer.mainInstanceMap.confirmModal?.setAlpha(0)
@@ -411,25 +456,26 @@ const handleGuanXing: SkillEffectHandler = (mainPlayer, event) => {
     }
 
     if (viewedCardIds.length === 0) {
-        submitArrange([])
+        submit(canSkip ? 'SKIP' : 'ARRANGE')
         return
     }
 
     mainPlayer.useSelectCardModal({
         type: 'small',
-        message: '觀星：依序點選放回牌堆頂的牌（先點者在最上方），未選的牌將置於牌堆底',
+        message:
+            '觀星（回合開始）：依序點選放回牌堆頂的牌（先點者在最上方），未選的牌將置於牌堆底；不選任何牌即全置牌堆底',
         cardIds: viewedCardIds,
         confirmText: '確認排列',
-        cancelText: '全置牌堆底',
+        cancelText: canSkip ? '不發動' : '全置牌堆底',
         maxSelectionCount: viewedCardIds.length,
         minSelectionCount: 0,
         handleConfirm: (selectedCardIds) => {
             const cardIds = Array.isArray(selectedCardIds)
                 ? selectedCardIds.filter(Boolean).map(String)
                 : [String(selectedCardIds)]
-            submitArrange(cardIds)
+            submit('ARRANGE', cardIds)
         },
-        handleCancel: () => submitArrange([]),
+        handleCancel: () => (canSkip ? submit('SKIP') : submit('ARRANGE', [])),
     })
 }
 
@@ -500,6 +546,7 @@ const skillEffectHandlers: Record<string, SkillEffectHandler> = {
     遺計: handleYiJi,
     流離: handleLiuLi,
     反間: handleFanJian,
+    突襲: handleTuXi,
     觀星: handleGuanXing,
     激將: handleJiJiang,
 }

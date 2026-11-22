@@ -46,17 +46,23 @@ export default class MainPlayer extends Player {
     jieYinButton?: Phaser.GameObjects.Container
     renDeButton?: Phaser.GameObjects.Container
     jiJiangButton?: Phaser.GameObjects.Container
-    guanXingButton?: Phaser.GameObjects.Container
     longDanMode: boolean = false
     longDanButton?: Phaser.GameObjects.Container
     playerPick: {
         candidates: Player[]
         selected: Player | null
+        // 多選（maxSelections > 1，如突襲最多兩名）時使用；單選維持 selected
+        selectedList: Player[]
+        maxSelections: number
         onConfirm: (player: Player) => void
+        onConfirmMany?: (players: Player[]) => void
         onCancel: () => void
     } | null = null
     weaponActionBorder?: Phaser.GameObjects.Graphics
     weaponHitArea?: Phaser.GameObjects.Rectangle
+    // 轉化技（國色…）可選裝備區的牌當來源：選中的裝備 id 與裝備欄上的點擊區
+    selectedConversionEquipmentId: ThreeKingdomsCardIds | null = null
+    conversionEquipmentOverlays: Phaser.GameObjects.GameObject[] = []
     mainInstanceMap: { [key: string]: Phaser.GameObjects.Container } = {}
     modalCardAlphas: Map<Card, number> = new Map()
     event: string = ''
@@ -268,7 +274,6 @@ export default class MainPlayer extends Player {
         this.createJieYinButton(scene)
         this.createRenDeButton(scene)
         this.createJiJiangButton(scene)
-        this.createGuanXingButton(scene)
         this.createLongDanButton(scene)
     }
     test() {
@@ -1352,6 +1357,25 @@ export default class MainPlayer extends Player {
     updatePlayerData(data: any): void {
         super.updatePlayerData(data)
         this.bindWeaponInteraction()
+        if (this.guoSeMode) {
+            if (
+                this.selectedConversionEquipmentId &&
+                !this.equipments.includes(this.selectedConversionEquipmentId)
+            ) {
+                // 選中的裝備已不在：連同目標與確認鈕一起重置，避免確認鈕亮著卻按了沒反應
+                this.selectedConversionEquipmentId = null
+                if (!this.selectedCard) {
+                    if (this.game) {
+                        this.game.selectTargetPlayers.forEach((player) =>
+                            player.setPlayerSelected(false),
+                        )
+                        this.game.selectTargetPlayers = []
+                    }
+                    this.mainInstanceMap.checkModal?.setAlpha(0)
+                }
+            }
+            this.applyGuoSeEquipmentOptions()
+        }
         if (data.hand.cardIds.join() !== this.hand.cardIds.join()) {
             // 保留相同的卡片 只處理不同的卡片
             console.log(
@@ -1791,6 +1815,15 @@ export default class MainPlayer extends Player {
     handleCheckClickInternal = () => {
         console.log('確認 按鈕被按下', this.selectedCard, this.event)
         if (this.playerPick) {
+            if (this.playerPick.maxSelections > 1) {
+                const targets = this.playerPick.selectedList
+                if (targets.length === 0) {
+                    this.showKillBlockedReason('請至少選擇一位目標。')
+                    return
+                }
+                this.playerPick.onConfirmMany?.(targets)
+                return
+            }
             const target = this.playerPick.selected
             if (!target) {
                 this.showKillBlockedReason('請先選擇一位目標。')
@@ -1799,7 +1832,7 @@ export default class MainPlayer extends Player {
             this.playerPick.onConfirm(target)
             return
         }
-        if (this.guoSeMode && this.selectedCard) {
+        if (this.guoSeMode && (this.selectedCard || this.selectedConversionEquipmentId)) {
             this.submitGuoSe()
             return
         }
@@ -2073,6 +2106,7 @@ export default class MainPlayer extends Player {
             })
         }
         if (this.guoSeMode) {
+            this.selectedConversionEquipmentId = null
             this.applyGuoSeMode()
         }
         if (this.longDanMode) {
@@ -2082,15 +2116,27 @@ export default class MainPlayer extends Player {
     beginPlayerPick = ({
         message,
         candidates,
-        onConfirm,
+        onConfirm = () => {},
+        onConfirmMany,
         onCancel,
+        maxSelections = 1,
     }: {
         message: string
         candidates: Player[]
-        onConfirm: (player: Player) => void
+        onConfirm?: (player: Player) => void
+        onConfirmMany?: (players: Player[]) => void
         onCancel: () => void
+        maxSelections?: number
     }) => {
-        this.playerPick = { candidates, selected: null, onConfirm, onCancel }
+        this.playerPick = {
+            candidates,
+            selected: null,
+            selectedList: [],
+            maxSelections,
+            onConfirm,
+            onConfirmMany,
+            onCancel,
+        }
         this.seats.forEach((player) => {
             player.setPlayerSelected(false)
             player.setOutOfDistance(!candidates.some((candidate) => candidate.id === player.id))
@@ -2103,6 +2149,18 @@ export default class MainPlayer extends Player {
     handlePlayerPickClick = (player: Player) => {
         const pick = this.playerPick
         if (!pick || player.isOutofDistance) return
+        if (pick.maxSelections > 1) {
+            const index = pick.selectedList.findIndex((p) => p.id === player.id)
+            if (index >= 0) {
+                player.setPlayerSelected(false)
+                pick.selectedList.splice(index, 1)
+                return
+            }
+            if (pick.selectedList.length >= pick.maxSelections) return
+            player.setPlayerSelected(true, 'to')
+            pick.selectedList.push(player)
+            return
+        }
         if (pick.selected?.id === player.id) {
             player.setPlayerSelected(false)
             pick.selected = null
@@ -2115,6 +2173,7 @@ export default class MainPlayer extends Player {
     clearPlayerPick = () => {
         if (!this.playerPick) return
         this.playerPick.selected?.setPlayerSelected(false)
+        this.playerPick.selectedList.forEach((player) => player.setPlayerSelected(false))
         this.playerPick = null
         this.resetOutofDistance()
         this.mainInstanceMap.checkModal?.setAlpha(0)
@@ -2124,7 +2183,39 @@ export default class MainPlayer extends Player {
         return this.general?.name === '大喬' || this.generalId === 'WU006'
     }
     isDiamondCard = (card: Card) => {
-        return threeKingdomsCards[card.id]?.suit === 'diamond'
+        return this.isDiamondCardId(card.id)
+    }
+    isDiamondCardId = (cardId?: ThreeKingdomsCardIds | null) => {
+        if (!cardId) return false
+        return threeKingdomsCards[cardId]?.suit === 'diamond'
+    }
+    // 在裝備欄上標出可當轉化來源的裝備（符合 isEligible），點擊時呼叫 onSelect。
+    // 已選中的裝備（selectedConversionEquipmentId）以實心底色標示。
+    showConversionEquipmentOptions = (
+        isEligible: (cardId: ThreeKingdomsCardIds) => boolean,
+        onSelect: (cardId: ThreeKingdomsCardIds) => void,
+    ) => {
+        this.clearConversionEquipmentOptions()
+        for (let i = 0; i < this.equipmentKeys.length; i++) {
+            const cardId = this.equipments[i]
+            const equipmentInstance = this.instanceMap[this.equipmentKeys[i]]
+            if (!cardId || !equipmentInstance || !isEligible(cardId)) continue
+            const isSelected = this.selectedConversionEquipmentId === cardId
+            const highlight = this.scene.add.rectangle(100, 12, 160, 24, 0x3b82f6, 0.25)
+            highlight.setAlpha(isSelected ? 1 : 0)
+            const border = this.scene.add.graphics()
+            border.lineStyle(2, 0x3b82f6, 1)
+            border.strokeRoundedRect(16, -4, 168, 32, 8)
+            const hitArea = this.scene.add.rectangle(100, 12, 160, 24, 0xffffff, 0.001)
+            hitArea.setInteractive({ useHandCursor: true })
+            hitArea.on('pointerdown', () => onSelect(cardId))
+            equipmentInstance.add([highlight, border, hitArea])
+            this.conversionEquipmentOverlays.push(highlight, border, hitArea)
+        }
+    }
+    clearConversionEquipmentOptions = () => {
+        this.conversionEquipmentOverlays.forEach((overlay) => overlay.destroy())
+        this.conversionEquipmentOverlays = []
     }
     // 技能鈕固定在武將卡的資訊列右側（手牌數的右邊），避免遮擋其他資訊。
     // 同一武將有兩顆技能鈕時（劉備：仁德＋激將）以 layout 'left' / 'right' 並排縮窄顯示
@@ -2169,8 +2260,11 @@ export default class MainPlayer extends Player {
             this.showKillBlockedReason('請先完成目前的出牌動作。')
             return
         }
-        if (!this.handCards.some((card) => !card.played && this.isDiamondCard(card))) {
-            this.showKillBlockedReason('你沒有方塊手牌，無法發動國色。')
+        if (
+            !this.handCards.some((card) => !card.played && this.isDiamondCard(card)) &&
+            !this.equipments.some((cardId) => this.isDiamondCardId(cardId))
+        ) {
+            this.showKillBlockedReason('你沒有方塊牌（手牌或裝備區），無法發動國色。')
             return
         }
         if (this.selectedCard) {
@@ -2184,12 +2278,54 @@ export default class MainPlayer extends Player {
             card.instance.setAlpha(this.isDiamondCard(card) ? 1 : 0.3)
         })
         this.guoSeButton?.setScale(1.1)
+        this.applyGuoSeEquipmentOptions()
         const hintText: Phaser.GameObjects.Text = this.hintInstance.getAt(0)
-        hintText?.setText('國色：請選擇一張方塊手牌，當作樂不思蜀')
+        hintText?.setText('國色：請選擇一張方塊牌（手牌或裝備區），當作樂不思蜀')
         this.hintInstance?.setAlpha(1)
+    }
+    applyGuoSeEquipmentOptions = () => {
+        this.showConversionEquipmentOptions(
+            (cardId) => this.isDiamondCardId(cardId),
+            (cardId) => this.handleGuoSeEquipmentClick(cardId),
+        )
+    }
+    handleGuoSeEquipmentClick = (cardId: ThreeKingdomsCardIds) => {
+        if (!this.guoSeMode || this.event) return
+        // 改選裝備：把已選的手牌放回去
+        this.deselectGuoSeHandCard()
+        if (this.game) {
+            this.game.selectTargetPlayers.forEach((player) => player.setPlayerSelected(false))
+            this.game.selectTargetPlayers = []
+        }
+        if (this.selectedConversionEquipmentId === cardId) {
+            this.selectedConversionEquipmentId = null
+            this.mainInstanceMap.checkModal?.setAlpha(0)
+        } else {
+            this.selectedConversionEquipmentId = cardId
+            this.resetOutofDistance()
+            this.mainInstanceMap.checkModal?.setAlpha(1)
+        }
+        this.applyGuoSeEquipmentOptions()
+    }
+    deselectGuoSeHandCard = () => {
+        const card = this.selectedCard
+        if (!card) return
+        this.selectedCard = null
+        this.scene.tweens.add({
+            targets: card.instance,
+            x: card.instance.x,
+            y: card.instance.y + 20,
+            duration: 500,
+            ease: 'Power2',
+        })
     }
     handleGuoSeCardClick = (card: Card) => {
         if (!this.isDiamondCard(card)) return
+        // 改選手牌：取消已選的裝備
+        if (this.selectedConversionEquipmentId) {
+            this.selectedConversionEquipmentId = null
+            this.applyGuoSeEquipmentOptions()
+        }
         const previousCard = this.selectedCard
         if (previousCard) {
             this.scene.tweens.add({
@@ -2222,15 +2358,17 @@ export default class MainPlayer extends Player {
     }
     submitGuoSe = async () => {
         const card = this.selectedCard
+        const equipmentId = card ? null : this.selectedConversionEquipmentId
+        const sourceCardId = card?.id ?? equipmentId
         const targetPlayer = this.game?.selectTargetPlayers[0]
-        if (!card) return
+        if (!sourceCardId) return
         if (!targetPlayer) {
             this.showKillBlockedReason('國色：請先選擇樂不思蜀的目標。')
             this.mainInstanceMap.checkModal?.setAlpha(0)
             return
         }
         try {
-            await this.game?.useSkillEffect('國色', 'CONTENTMENT', [card.id], targetPlayer.id)
+            await this.game?.useSkillEffect('國色', 'CONTENTMENT', [sourceCardId], targetPlayer.id)
         } catch (error: any) {
             const data = error?.response?.data
             console.error('國色 API 失敗', error?.response?.status, data)
@@ -2244,7 +2382,8 @@ export default class MainPlayer extends Player {
         targetPlayer.setPlayerSelected(false)
         if (this.game) this.game.selectTargetPlayers = []
         this.selectedCard = null
-        card.playCard()
+        // 裝備區的牌由後端狀態更新移出裝備欄；手牌才需要播出牌動畫
+        card?.playCard()
         this.clearGuoSeMode()
     }
     cancelGuoSeMode = () => {
@@ -2268,7 +2407,9 @@ export default class MainPlayer extends Player {
     clearGuoSeMode = () => {
         if (!this.guoSeMode) return
         this.guoSeMode = false
+        this.selectedConversionEquipmentId = null
         this.guoSeButton?.setScale(1)
+        this.clearConversionEquipmentOptions()
         this.handCards.forEach((card) => card.instance.setAlpha(1))
         this.mainInstanceMap.checkModal?.setAlpha(0)
         this.hintInstance?.setAlpha(0)
@@ -2829,54 +2970,6 @@ export default class MainPlayer extends Player {
         this.mainInstanceMap.confirmModal?.setAlpha(0)
         this.hintInstance?.setAlpha(0)
         this.handCards.forEach((handCard) => handCard.instance.setAlpha(1))
-    }
-    isGuanXingAvailable = () => {
-        return this.general?.name === '諸葛亮' || this.generalId === 'SHU004'
-    }
-    createGuanXingButton = (scene: Phaser.Scene) => {
-        if (!this.isGuanXingAvailable()) return
-        this.guanXingButton = this.createSkillButton(scene, '觀星', 0x0ea5e9, () =>
-            this.handleGuanXingButtonClick(),
-        )
-    }
-    handleGuanXingButtonClick = () => {
-        const isMyTurn = this.game?.getActivePlayer() === this.id
-        if (!isMyTurn || this.event || this.discardMode || this.reactionMode) {
-            this.showKillBlockedReason('觀星只能在自己的出牌階段發動。')
-            return
-        }
-        if (
-            this.guoSeMode ||
-            this.viperSpearMode ||
-            this.heavenlyDoubleHalberdMode ||
-            this.selectedCard ||
-            this.playerPick
-        ) {
-            this.showKillBlockedReason('請先完成目前的出牌動作。')
-            return
-        }
-        this.useConfirmModal({
-            message: '是否發動觀星？每回合限一次。觀看牌堆頂的牌並重新排列。',
-            confirmText: '發動',
-            cancelText: '取消',
-            handleConfirm: () => {
-                this.mainInstanceMap.confirmModal?.setAlpha(0)
-                this.submitGuanXing()
-            },
-            handleCancel: () => {
-                this.mainInstanceMap.confirmModal?.setAlpha(0)
-            },
-        })
-    }
-    // 第二段由後端回傳的 AskSkillEffectEvent（觀星）接手，見 askSkillEffectEvent.ts
-    submitGuanXing = async () => {
-        try {
-            await this.game?.useSkillEffect('觀星', 'ACCEPT')
-        } catch (error: any) {
-            const data = error?.response?.data
-            console.error('觀星 API 失敗', error?.response?.status, data)
-            this.showKillBlockedReason(`觀星發動失敗：${data?.message ?? error?.message ?? '未知錯誤'}`)
-        }
     }
     createCheckModal(scene: Phaser.Scene) {
         // 出牌確認視窗
