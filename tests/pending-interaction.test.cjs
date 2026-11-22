@@ -749,3 +749,42 @@ test(
         }
     },
 )
+
+const { playedCardLabel } = loadModule('src/utils/conversionCard.ts')
+
+const conversionEvent = (skillName, playerId, cardId) => ({
+    event: 'SkillEffectEvent',
+    data: { skillName, playerId, accepted: true, dataCardIds: [cardId], dataPlayerId: null },
+})
+
+test('轉化技出牌 log 顯示轉化後的牌與來源（龍膽雙向、武聖、奇襲、國色、傾國）', () => {
+    const cases = [
+        ['龍膽', '閃', '殺（龍膽：閃）'],
+        ['龍膽', '殺', '閃（龍膽：殺）'],
+        ['武聖', '桃', '殺（武聖：桃）'],
+        ['奇襲', '殺', '過河拆橋（奇襲：殺）'],
+        ['國色', '閃', '樂不思蜀（國色：閃）'],
+        ['傾國', '殺', '閃（傾國：殺）'],
+    ]
+    for (const [skillName, sourceName, expected] of cases) {
+        const events = [conversionEvent(skillName, 'zhao', 'BH2028'), { event: 'PlayCardEvent' }]
+        assert.equal(playedCardLabel(events, 'zhao', 'BH2028', sourceName), expected)
+    }
+})
+
+test('沒有對應轉化技事件時照原牌名顯示', () => {
+    assert.equal(playedCardLabel([{ event: 'PlayCardEvent' }], 'zhao', 'BH2028', '閃'), '閃')
+    // 別張牌、別的玩家、非轉化技都不套用
+    assert.equal(
+        playedCardLabel([conversionEvent('龍膽', 'zhao', 'BS8008')], 'zhao', 'BH2028', '閃'),
+        '閃',
+    )
+    assert.equal(
+        playedCardLabel([conversionEvent('龍膽', 'other', 'BH2028')], 'zhao', 'BH2028', '閃'),
+        '閃',
+    )
+    assert.equal(
+        playedCardLabel([conversionEvent('制衡', 'zhao', 'BH2028')], 'zhao', 'BH2028', '閃'),
+        '閃',
+    )
+})
