@@ -1516,38 +1516,55 @@ export default class MainPlayer extends Player {
 
         return wrappedLines.join('\n')
     }
-    applyConfirmModalMessageLayout = (messageText: Phaser.GameObjects.Text, message: string) => {
+    applyModalMessageLayout = (
+        messageText: Phaser.GameObjects.Text,
+        message: string,
+        centerY: number,
+        maxHeight: number,
+        maxLines: number = Infinity,
+    ) => {
         const normalizedMessage = (message || '').trim()
         const modalTextWidth = 520
-        const maxLines = this.confirmModalMaxLines
-        let chosenFontSize = this.confirmModalMinFontSize
-        let chosenMessage = normalizedMessage
+        messageText.setScale(1)
+        messageText.setStyle({ color: '#fff', align: 'center' })
 
         for (
             let fontSize = this.confirmModalBaseFontSize;
             fontSize >= this.confirmModalMinFontSize;
             fontSize -= 2
         ) {
-            const maxUnitsPerLine = Math.max(8, Math.floor(modalTextWidth / (fontSize * 0.95)))
-            const wrappedMessage = this.wrapTextByVisualUnit(normalizedMessage, maxUnitsPerLine)
-            const lineCount = wrappedMessage.split('\n').length
-            if (lineCount <= maxLines) {
-                chosenFontSize = fontSize
-                chosenMessage = wrappedMessage
+            messageText.setFontSize(fontSize)
+            let maxUnitsPerLine = Math.max(1, Math.floor(modalTextWidth / fontSize))
+            let wrappedMessage = this.wrapTextByVisualUnit(normalizedMessage, maxUnitsPerLine)
+            messageText.setText(wrappedMessage)
+            // 實際字型寬度可能超出估算，縮短每行直到量測寬度符合邊界。
+            while (messageText.width > modalTextWidth && maxUnitsPerLine > 1) {
+                maxUnitsPerLine -= 1
+                wrappedMessage = this.wrapTextByVisualUnit(normalizedMessage, maxUnitsPerLine)
+                messageText.setText(wrappedMessage)
+            }
+            if (
+                messageText.width <= modalTextWidth &&
+                messageText.height <= maxHeight &&
+                wrappedMessage.split('\n').length <= maxLines
+            ) {
                 break
             }
-            chosenFontSize = fontSize
-            chosenMessage = wrappedMessage
         }
 
-        messageText.setStyle({
-            fontSize: `${chosenFontSize}px`,
-            color: '#fff',
-            align: 'center',
-        })
-        messageText.setText(chosenMessage)
+        messageText.setScale(
+            Math.min(
+                1,
+                modalTextWidth / Math.max(1, messageText.width),
+                maxHeight / Math.max(1, messageText.height),
+            ),
+        )
         messageText.setOrigin(0.5)
-        messageText.setPosition(300, 100)
+        messageText.setPosition(300, centerY)
+    }
+
+    applyConfirmModalMessageLayout = (messageText: Phaser.GameObjects.Text, message: string) => {
+        this.applyModalMessageLayout(messageText, message, 100, 160, this.confirmModalMaxLines)
     }
     useConfirmModal = ({
         message = '提示訊息',
@@ -3083,6 +3100,7 @@ export default class MainPlayer extends Player {
             color: '#fff',
         })
         messageText.setOrigin(0.5)
+        this.applyModalMessageLayout(messageText, '請選擇卡牌？', 75, 110)
         // 添加 "是" 按鈕
         const yesButton = scene.add
             .text(200, 350, '是', { fontSize: '32px', color: '#0f0' })
@@ -3433,7 +3451,14 @@ export default class MainPlayer extends Player {
             this.mainInstanceMap.selectCardModal?.getData('cardInstance').push(container)
         }
         const modelText: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(1)
-        modelText.setText(message)
+        // 預留卡牌選取時上移 20px 的空間，手牌與完整卡牌的頂端不同。
+        const messageBottom = handCardCount > 0 ? 50 : type === 'small' ? 130 : 85
+        this.applyModalMessageLayout(
+            modelText,
+            message,
+            (20 + messageBottom) / 2,
+            messageBottom - 20,
+        )
         const yesButton: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(2)
         yesButton.setText(confirmText)
         const noButton: Phaser.GameObjects.Text = this.mainInstanceMap.selectCardModal?.getAt(3)
