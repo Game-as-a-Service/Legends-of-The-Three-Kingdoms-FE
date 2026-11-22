@@ -16,6 +16,7 @@ import shadowrunnerAudio from '~/assets/shadowrunner.mp3'
 import { Card, Game, BattleScene } from '~/src/classes'
 import threeKingdomsCards from '~/assets/cards.json'
 import { atkLine } from '~/src/utils/drawing'
+import { playedCardLabel } from '~/src/utils/conversionCard'
 import { Client } from '@stomp/stompjs'
 // import api from '~/src/utils/api'
 import generalCards from '~/assets/generalCards.json'
@@ -325,7 +326,13 @@ onMounted(() => {
                                         eventMessage = `${generalName} 不出牌`
                                         break
                                     }
-                                    const cardName = threeKingdomsCards[event.data.cardId].name
+                                    // 轉化技（如龍膽閃當殺）顯示轉化後的牌：「殺（龍膽：閃）」
+                                    const cardName = playedCardLabel(
+                                        res.events,
+                                        event.data.playerId,
+                                        event.data.cardId,
+                                        threeKingdomsCards[event.data.cardId].name,
+                                    )
                                     // 有指定對象
                                     if (
                                         event.data.targetPlayerId &&
